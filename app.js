@@ -42,6 +42,7 @@ const btnLogFeed = document.getElementById('btn-log-feed');
 const logModal = document.getElementById('log-modal');
 const logModalTitle = document.getElementById('log-modal-title');
 const feedDateInput = document.getElementById('feed-date');
+const feedDateLabel = document.getElementById('feed-date-label');
 const feedTimeInput = document.getElementById('feed-time');
 const amountChips = document.getElementById('amount-chips');
 const mlWheelTrack = document.getElementById('ml-wheel-track');
@@ -266,7 +267,7 @@ function renderHistory() {
     const feed = filtered[i];
     const fullIndex = latestFeeds.indexOf(feed);
     const older = latestFeeds[fullIndex + 1];
-    const gap = older ? `+${durationString(feed.timestamp - older.timestamp)}` : '—';
+    const gap = older ? durationString(feed.timestamp - older.timestamp) : '—';
     const amountHtml = feed.amountMl != null
       ? `<span class="history-amount-val">${feed.amountMl}ml</span>`
       : `<button class="add-amount-btn">Add amount</button>`;
@@ -448,6 +449,7 @@ function openLogModal(feed) {
   const baseTime = feed ? new Date(feed.timestamp) : new Date();
   feedDateInput.value = `${baseTime.getFullYear()}-${String(baseTime.getMonth() + 1).padStart(2, '0')}-${String(baseTime.getDate()).padStart(2, '0')}`;
   feedDateInput.max = todayDateString();
+  updateFeedDateLabel();
   feedTimeInput.value = `${String(baseTime.getHours()).padStart(2, '0')}:${String(baseTime.getMinutes()).padStart(2, '0')}`;
 
   logModalTitle.textContent = feed ? 'Add amount' : 'Log a feed';
@@ -459,6 +461,18 @@ function openLogModal(feed) {
   onAmountChanged(DEFAULT_ML);
   updateWheelActiveItem();
 }
+
+function updateFeedDateLabel() {
+  const val = feedDateInput.value;
+  if (!val || val === todayDateString()) {
+    feedDateLabel.textContent = 'Today';
+    return;
+  }
+  const [y, m, d] = val.split('-').map(Number);
+  feedDateLabel.textContent = new Date(y, m - 1, d).toLocaleDateString([], { day: 'numeric', month: 'short' });
+}
+
+feedDateInput.addEventListener('change', updateFeedDateLabel);
 
 function readModalTimestamp() {
   const now = new Date();
@@ -538,6 +552,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=10').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=11').catch(() => {});
   });
 }
