@@ -1,7 +1,7 @@
 import { firebaseConfig } from './firebase-config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
-  getFirestore, collection, addDoc, deleteDoc, doc, setDoc,
+  getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc,
   query, orderBy, limit, onSnapshot, enableIndexedDbPersistence,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
@@ -27,6 +27,8 @@ const joinCodeInput = document.getElementById('join-code');
 const setupError = document.getElementById('setup-error');
 const btnCreateHousehold = document.getElementById('btn-create-household');
 
+const heroCard = document.getElementById('hero-card');
+const heroLabelEl = document.getElementById('hero-label');
 const sinceLastFeedEl = document.getElementById('since-last-feed');
 const lastFeedDetailEl = document.getElementById('last-feed-detail');
 const nextFeedTimeEl = document.getElementById('next-feed-time');
@@ -38,11 +40,13 @@ const toast = document.getElementById('toast');
 
 const btnLogFeed = document.getElementById('btn-log-feed');
 const logModal = document.getElementById('log-modal');
+const logModalTitle = document.getElementById('log-modal-title');
 const feedTimeInput = document.getElementById('feed-time');
 const amountChips = document.getElementById('amount-chips');
 const mlWheelTrack = document.getElementById('ml-wheel-track');
 const intervalChips = document.getElementById('interval-chips');
 const intervalAutoTag = document.getElementById('interval-auto-tag');
+const logStart = document.getElementById('log-start');
 const logCancel = document.getElementById('log-cancel');
 const logConfirm = document.getElementById('log-confirm');
 
@@ -62,6 +66,7 @@ let intervalOverridden = false;
 let latestFeeds = [];
 let currentRange = 'day';
 let wheelScrollTimer = null;
+let editingFeedId = null;
 
 function startOfToday() {
   const d = new Date();
@@ -195,15 +200,30 @@ function listenToProfile(code) {
 
 function renderSinceLastFeed() {
   if (latestFeeds.length === 0) {
+    heroCard.classList.remove('hero-pending');
+    heroLabelEl.textContent = 'Since last feed';
     sinceLastFeedEl.textContent = '—';
     lastFeedDetailEl.textContent = 'No feeds yet';
     return;
   }
   const last = latestFeeds[0];
+  const isPending = last.amountMl == null;
+  heroCard.classList.toggle('hero-pending', isPending);
   sinceLastFeedEl.textContent = durationString(Date.now() - last.timestamp);
-  const amount = last.amountMl ? `${last.amountMl}ml · ` : '';
-  lastFeedDetailEl.textContent = `Last fed at ${formatClock(last.timestamp)} · ${amount}${timeAgo(last.timestamp)}`;
+  if (isPending) {
+    heroLabelEl.textContent = 'Feeding now';
+    lastFeedDetailEl.textContent = 'Tap to add amount';
+  } else {
+    heroLabelEl.textContent = 'Since last feed';
+    lastFeedDetailEl.textContent = `Last fed at ${formatClock(last.timestamp)} · ${last.amountMl}ml · ${timeAgo(last.timestamp)}`;
+  }
 }
+
+heroCard.addEventListener('click', () => {
+  if (latestFeeds.length && latestFeeds[0].amountMl == null) {
+    openLogModal(latestFeeds[0]);
+  }
+});
 
 function renderNextFeed() {
   if (latestFeeds.length === 0) {
@@ -241,16 +261,19 @@ function renderHistory() {
     const fullIndex = latestFeeds.indexOf(feed);
     const older = latestFeeds[fullIndex + 1];
     const gap = older ? `+${durationString(feed.timestamp - older.timestamp)}` : '—';
-    const amount = feed.amountMl ? `${feed.amountMl}ml` : 'Bottle';
+    const amountHtml = feed.amountMl != null
+      ? `<span class="history-amount-val">${feed.amountMl}ml</span>`
+      : `<button class="add-amount-btn">Add amount</button>`;
 
     const li = document.createElement('li');
     li.innerHTML = `
       <span class="history-time-val">${formatClock(feed.timestamp)}</span>
-      <span class="history-amount-val">${amount}</span>
+      ${amountHtml}
       <span class="history-gap-val">${gap}</span>
       <button class="history-delete" title="Delete">✕</button>
     `;
     li.querySelector('.history-delete').addEventListener('click', () => deleteFeed(feed.id));
+    li.querySelector('.add-amount-btn')?.addEventListener('click', () => openLogModal(feed));
     historyList.appendChild(li);
   }
 }
@@ -278,6 +301,34 @@ async function logFeed(timestamp, amountMl, intervalHours) {
   } catch (e) {
     console.error(e);
     showToast('Could not log feed — check connection');
+  }
+}
+
+async function startFeed(timestamp, intervalHours) {
+  const code = getHouseholdCode();
+  if (!code) return;
+  try {
+    await addDoc(feedsCollection(code), {
+      type: 'bottle',
+      timestamp,
+      intervalHours,
+    });
+    showToast('Feed started');
+  } catch (e) {
+    console.error(e);
+    showToast('Could not start feed — check connection');
+  }
+}
+
+async function finishFeed(id, timestamp, amountMl, intervalHours) {
+  const code = getHouseholdCode();
+  if (!code) return;
+  try {
+    await updateDoc(doc(db, 'households', code, 'feeds', id), { timestamp, amountMl, intervalHours });
+    showToast('Amount saved');
+  } catch (e) {
+    console.error(e);
+    showToast('Could not save — check connection');
   }
 }
 
@@ -382,13 +433,18 @@ intervalChips.querySelectorAll('.chip').forEach(chip => {
 
 // --- Log modal ---
 
-function openLogModal() {
+function openLogModal(feed) {
+  editingFeedId = feed ? feed.id : null;
   intervalOverridden = false;
   selectedMl = DEFAULT_ML;
   selectedIntervalHours = computeAutoIntervalHours(DEFAULT_ML);
 
-  const now = new Date();
-  feedTimeInput.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const baseTime = feed ? new Date(feed.timestamp) : new Date();
+  feedTimeInput.value = `${String(baseTime.getHours()).padStart(2, '0')}:${String(baseTime.getMinutes()).padStart(2, '0')}`;
+
+  logModalTitle.textContent = feed ? 'Add amount' : 'Log a feed';
+  logStart.hidden = !!feed;
+  logConfirm.textContent = feed ? 'Save amount' : 'Log feed';
 
   logModal.hidden = false;
   scrollWheelTo(DEFAULT_ML);
@@ -396,10 +452,7 @@ function openLogModal() {
   updateWheelActiveItem();
 }
 
-btnLogFeed.addEventListener('click', openLogModal);
-logCancel.addEventListener('click', () => { logModal.hidden = true; });
-
-logConfirm.addEventListener('click', () => {
+function readModalTimestamp() {
   let timestamp = Date.now();
   if (feedTimeInput.value) {
     const [h, m] = feedTimeInput.value.split(':').map(Number);
@@ -407,8 +460,27 @@ logConfirm.addEventListener('click', () => {
     d.setHours(h, m, 0, 0);
     timestamp = d.getTime();
   }
+  return timestamp;
+}
+
+btnLogFeed.addEventListener('click', () => openLogModal());
+logCancel.addEventListener('click', () => { logModal.hidden = true; editingFeedId = null; });
+
+logStart.addEventListener('click', () => {
+  const timestamp = readModalTimestamp();
   logModal.hidden = true;
-  logFeed(timestamp, selectedMl, selectedIntervalHours);
+  startFeed(timestamp, selectedIntervalHours);
+});
+
+logConfirm.addEventListener('click', () => {
+  const timestamp = readModalTimestamp();
+  logModal.hidden = true;
+  if (editingFeedId) {
+    finishFeed(editingFeedId, timestamp, selectedMl, selectedIntervalHours);
+    editingFeedId = null;
+  } else {
+    logFeed(timestamp, selectedMl, selectedIntervalHours);
+  }
 });
 
 {
@@ -461,6 +533,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=8').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=9').catch(() => {});
   });
 }

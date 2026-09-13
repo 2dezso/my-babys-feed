@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#eafbe9">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=8">
+<link rel="manifest" href="manifest.json?v=9">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=8">
+<link rel="stylesheet" href="style.css?v=9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -42,8 +42,8 @@
   </header>
 
   <main>
-    <section class="hero-card">
-      <div class="hero-label">Since last feed</div>
+    <section id="hero-card" class="hero-card">
+      <div id="hero-label" class="hero-label">Since last feed</div>
       <div id="since-last-feed" class="hero-time">—</div>
       <div id="last-feed-detail" class="hero-detail"></div>
     </section>
@@ -164,7 +164,7 @@
 
 <div id="log-modal" class="modal" hidden>
   <div class="modal-card">
-    <h2>Log a feed</h2>
+    <h2 id="log-modal-title">Log a feed</h2>
 
     <div class="modal-section">
       <div class="section-label">Time</div>
@@ -195,6 +195,8 @@
       </div>
     </div>
 
+    <button id="log-start" class="btn btn-secondary log-start-btn">Start feed — add amount later</button>
+
     <div class="modal-actions">
       <button id="log-cancel" class="btn btn-secondary">Cancel</button>
       <button id="log-confirm" class="btn btn-primary">Log feed</button>
@@ -215,6 +217,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=8"></script>
+<script type="module" src="app.js?v=9"></script>
 </body>
 </html>

@@ -43,11 +43,13 @@ Just open `index.html` in a browser — it's a static site, no build step, no se
 4. GitHub Pages rebuilds in ~30–60s at the repo's Pages URL.
 
 ## Data model
-Firestore: `households/{code}/feeds/{feedId}` → `{ type, timestamp, amountMl, intervalHours }`
+Firestore: `households/{code}/feeds/{feedId}` → `{ type, timestamp, amountMl?, intervalHours }`
 - `type`: always `bottle`
 - `timestamp`: feed time in ms (client-editable via the time field, defaults to now)
-- `amountMl`: bottle amount, picked via quick chips (60/90/120ml) or the scroll wheel
+- `amountMl`: bottle amount, picked via quick chips (60/90/120ml) or the scroll wheel. **Absent** while a feed is logged via "Start feed — add amount later" and hasn't been finished yet — that's what marks it as pending (not `0`, since the wheel's minimum is 20ml)
 - `intervalHours`: hours until the next expected feed. Auto-estimated from the amount (90ml→3h, +1h per +30ml, clamped 2–6h) but can be overridden with the interval chips. Used to compute "Next feed expected" on the home screen
+
+A pending feed (no `amountMl`) turns the home screen's hero card into a "Feeding now" state (tap it to add the amount) and shows "Add amount" in its Past Feeds row instead of a value.
 
 The home screen also shows time-since-last-feed live, and the total ml fed since midnight. "Past feeds" filters to calendar-day ranges (today, or the last 7/30 calendar days, each starting at 00:00) rather than a rolling 24h window (the sync query pulls up to the most recent 500 feeds to keep the 30-day view populated).
 

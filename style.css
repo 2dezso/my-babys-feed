@@ -290,6 +290,11 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
 .hero-time { font-size: 3rem; font-weight: 900; margin: 4px 0; line-height: 1.1; }
 .hero-detail { font-size: 0.95rem; font-weight: 700; opacity: 0.9; }
 
+.hero-card.hero-pending {
+  background: linear-gradient(160deg, #f0b429, #e0932a);
+  cursor: pointer;
+}
+
 .next-feed-pill {
   background: var(--card);
   border-radius: 999px;
@@ -393,6 +398,19 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
   cursor: pointer;
   padding: 0;
   justify-self: end;
+}
+
+.add-amount-btn {
+  justify-self: end;
+  background: var(--secondary);
+  color: var(--primary-2);
+  border: none;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .modal {
@@ -503,6 +521,8 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
   font-size: 1.25rem;
   font-weight: 900;
 }
+
+.log-start-btn { margin-bottom: 12px; }
 
 .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
 .modal-actions .btn { flex: 1; }
