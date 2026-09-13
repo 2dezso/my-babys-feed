@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fef6f0">
+<title>Baby Feed</title>
+<link rel="manifest" href="manifest.json?v=1">
+<link rel="stylesheet" href="style.css?v=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
+</head>
+<body>
+
+<div id="setup-screen" class="screen" hidden>
+  <div class="card">
+    <h1>🍼 Baby Feed</h1>
+    <p class="muted">Track feeds, synced between everyone looking after the baby.</p>
+
+    <div class="setup-choice">
+      <button id="btn-create-household" class="btn btn-primary">Start a new household</button>
+      <div class="or-divider">or</div>
+      <form id="join-form">
+        <label for="join-code">Enter the code someone shared with you</label>
+        <input id="join-code" type="text" inputmode="text" autocapitalize="characters" placeholder="e.g. ABCD12" maxlength="8">
+        <button type="submit" class="btn btn-secondary">Join household</button>
+      </form>
+    </div>
+    <p id="setup-error" class="error" hidden></p>
+  </div>
+</div>
+
+<div id="app-screen" class="screen" hidden>
+  <header>
+    <div class="header-left">
+      <span class="baby-emoji">🍼</span>
+      <span class="app-title">Baby Feed</span>
+    </div>
+    <button id="btn-share" class="icon-btn" title="Share household code">Share code</button>
+  </header>
+
+  <main>
+    <section class="last-feed-card">
+      <div class="last-feed-label">Last feed</div>
+      <div id="last-feed-time" class="last-feed-time">—</div>
+      <div id="last-feed-detail" class="last-feed-detail muted"></div>
+    </section>
+
+    <section class="quick-log">
+      <button class="log-btn" data-type="breast_left">
+        <span class="log-emoji">🤱</span>
+        <span>Left</span>
+      </button>
+      <button class="log-btn" data-type="breast_right">
+        <span class="log-emoji">🤱</span>
+        <span>Right</span>
+      </button>
+      <button class="log-btn" data-type="bottle">
+        <span class="log-emoji">🍼</span>
+        <span>Bottle</span>
+      </button>
+      <button class="log-btn" data-type="solid">
+        <span class="log-emoji">🥣</span>
+        <span>Solid</span>
+      </button>
+    </section>
+
+    <section class="history">
+      <h2>History</h2>
+      <ul id="history-list"></ul>
+      <p id="history-empty" class="muted" hidden>No feeds logged yet — tap a button above.</p>
+    </section>
+  </main>
+</div>
+
+<div id="bottle-modal" class="modal" hidden>
+  <div class="modal-card">
+    <h2>Bottle amount</h2>
+    <div class="amount-chips">
+      <button class="chip" data-ml="60">60ml</button>
+      <button class="chip" data-ml="90">90ml</button>
+      <button class="chip" data-ml="120">120ml</button>
+      <button class="chip" data-ml="150">150ml</button>
+      <button class="chip" data-ml="180">180ml</button>
+    </div>
+    <label for="custom-ml">Or enter amount (ml)</label>
+    <input id="custom-ml" type="number" inputmode="numeric" min="0" step="5" placeholder="e.g. 100">
+    <div class="modal-actions">
+      <button id="bottle-cancel" class="btn btn-secondary">Cancel</button>
+      <button id="bottle-confirm" class="btn btn-primary">Log feed</button>
+    </div>
+  </div>
+</div>
+
+<div id="share-modal" class="modal" hidden>
+  <div class="modal-card">
+    <h2>Household code</h2>
+    <p class="muted">Share this with anyone else feeding the baby — they enter it on the "Join household" screen.</p>
+    <div id="share-code" class="share-code"></div>
+    <div class="modal-actions">
+      <button id="share-close" class="btn btn-primary">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script type="module" src="app.js?v=1"></script>
+</body>
+</html>
