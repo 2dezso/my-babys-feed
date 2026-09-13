@@ -468,18 +468,21 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
 }
 .chip.selected { border-color: var(--primary); background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: var(--primary-ink); }
 
-#feed-time {
-  width: 100%;
-  padding: 14px;
+.datetime-row { display: flex; gap: 8px; }
+.datetime-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 8px;
   border-radius: 14px;
   border: 2px solid var(--border);
-  font-size: 1.4rem;
+  font-size: 1.1rem;
   font-weight: 800;
   font-family: inherit;
   background: var(--bg);
   color: var(--ink);
   text-align: center;
 }
+#feed-time { flex: 0.8; }
 
 .wheel-picker {
   position: relative;

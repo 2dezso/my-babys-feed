@@ -41,6 +41,7 @@ const toast = document.getElementById('toast');
 const btnLogFeed = document.getElementById('btn-log-feed');
 const logModal = document.getElementById('log-modal');
 const logModalTitle = document.getElementById('log-modal-title');
+const feedDateInput = document.getElementById('feed-date');
 const feedTimeInput = document.getElementById('feed-time');
 const amountChips = document.getElementById('amount-chips');
 const mlWheelTrack = document.getElementById('ml-wheel-track');
@@ -128,6 +129,11 @@ function profileDocRef(code) {
 
 function getHouseholdCode() {
   return localStorage.getItem(STORAGE_KEY);
+}
+
+function todayDateString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function computeAutoIntervalHours(ml) {
@@ -440,6 +446,8 @@ function openLogModal(feed) {
   selectedIntervalHours = computeAutoIntervalHours(DEFAULT_ML);
 
   const baseTime = feed ? new Date(feed.timestamp) : new Date();
+  feedDateInput.value = `${baseTime.getFullYear()}-${String(baseTime.getMonth() + 1).padStart(2, '0')}-${String(baseTime.getDate()).padStart(2, '0')}`;
+  feedDateInput.max = todayDateString();
   feedTimeInput.value = `${String(baseTime.getHours()).padStart(2, '0')}:${String(baseTime.getMinutes()).padStart(2, '0')}`;
 
   logModalTitle.textContent = feed ? 'Add amount' : 'Log a feed';
@@ -453,14 +461,14 @@ function openLogModal(feed) {
 }
 
 function readModalTimestamp() {
-  let timestamp = Date.now();
+  const now = new Date();
+  const [y, mo, d] = (feedDateInput.value || todayDateString()).split('-').map(Number);
+  let h = now.getHours();
+  let mi = now.getMinutes();
   if (feedTimeInput.value) {
-    const [h, m] = feedTimeInput.value.split(':').map(Number);
-    const d = new Date();
-    d.setHours(h, m, 0, 0);
-    timestamp = d.getTime();
+    [h, mi] = feedTimeInput.value.split(':').map(Number);
   }
-  return timestamp;
+  return new Date(y, mo - 1, d, h, mi, 0, 0).getTime();
 }
 
 btnLogFeed.addEventListener('click', () => openLogModal());
@@ -483,10 +491,7 @@ logConfirm.addEventListener('click', () => {
   }
 });
 
-{
-  const today = new Date();
-  profileDobInput.max = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-}
+profileDobInput.max = todayDateString();
 
 // --- Share / setup ---
 
@@ -533,6 +538,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=9').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=10').catch(() => {});
   });
 }
