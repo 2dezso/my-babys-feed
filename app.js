@@ -18,6 +18,9 @@ const WHEEL_ITEM_HEIGHT = 40;
 
 const setupScreen = document.getElementById('setup-screen');
 const appScreen = document.getElementById('app-screen');
+const homeScreen = document.getElementById('home-screen');
+const milestonesScreen = document.getElementById('milestones-screen');
+const trendsScreen = document.getElementById('trends-screen');
 const joinForm = document.getElementById('join-form');
 const joinCodeInput = document.getElementById('join-code');
 const setupError = document.getElementById('setup-error');
@@ -117,9 +120,39 @@ function computeAutoIntervalHours(ml) {
   return Math.min(6, Math.max(2, Math.round(raw)));
 }
 
+const SCREENS = {
+  feed: appScreen,
+  home: homeScreen,
+  milestones: milestonesScreen,
+  trends: trendsScreen,
+};
+
+function showScreen(name) {
+  Object.values(SCREENS).forEach(el => { el.hidden = true; });
+  (SCREENS[name] || SCREENS.feed).hidden = false;
+}
+
+function applyRouteFromHash() {
+  const name = (location.hash || '').slice(1);
+  showScreen(name in SCREENS ? name : 'feed');
+}
+
+function goTo(name) {
+  location.hash = name;
+}
+
+window.addEventListener('hashchange', applyRouteFromHash);
+
+document.querySelectorAll('[data-nav]').forEach(el => {
+  el.addEventListener('click', () => goTo(el.dataset.nav));
+});
+
 function enterApp(code) {
   setupScreen.hidden = true;
-  appScreen.hidden = false;
+  if (!(location.hash.slice(1) in SCREENS)) {
+    history.replaceState(null, '', '#feed');
+  }
+  applyRouteFromHash();
   listenToFeeds(code);
 }
 
@@ -384,6 +417,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=3').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=6').catch(() => {});
   });
 }

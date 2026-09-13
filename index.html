@@ -4,19 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#eafbe9">
-<title>Baby Feed</title>
-<link rel="manifest" href="manifest.json?v=5">
+<title>Charlie's First Year</title>
+<link rel="manifest" href="manifest.json?v=6">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card">
-    <h1>🍼 Baby Feed</h1>
+    <h1>🍼 Charlie's First Year</h1>
     <p class="muted">Track feeds, synced between everyone looking after the baby.</p>
 
     <div class="setup-choice">
@@ -36,9 +36,9 @@
   <header>
     <div class="header-left">
       <span class="baby-avatar">🍼</span>
-      <span class="app-title">Baby Feed</span>
+      <span class="app-title">Charlie's First Year</span>
     </div>
-    <button id="btn-share" class="icon-btn" title="Share household code">Share code</button>
+    <button id="btn-home" class="icon-btn icon-btn-round" data-nav="home" title="Home">🏠</button>
   </header>
 
   <main>
@@ -89,6 +89,51 @@
       </div>
       <p id="history-empty" class="muted" hidden>No feeds in this range.</p>
     </section>
+  </main>
+</div>
+
+<div id="home-screen" class="screen home-screen" hidden>
+  <main class="home-main">
+    <h1 class="home-title">Charlie's First Year</h1>
+
+    <nav class="home-grid">
+      <button class="home-tile" data-nav="feed">
+        <span class="home-circle home-circle-green">🍼</span>
+        <span class="home-tile-label">Baby Feed</span>
+      </button>
+      <button class="home-tile" data-nav="milestones">
+        <span class="home-circle home-circle-lavender">📅</span>
+        <span class="home-tile-label">Milestones</span>
+      </button>
+      <button class="home-tile" data-nav="trends">
+        <span class="home-circle home-circle-peach">📈</span>
+        <span class="home-tile-label">Trends &amp; Facts</span>
+      </button>
+    </nav>
+
+    <button id="btn-share" class="btn btn-secondary home-share-btn">Share household code</button>
+  </main>
+</div>
+
+<div id="milestones-screen" class="screen home-screen" hidden>
+  <header class="sub-header">
+    <button class="icon-btn icon-btn-round" data-nav="home" title="Home">🏠</button>
+  </header>
+  <main class="placeholder-main">
+    <span class="placeholder-icon home-circle-lavender">📅</span>
+    <h2>Milestones</h2>
+    <p class="muted">Coming soon — first smile, rolling over, first tooth and more.</p>
+  </main>
+</div>
+
+<div id="trends-screen" class="screen home-screen" hidden>
+  <header class="sub-header">
+    <button class="icon-btn icon-btn-round" data-nav="home" title="Home">🏠</button>
+  </header>
+  <main class="placeholder-main">
+    <span class="placeholder-icon home-circle-peach">📈</span>
+    <h2>Trends &amp; Facts</h2>
+    <p class="muted">Coming soon — feeding patterns and fun facts as Charlie grows.</p>
   </main>
 </div>
 
@@ -145,6 +190,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=5"></script>
+<script type="module" src="app.js?v=6"></script>
 </body>
 </html>

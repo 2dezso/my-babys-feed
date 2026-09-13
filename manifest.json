@@ -1,6 +1,6 @@
 {
-  "name": "Baby Feed",
-  "short_name": "Baby Feed",
+  "name": "Charlie's First Year",
+  "short_name": "Charlie's Year",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#eafbe9",
