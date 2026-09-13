@@ -159,14 +159,18 @@ function renderHistory() {
   const filtered = latestFeeds.filter(f => f.timestamp >= cutoff);
   historyList.innerHTML = '';
   historyEmpty.hidden = filtered.length !== 0;
-  for (const feed of filtered) {
-    const li = document.createElement('li');
+  for (let i = 0; i < filtered.length; i++) {
+    const feed = filtered[i];
+    const fullIndex = latestFeeds.indexOf(feed);
+    const older = latestFeeds[fullIndex + 1];
+    const gap = older ? `+${durationString(feed.timestamp - older.timestamp)}` : '—';
     const amount = feed.amountMl ? `${feed.amountMl}ml` : 'Bottle';
+
+    const li = document.createElement('li');
     li.innerHTML = `
-      <div class="history-main">
-        <span class="history-type">${amount}</span>
-        <span class="history-time">${formatClock(feed.timestamp)} · ${timeAgo(feed.timestamp)}</span>
-      </div>
+      <span class="history-time-val">${formatClock(feed.timestamp)}</span>
+      <span class="history-amount-val">${amount}</span>
+      <span class="history-gap-val">${gap}</span>
       <button class="history-delete" title="Delete">✕</button>
     `;
     li.querySelector('.history-delete').addEventListener('click', () => deleteFeed(feed.id));
