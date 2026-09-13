@@ -26,6 +26,7 @@ const btnCreateHousehold = document.getElementById('btn-create-household');
 const sinceLastFeedEl = document.getElementById('since-last-feed');
 const lastFeedDetailEl = document.getElementById('last-feed-detail');
 const nextFeedTimeEl = document.getElementById('next-feed-time');
+const todayTotalEl = document.getElementById('today-total-value');
 const historyList = document.getElementById('history-list');
 const historyEmpty = document.getElementById('history-empty');
 const historyRange = document.getElementById('history-range');
@@ -53,7 +54,18 @@ let latestFeeds = [];
 let currentRange = 'day';
 let wheelScrollTimer = null;
 
-const RANGE_MS = { day: 24 * 60 * 60 * 1000, '7d': 7 * 24 * 60 * 60 * 1000, '30d': 30 * 24 * 60 * 60 * 1000 };
+function startOfToday() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function rangeCutoff(range) {
+  const today = startOfToday();
+  if (range === '7d') return today - 6 * 24 * 60 * 60 * 1000;
+  if (range === '30d') return today - 29 * 24 * 60 * 60 * 1000;
+  return today;
+}
 
 function showToast(msg) {
   toast.textContent = msg;
@@ -117,6 +129,7 @@ function listenToFeeds(code) {
     latestFeeds = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     renderSinceLastFeed();
     renderNextFeed();
+    renderTodayTotal();
     renderHistory();
   }, (err) => {
     console.error(err);
@@ -154,8 +167,16 @@ function renderNextFeed() {
   }
 }
 
+function renderTodayTotal() {
+  const today = startOfToday();
+  const total = latestFeeds
+    .filter(f => f.timestamp >= today)
+    .reduce((sum, f) => sum + (f.amountMl || 0), 0);
+  todayTotalEl.textContent = `${total}ml`;
+}
+
 function renderHistory() {
-  const cutoff = Date.now() - RANGE_MS[currentRange];
+  const cutoff = rangeCutoff(currentRange);
   const filtered = latestFeeds.filter(f => f.timestamp >= cutoff);
   historyList.innerHTML = '';
   historyEmpty.hidden = filtered.length !== 0;
@@ -352,7 +373,7 @@ joinForm.addEventListener('submit', (e) => {
   enterApp(code);
 });
 
-setInterval(() => { renderSinceLastFeed(); renderNextFeed(); }, 15000);
+setInterval(() => { renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); }, 15000);
 
 const existingCode = getHouseholdCode();
 if (existingCode) {
