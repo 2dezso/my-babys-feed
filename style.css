@@ -181,7 +181,6 @@ body {
 }
 .profile-main .placeholder-icon { align-self: center; margin-bottom: 4px; }
 .profile-main h2 { text-align: center; }
-.weight-log-heading { margin-top: 30px; }
 
 .field-label {
   display: block;
@@ -200,37 +199,6 @@ body {
   background: var(--bg);
   color: var(--ink);
 }
-
-.weight-table-head, #weight-list li {
-  display: grid;
-  grid-template-columns: 1fr 1fr 30px;
-  align-items: center;
-  gap: 4px;
-}
-.weight-table-head {
-  padding: 12px 14px 8px;
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.weight-table-head span:nth-child(2) { text-align: right; }
-
-#weight-list { list-style: none; margin: 0; padding: 0 0 4px; }
-#weight-list li { padding: 10px 14px; border-top: 1px solid var(--border); }
-#weight-list li:first-child { border-top: none; }
-.weight-date-val { font-weight: 800; }
-.weight-value-val { text-align: right; font-weight: 700; }
-
-.add-weight-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 14px;
-}
-.add-weight-row .field-input { flex: 1; }
-.weight-add-btn { width: auto; padding: 13px 20px; flex-shrink: 0; }
 
 .card {
   background: var(--card);

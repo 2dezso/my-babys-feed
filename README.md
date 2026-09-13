@@ -26,9 +26,9 @@ service cloud.firestore {
 }
 ```
 
-This means: anyone who knows the exact household code can read/write everything under that household (feeds, profile, weights), and nothing else. There's no password beyond the code itself — don't share it outside the people feeding the baby. This is deliberately simple (no accounts/login), matching how the app is meant to be used.
+This means: anyone who knows the exact household code can read/write everything under that household (feeds, profile), and nothing else. There's no password beyond the code itself — don't share it outside the people feeding the baby. This is deliberately simple (no accounts/login), matching how the app is meant to be used.
 
-> **If you set this up before the Profile feature was added**, your rules only cover `households/{code}/feeds/{feedId}` — go back to the Rules tab and replace them with the wildcard version above, then Publish, or saving a profile / weight entry will fail.
+> **If you set this up before the Profile feature was added**, your rules only cover `households/{code}/feeds/{feedId}` — go back to the Rules tab and replace them with the wildcard version above, then Publish, or saving a profile will fail.
 
 ### 3. Deploy to GitHub Pages
 Already wired up for `github.com/2dezso/my-babys-feed` — see [Deploy](#deploy) below.
@@ -54,10 +54,6 @@ The home screen also shows time-since-last-feed live, and the total ml fed since
 Firestore: `households/{code}/profile/info` → `{ name, dob }`
 - `name`: baby's name, also shown as the Profile tile's label on the home screen
 - `dob`: date of birth as a `YYYY-MM-DD` string (not currently used elsewhere yet — reserved for future age-aware features)
-
-Firestore: `households/{code}/weights/{weightId}` → `{ weightKg, timestamp, isBirth? }`
-- Freeform log — add an entry for any date, no fixed schedule enforced
-- `isBirth`: set on the entry auto-created from the profile screen's "Birth weight" field (only created once, at the DOB timestamp)
 
 ## Costs
 Firebase Spark (free) plan covers this comfortably — Firestore free tier is 50K reads / 20K writes per day, far beyond what a feeding tracker for one baby will use. GitHub Pages hosting is free.
