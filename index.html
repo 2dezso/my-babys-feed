@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#eafbe9">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=11">
+<link rel="manifest" href="manifest.json?v=12">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -38,7 +38,10 @@
       <span class="baby-avatar">🍼</span>
       <span class="app-title">Charlie's First Year</span>
     </div>
-    <button id="btn-home" class="icon-btn icon-btn-round" data-nav="home" title="Home">🏠</button>
+    <div class="header-right">
+      <button class="icon-btn icon-btn-round" data-nav="poo" title="Nappy">💩</button>
+      <button id="btn-home" class="icon-btn icon-btn-round" data-nav="home" title="Home">🏠</button>
+    </div>
   </header>
 
   <main>
@@ -162,6 +165,73 @@
   </main>
 </div>
 
+<div id="poo-screen" class="screen poo-screen" hidden>
+  <header>
+    <div class="header-left">
+      <span class="baby-avatar">💩</span>
+      <span class="app-title">Nappy</span>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn icon-btn-round" data-nav="feed" title="Baby Feed">🍼</button>
+      <button class="icon-btn icon-btn-round" data-nav="home" title="Home">🏠</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero-card">
+      <div class="hero-label">Since last poo</div>
+      <div id="since-last-poo" class="hero-time">—</div>
+      <div id="last-poo-detail" class="hero-detail"></div>
+    </section>
+
+    <button id="btn-log-poo" class="log-feed-btn poo-log-btn">
+      <span class="log-emoji">💩</span>
+      <span>Log poo</span>
+    </button>
+    <button id="btn-log-poo-custom" class="text-link-btn">Log for a different time</button>
+
+    <section class="history">
+      <div class="history-header">
+        <h2>Past</h2>
+        <div class="segmented" id="poo-history-range">
+          <button class="segment active" data-range="day">Day</button>
+          <button class="segment" data-range="7d">7d</button>
+          <button class="segment" data-range="30d">30d</button>
+        </div>
+      </div>
+      <div class="history-table-wrap">
+        <div class="poo-table-head">
+          <span>Time</span>
+          <span>Gap</span>
+          <span></span>
+        </div>
+        <ul id="poo-history-list"></ul>
+      </div>
+      <p id="poo-history-empty" class="muted" hidden>No poos logged in this range.</p>
+    </section>
+  </main>
+</div>
+
+<div id="poo-time-modal" class="modal" hidden>
+  <div class="modal-card">
+    <h2>Log poo</h2>
+    <div class="modal-section">
+      <div class="section-label">When</div>
+      <div class="datetime-row">
+        <div class="date-field">
+          <input id="poo-date" type="date">
+          <span id="poo-date-label" class="date-field-label">Today</span>
+        </div>
+        <input id="poo-time" type="time">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button id="poo-time-cancel" class="btn btn-secondary">Cancel</button>
+      <button id="poo-time-confirm" class="btn btn-primary">Log poo</button>
+    </div>
+  </div>
+</div>
+
 <div id="log-modal" class="modal" hidden>
   <div class="modal-card">
     <h2 id="log-modal-title">Log a feed</h2>
@@ -223,6 +293,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=11"></script>
+<script type="module" src="app.js?v=12"></script>
 </body>
 </html>

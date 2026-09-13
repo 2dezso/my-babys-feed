@@ -22,6 +22,7 @@ const homeScreen = document.getElementById('home-screen');
 const milestonesScreen = document.getElementById('milestones-screen');
 const trendsScreen = document.getElementById('trends-screen');
 const profileScreen = document.getElementById('profile-screen');
+const pooScreen = document.getElementById('poo-screen');
 const joinForm = document.getElementById('join-form');
 const joinCodeInput = document.getElementById('join-code');
 const setupError = document.getElementById('setup-error');
@@ -62,11 +63,27 @@ const profileNameInput = document.getElementById('profile-name');
 const profileDobInput = document.getElementById('profile-dob');
 const profileSaveBtn = document.getElementById('profile-save');
 
+const sinceLastPooEl = document.getElementById('since-last-poo');
+const lastPooDetailEl = document.getElementById('last-poo-detail');
+const btnLogPoo = document.getElementById('btn-log-poo');
+const btnLogPooCustom = document.getElementById('btn-log-poo-custom');
+const pooHistoryList = document.getElementById('poo-history-list');
+const pooHistoryEmpty = document.getElementById('poo-history-empty');
+const pooHistoryRange = document.getElementById('poo-history-range');
+const pooTimeModal = document.getElementById('poo-time-modal');
+const pooDateInput = document.getElementById('poo-date');
+const pooDateLabel = document.getElementById('poo-date-label');
+const pooTimeInput = document.getElementById('poo-time');
+const pooTimeCancel = document.getElementById('poo-time-cancel');
+const pooTimeConfirm = document.getElementById('poo-time-confirm');
+
 let selectedMl = DEFAULT_ML;
 let selectedIntervalHours = 3;
 let intervalOverridden = false;
 let latestFeeds = [];
+let latestPoos = [];
 let currentRange = 'day';
+let currentPooRange = 'day';
 let wheelScrollTimer = null;
 let editingFeedId = null;
 
@@ -128,6 +145,10 @@ function profileDocRef(code) {
   return doc(db, 'households', code, 'profile', 'info');
 }
 
+function poosCollection(code) {
+  return collection(db, 'households', code, 'poos');
+}
+
 function getHouseholdCode() {
   return localStorage.getItem(STORAGE_KEY);
 }
@@ -148,6 +169,7 @@ const SCREENS = {
   milestones: milestonesScreen,
   trends: trendsScreen,
   profile: profileScreen,
+  poo: pooScreen,
 };
 
 function showScreen(name) {
@@ -178,6 +200,7 @@ function enterApp(code) {
   applyRouteFromHash();
   listenToFeeds(code);
   listenToProfile(code);
+  listenToPoos(code);
 }
 
 function listenToFeeds(code) {
@@ -204,6 +227,102 @@ function listenToProfile(code) {
     console.error(err);
   });
 }
+
+function listenToPoos(code) {
+  const q = query(poosCollection(code), orderBy('timestamp', 'desc'), limit(500));
+  onSnapshot(q, (snapshot) => {
+    latestPoos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderSinceLastPoo();
+    renderPooHistory();
+  }, (err) => {
+    console.error(err);
+    showToast('Sync error — check connection');
+  });
+}
+
+function renderSinceLastPoo() {
+  if (latestPoos.length === 0) {
+    sinceLastPooEl.textContent = '—';
+    lastPooDetailEl.textContent = 'No poos yet';
+    return;
+  }
+  const last = latestPoos[0];
+  sinceLastPooEl.textContent = durationString(Date.now() - last.timestamp);
+  lastPooDetailEl.textContent = `Last at ${formatClock(last.timestamp)} · ${timeAgo(last.timestamp)}`;
+}
+
+function renderPooHistory() {
+  const cutoff = rangeCutoff(currentPooRange);
+  const filtered = latestPoos.filter(p => p.timestamp >= cutoff);
+  pooHistoryList.innerHTML = '';
+  pooHistoryEmpty.hidden = filtered.length !== 0;
+  for (let i = 0; i < filtered.length; i++) {
+    const poo = filtered[i];
+    const fullIndex = latestPoos.indexOf(poo);
+    const older = latestPoos[fullIndex + 1];
+    const gap = older ? durationString(poo.timestamp - older.timestamp) : '—';
+
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span class="history-time-val">${formatClock(poo.timestamp)}</span>
+      <span class="history-gap-val">${gap}</span>
+      <button class="history-delete" title="Delete">✕</button>
+    `;
+    li.querySelector('.history-delete').addEventListener('click', () => deletePoo(poo.id));
+    pooHistoryList.appendChild(li);
+  }
+}
+
+pooHistoryRange.querySelectorAll('.segment').forEach(seg => {
+  seg.addEventListener('click', () => {
+    currentPooRange = seg.dataset.range;
+    pooHistoryRange.querySelectorAll('.segment').forEach(s => s.classList.remove('active'));
+    seg.classList.add('active');
+    renderPooHistory();
+  });
+});
+
+async function logPoo(timestamp) {
+  const code = getHouseholdCode();
+  if (!code) return;
+  try {
+    await addDoc(poosCollection(code), { timestamp });
+    showToast('Poo logged');
+  } catch (e) {
+    console.error(e);
+    showToast('Could not log poo — check connection');
+  }
+}
+
+async function deletePoo(id) {
+  const code = getHouseholdCode();
+  if (!code) return;
+  try {
+    await deleteDoc(doc(db, 'households', code, 'poos', id));
+  } catch (e) {
+    console.error(e);
+    showToast('Could not delete');
+  }
+}
+
+btnLogPoo.addEventListener('click', () => logPoo(Date.now()));
+
+btnLogPooCustom.addEventListener('click', () => {
+  const now = new Date();
+  pooDateInput.value = todayDateString();
+  pooDateInput.max = todayDateString();
+  updateDateLabel(pooDateInput, pooDateLabel);
+  pooTimeInput.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  pooTimeModal.hidden = false;
+});
+
+pooTimeCancel.addEventListener('click', () => { pooTimeModal.hidden = true; });
+
+pooTimeConfirm.addEventListener('click', () => {
+  const timestamp = combineDateTimeToTimestamp(pooDateInput.value, pooTimeInput.value);
+  pooTimeModal.hidden = true;
+  logPoo(timestamp);
+});
 
 function renderSinceLastFeed() {
   if (latestFeeds.length === 0) {
@@ -449,7 +568,7 @@ function openLogModal(feed) {
   const baseTime = feed ? new Date(feed.timestamp) : new Date();
   feedDateInput.value = `${baseTime.getFullYear()}-${String(baseTime.getMonth() + 1).padStart(2, '0')}-${String(baseTime.getDate()).padStart(2, '0')}`;
   feedDateInput.max = todayDateString();
-  updateFeedDateLabel();
+  updateDateLabel(feedDateInput, feedDateLabel);
   feedTimeInput.value = `${String(baseTime.getHours()).padStart(2, '0')}:${String(baseTime.getMinutes()).padStart(2, '0')}`;
 
   logModalTitle.textContent = feed ? 'Add amount' : 'Log a feed';
@@ -462,27 +581,31 @@ function openLogModal(feed) {
   updateWheelActiveItem();
 }
 
-function updateFeedDateLabel() {
-  const val = feedDateInput.value;
+function updateDateLabel(input, label) {
+  const val = input.value;
   if (!val || val === todayDateString()) {
-    feedDateLabel.textContent = 'Today';
+    label.textContent = 'Today';
     return;
   }
   const [y, m, d] = val.split('-').map(Number);
-  feedDateLabel.textContent = new Date(y, m - 1, d).toLocaleDateString([], { day: 'numeric', month: 'short' });
+  label.textContent = new Date(y, m - 1, d).toLocaleDateString([], { day: 'numeric', month: 'short' });
 }
 
-feedDateInput.addEventListener('change', updateFeedDateLabel);
+feedDateInput.addEventListener('change', () => updateDateLabel(feedDateInput, feedDateLabel));
 
-function readModalTimestamp() {
+function combineDateTimeToTimestamp(dateStr, timeStr) {
   const now = new Date();
-  const [y, mo, d] = (feedDateInput.value || todayDateString()).split('-').map(Number);
+  const [y, mo, d] = (dateStr || todayDateString()).split('-').map(Number);
   let h = now.getHours();
   let mi = now.getMinutes();
-  if (feedTimeInput.value) {
-    [h, mi] = feedTimeInput.value.split(':').map(Number);
+  if (timeStr) {
+    [h, mi] = timeStr.split(':').map(Number);
   }
   return new Date(y, mo - 1, d, h, mi, 0, 0).getTime();
+}
+
+function readModalTimestamp() {
+  return combineDateTimeToTimestamp(feedDateInput.value, feedTimeInput.value);
 }
 
 btnLogFeed.addEventListener('click', () => openLogModal());
@@ -541,7 +664,7 @@ joinForm.addEventListener('submit', (e) => {
   enterApp(code);
 });
 
-setInterval(() => { renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); }, 15000);
+setInterval(() => { renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); }, 15000);
 
 const existingCode = getHouseholdCode();
 if (existingCode) {
@@ -552,6 +675,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=11').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=12').catch(() => {});
   });
 }

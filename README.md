@@ -57,5 +57,10 @@ Firestore: `households/{code}/profile/info` → `{ name, dob }`
 - `name`: baby's name, also shown as the Profile tile's label on the home screen
 - `dob`: date of birth as a `YYYY-MM-DD` string (not currently used elsewhere yet — reserved for future age-aware features)
 
+Firestore: `households/{code}/poos/{pooId}` → `{ timestamp }`
+- Nappy/poo log, reached via the 💩 icon next to the home button on the Baby Feed screen (its own light-brown themed page, separate from the home hub)
+- "Log poo" logs the current time instantly with no modal; "Log for a different time" opens a small date/time picker for backfilling
+- Same "since last" hero stat and Day/7d/30d history pattern as feeds, just without an amount column. Already covered by the wildcard Firestore rule above — no rules change needed for this one.
+
 ## Costs
 Firebase Spark (free) plan covers this comfortably — Firestore free tier is 50K reads / 20K writes per day, far beyond what a feeding tracker for one baby will use. GitHub Pages hosting is free.
