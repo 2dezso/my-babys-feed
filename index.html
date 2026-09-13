@@ -3,10 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#eaf7ea">
+<meta name="theme-color" content="#eafbe9">
 <title>Baby Feed</title>
-<link rel="manifest" href="manifest.json?v=2">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="manifest" href="manifest.json?v=3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=3">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -32,22 +35,25 @@
 <div id="app-screen" class="screen" hidden>
   <header>
     <div class="header-left">
-      <span class="baby-emoji">🍼</span>
+      <span class="baby-avatar">🍼</span>
       <span class="app-title">Baby Feed</span>
     </div>
     <button id="btn-share" class="icon-btn" title="Share household code">Share code</button>
   </header>
 
   <main>
-    <section class="last-feed-card">
-      <div class="last-feed-label">Last feed</div>
-      <div id="last-feed-time" class="last-feed-time">—</div>
-      <div id="last-feed-detail" class="last-feed-detail muted"></div>
+    <section class="hero-card">
+      <div class="hero-label">Since last feed</div>
+      <div id="since-last-feed" class="hero-time">—</div>
+      <div id="last-feed-detail" class="hero-detail"></div>
     </section>
 
-    <section class="next-feed-card">
-      <div class="next-feed-label">Next feed expected</div>
-      <div id="next-feed-time" class="next-feed-time">—</div>
+    <section class="next-feed-pill">
+      <span class="next-feed-icon">⏰</span>
+      <div class="next-feed-text">
+        <span class="next-feed-label">Next feed expected</span>
+        <span id="next-feed-time" class="next-feed-value">—</span>
+      </div>
     </section>
 
     <button id="btn-log-feed" class="log-feed-btn">
@@ -56,9 +62,16 @@
     </button>
 
     <section class="history">
-      <h2>History</h2>
+      <div class="history-header">
+        <h2>Past feeds</h2>
+        <div class="segmented" id="history-range">
+          <button class="segment active" data-range="day">Day</button>
+          <button class="segment" data-range="7d">7d</button>
+          <button class="segment" data-range="30d">30d</button>
+        </div>
+      </div>
       <ul id="history-list"></ul>
-      <p id="history-empty" class="muted" hidden>No feeds logged yet — tap a button above.</p>
+      <p id="history-empty" class="muted" hidden>No feeds in this range.</p>
     </section>
   </main>
 </div>
@@ -68,16 +81,8 @@
     <h2>Log a feed</h2>
 
     <div class="modal-section">
-      <div class="section-label">When</div>
-      <div class="amount-chips" id="when-chips">
-        <button class="chip" data-mins-ago="0">Now</button>
-        <button class="chip" data-mins-ago="5">5m ago</button>
-        <button class="chip" data-mins-ago="15">15m ago</button>
-        <button class="chip" data-mins-ago="30">30m ago</button>
-        <button class="chip" data-mins-ago="60">1h ago</button>
-      </div>
-      <label for="custom-time">Or set exact time</label>
-      <input id="custom-time" type="time">
+      <div class="section-label">Time</div>
+      <input id="feed-time" type="time">
     </div>
 
     <div class="modal-section">
@@ -86,20 +91,21 @@
         <button class="chip" data-ml="60">60ml</button>
         <button class="chip" data-ml="90">90ml</button>
         <button class="chip" data-ml="120">120ml</button>
-        <button class="chip" data-ml="150">150ml</button>
-        <button class="chip" data-ml="180">180ml</button>
       </div>
-      <label for="custom-ml">Or enter amount (ml)</label>
-      <input id="custom-ml" type="number" inputmode="numeric" min="0" step="5" placeholder="e.g. 100">
+      <div class="wheel-picker" id="ml-wheel">
+        <div class="wheel-highlight"></div>
+        <div class="wheel-track" id="ml-wheel-track"></div>
+      </div>
     </div>
 
     <div class="modal-section">
-      <div class="section-label">Next feed in</div>
+      <div class="section-label">Next feed in <span id="interval-auto-tag" class="auto-tag">auto</span></div>
       <div class="amount-chips" id="interval-chips">
         <button class="chip" data-hours="2">2h</button>
         <button class="chip" data-hours="3">3h</button>
         <button class="chip" data-hours="4">4h</button>
         <button class="chip" data-hours="5">5h</button>
+        <button class="chip" data-hours="6">6h</button>
       </div>
     </div>
 
@@ -123,6 +129,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=2"></script>
+<script type="module" src="app.js?v=3"></script>
 </body>
 </html>
