@@ -82,8 +82,8 @@ let selectedIntervalHours = 3;
 let intervalOverridden = false;
 let latestFeeds = [];
 let latestPoos = [];
-let currentRange = 'day';
-let currentPooRange = 'day';
+let currentRange = 'today';
+let currentPooRange = 'today';
 let wheelScrollTimer = null;
 let editingFeedId = null;
 
@@ -94,10 +94,9 @@ function startOfToday() {
 }
 
 function rangeCutoff(range) {
-  const today = startOfToday();
-  if (range === '7d') return today - 6 * 24 * 60 * 60 * 1000;
-  if (range === '30d') return today - 29 * 24 * 60 * 60 * 1000;
-  return today;
+  if (range === '7d') return Date.now() - 7 * 24 * 60 * 60 * 1000;
+  if (range === '1d') return Date.now() - 24 * 60 * 60 * 1000;
+  return startOfToday();
 }
 
 function showToast(msg) {
@@ -377,30 +376,60 @@ function renderTodayTotal() {
   todayTotalEl.textContent = `${total}ml`;
 }
 
+function dayKeyForTimestamp(ts) {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function dayLabelForKey(dayStartMs) {
+  const diffDays = Math.round((startOfToday() - dayStartMs) / 86400000);
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  return new Date(dayStartMs).toLocaleDateString([], { day: 'numeric', month: 'short' });
+}
+
 function renderHistory() {
   const cutoff = rangeCutoff(currentRange);
   const filtered = latestFeeds.filter(f => f.timestamp >= cutoff);
   historyList.innerHTML = '';
   historyEmpty.hidden = filtered.length !== 0;
-  for (let i = 0; i < filtered.length; i++) {
-    const feed = filtered[i];
-    const fullIndex = latestFeeds.indexOf(feed);
-    const older = latestFeeds[fullIndex + 1];
-    const gap = older ? durationString(feed.timestamp - older.timestamp) : '—';
-    const amountHtml = feed.amountMl != null
-      ? `<span class="history-amount-val">${feed.amountMl}ml</span>`
-      : `<button class="add-amount-btn">Add amount</button>`;
 
-    const li = document.createElement('li');
-    li.innerHTML = `
-      <span class="history-time-val">${formatClock(feed.timestamp)}</span>
-      ${amountHtml}
-      <span class="history-gap-val">${gap}</span>
-      <button class="history-delete" title="Delete">✕</button>
-    `;
-    li.querySelector('.history-delete').addEventListener('click', () => deleteFeed(feed.id));
-    li.querySelector('.add-amount-btn')?.addEventListener('click', () => openLogModal(feed));
-    historyList.appendChild(li);
+  const groups = new Map();
+  for (const feed of filtered) {
+    const key = dayKeyForTimestamp(feed.timestamp);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(feed);
+  }
+
+  for (const key of Array.from(groups.keys()).sort((a, b) => b - a)) {
+    const dayFeeds = groups.get(key);
+    const dayTotal = dayFeeds.reduce((sum, f) => sum + (f.amountMl || 0), 0);
+
+    const headerLi = document.createElement('li');
+    headerLi.className = 'day-group-header';
+    headerLi.innerHTML = `<span class="day-group-label">${dayLabelForKey(key)}</span><span class="day-group-total">${dayTotal}ml</span>`;
+    historyList.appendChild(headerLi);
+
+    for (const feed of dayFeeds) {
+      const fullIndex = latestFeeds.indexOf(feed);
+      const older = latestFeeds[fullIndex + 1];
+      const gap = older ? durationString(feed.timestamp - older.timestamp) : '—';
+      const amountHtml = feed.amountMl != null
+        ? `<span class="history-amount-val">${feed.amountMl}ml</span>`
+        : `<button class="add-amount-btn">Add amount</button>`;
+
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span class="history-time-val">${formatClock(feed.timestamp)}</span>
+        ${amountHtml}
+        <span class="history-gap-val">${gap}</span>
+        <button class="history-delete" title="Delete">✕</button>
+      `;
+      li.querySelector('.history-delete').addEventListener('click', () => deleteFeed(feed.id));
+      li.querySelector('.add-amount-btn')?.addEventListener('click', () => openLogModal(feed));
+      historyList.appendChild(li);
+    }
   }
 }
 
@@ -675,6 +704,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=12').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=13').catch(() => {});
   });
 }

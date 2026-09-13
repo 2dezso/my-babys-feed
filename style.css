@@ -438,6 +438,16 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
 }
 #history-list li:first-child { border-top: none; }
 
+#history-list li.day-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  background: var(--secondary);
+  padding: 8px 16px;
+}
+.day-group-label { color: var(--muted); font-weight: 800; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.day-group-total { color: var(--ink); font-weight: 800; font-size: 0.85rem; }
+
 .poo-table-head, #poo-history-list li {
   display: grid;
   grid-template-columns: 1.3fr 1fr 28px;

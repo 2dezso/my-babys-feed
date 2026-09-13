@@ -51,7 +51,7 @@ Firestore: `households/{code}/feeds/{feedId}` → `{ type, timestamp, amountMl?,
 
 A pending feed (no `amountMl`) turns the home screen's hero card into a "Feeding now" state (tap it to add the amount) and shows "Add amount" in its Past Feeds row instead of a value.
 
-The home screen also shows time-since-last-feed live, and the total ml fed since midnight. "Past feeds" filters to calendar-day ranges (today, or the last 7/30 calendar days, each starting at 00:00) rather than a rolling 24h window (the sync query pulls up to the most recent 500 feeds to keep the 30-day view populated).
+The home screen also shows time-since-last-feed live, and the total ml fed since midnight. "Past feeds" has three tabs: **Today** (calendar day, midnight to now), **1D** (rolling 24 hours), **7D** (rolling 7 days) — the sync query pulls up to the most recent 500 feeds to keep the 7-day view populated. Entries are grouped by calendar day with a header showing that day's total ml, so multi-day ranges (7D) show a running breakdown per day, not just one combined list.
 
 Firestore: `households/{code}/profile/info` → `{ name, dob }`
 - `name`: baby's name, also shown as the Profile tile's label on the home screen
@@ -60,7 +60,7 @@ Firestore: `households/{code}/profile/info` → `{ name, dob }`
 Firestore: `households/{code}/poos/{pooId}` → `{ timestamp }`
 - Nappy/poo log, reached via the 💩 icon next to the home button on the Baby Feed screen (its own light-brown themed page, separate from the home hub)
 - "Log poo" logs the current time instantly with no modal; "Log for a different time" opens a small date/time picker for backfilling
-- Same "since last" hero stat and Day/7d/30d history pattern as feeds, just without an amount column. Already covered by the wildcard Firestore rule above — no rules change needed for this one.
+- Same "since last" hero stat and Today/1D/7D history pattern as feeds, just without an amount column or day-total headers. Already covered by the wildcard Firestore rule above — no rules change needed for this one.
 
 ## Costs
 Firebase Spark (free) plan covers this comfortably — Firestore free tier is 50K reads / 20K writes per day, far beyond what a feeding tracker for one baby will use. GitHub Pages hosting is free.
