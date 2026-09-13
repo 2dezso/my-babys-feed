@@ -10,13 +10,8 @@ const db = getFirestore(app);
 try { enableIndexedDbPersistence(db); } catch (e) { /* multiple tabs open, fine */ }
 
 const STORAGE_KEY = 'babyfeed_household_code';
-
-const TYPE_LABELS = {
-  breast_left: 'Left breast',
-  breast_right: 'Right breast',
-  bottle: 'Bottle',
-  solid: 'Solid food',
-};
+const INTERVAL_KEY = 'babyfeed_default_interval_hours';
+const DEFAULT_INTERVAL_HOURS = 3;
 
 const setupScreen = document.getElementById('setup-screen');
 const appScreen = document.getElementById('app-screen');
@@ -27,21 +22,29 @@ const btnCreateHousehold = document.getElementById('btn-create-household');
 
 const lastFeedTimeEl = document.getElementById('last-feed-time');
 const lastFeedDetailEl = document.getElementById('last-feed-detail');
+const nextFeedTimeEl = document.getElementById('next-feed-time');
 const historyList = document.getElementById('history-list');
 const historyEmpty = document.getElementById('history-empty');
 const toast = document.getElementById('toast');
 
-const bottleModal = document.getElementById('bottle-modal');
+const btnLogFeed = document.getElementById('btn-log-feed');
+const logModal = document.getElementById('log-modal');
+const whenChips = document.getElementById('when-chips');
+const customTimeInput = document.getElementById('custom-time');
+const amountChips = document.getElementById('amount-chips');
 const customMlInput = document.getElementById('custom-ml');
-const bottleCancel = document.getElementById('bottle-cancel');
-const bottleConfirm = document.getElementById('bottle-confirm');
+const intervalChips = document.getElementById('interval-chips');
+const logCancel = document.getElementById('log-cancel');
+const logConfirm = document.getElementById('log-confirm');
 
 const shareModal = document.getElementById('share-modal');
 const btnShare = document.getElementById('btn-share');
 const shareCodeEl = document.getElementById('share-code');
 const shareClose = document.getElementById('share-close');
 
+let selectedMinsAgo = 0;
 let selectedMl = null;
+let selectedIntervalHours = DEFAULT_INTERVAL_HOURS;
 let latestFeeds = [];
 
 function showToast(msg) {
@@ -81,6 +84,11 @@ function getHouseholdCode() {
   return localStorage.getItem(STORAGE_KEY);
 }
 
+function getDefaultIntervalHours() {
+  const stored = Number(localStorage.getItem(INTERVAL_KEY));
+  return stored > 0 ? stored : DEFAULT_INTERVAL_HOURS;
+}
+
 function enterApp(code) {
   setupScreen.hidden = true;
   appScreen.hidden = false;
@@ -92,6 +100,7 @@ function listenToFeeds(code) {
   onSnapshot(q, (snapshot) => {
     latestFeeds = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     renderLastFeed();
+    renderNextFeed();
     renderHistory();
   }, (err) => {
     console.error(err);
@@ -107,11 +116,30 @@ function renderLastFeed() {
   }
   const last = latestFeeds[0];
   lastFeedTimeEl.textContent = timeAgo(last.timestamp);
-  const label = TYPE_LABELS[last.type] || last.type;
-  const detail = last.type === 'bottle' && last.amountMl
-    ? `${label} · ${last.amountMl}ml · ${formatClock(last.timestamp)}`
-    : `${label} · ${formatClock(last.timestamp)}`;
-  lastFeedDetailEl.textContent = detail;
+  const amount = last.amountMl ? `${last.amountMl}ml · ` : '';
+  lastFeedDetailEl.textContent = `${amount}${formatClock(last.timestamp)}`;
+}
+
+function renderNextFeed() {
+  if (latestFeeds.length === 0) {
+    nextFeedTimeEl.textContent = '—';
+    return;
+  }
+  const last = latestFeeds[0];
+  const intervalHours = last.intervalHours || DEFAULT_INTERVAL_HOURS;
+  const nextTs = last.timestamp + intervalHours * 60 * 60 * 1000;
+  const diffMs = nextTs - Date.now();
+  const clock = formatClock(nextTs);
+  if (diffMs <= 0) {
+    const overdueMins = Math.floor(-diffMs / 60000);
+    nextFeedTimeEl.textContent = overdueMins < 1 ? `${clock} · due now` : `${clock} · overdue ${overdueMins}m`;
+  } else {
+    const mins = Math.round(diffMs / 60000);
+    const hours = Math.floor(mins / 60);
+    const remMins = mins % 60;
+    const inText = hours > 0 ? `in ${hours}h ${remMins}m` : `in ${remMins}m`;
+    nextFeedTimeEl.textContent = `${clock} · ${inText}`;
+  }
 }
 
 function renderHistory() {
@@ -119,11 +147,10 @@ function renderHistory() {
   historyEmpty.hidden = latestFeeds.length !== 0;
   for (const feed of latestFeeds) {
     const li = document.createElement('li');
-    const label = TYPE_LABELS[feed.type] || feed.type;
-    const amount = feed.type === 'bottle' && feed.amountMl ? ` · ${feed.amountMl}ml` : '';
+    const amount = feed.amountMl ? `${feed.amountMl}ml` : 'Bottle';
     li.innerHTML = `
       <div class="history-main">
-        <span class="history-type">${label}${amount}</span>
+        <span class="history-type">${amount}</span>
         <span class="history-time">${formatClock(feed.timestamp)} · ${timeAgo(feed.timestamp)}</span>
       </div>
       <button class="history-delete" title="Delete">✕</button>
@@ -133,14 +160,15 @@ function renderHistory() {
   }
 }
 
-async function logFeed(type, extra = {}) {
+async function logFeed(timestamp, amountMl, intervalHours) {
   const code = getHouseholdCode();
   if (!code) return;
   try {
     await addDoc(feedsCollection(code), {
-      type,
-      timestamp: Date.now(),
-      ...extra,
+      type: 'bottle',
+      timestamp,
+      intervalHours,
+      ...(amountMl ? { amountMl } : {}),
     });
     showToast('Feed logged');
   } catch (e) {
@@ -160,23 +188,44 @@ async function deleteFeed(id) {
   }
 }
 
-document.querySelectorAll('.log-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const type = btn.dataset.type;
-    if (type === 'bottle') {
-      selectedMl = null;
-      customMlInput.value = '';
-      document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
-      bottleModal.hidden = false;
-    } else {
-      logFeed(type);
-    }
+function selectChip(container, selector, value) {
+  container.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  const target = container.querySelector(selector(value));
+  if (target) target.classList.add('selected');
+}
+
+function openLogModal() {
+  selectedMinsAgo = 0;
+  selectedMl = null;
+  selectedIntervalHours = getDefaultIntervalHours();
+
+  customTimeInput.value = '';
+  customMlInput.value = '';
+
+  selectChip(whenChips, (v) => `[data-mins-ago="${v}"]`, 0);
+  amountChips.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  selectChip(intervalChips, (v) => `[data-hours="${v}"]`, selectedIntervalHours);
+
+  logModal.hidden = false;
+}
+
+btnLogFeed.addEventListener('click', openLogModal);
+
+whenChips.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    selectedMinsAgo = Number(chip.dataset.minsAgo);
+    customTimeInput.value = '';
+    selectChip(whenChips, (v) => `[data-mins-ago="${v}"]`, selectedMinsAgo);
   });
 });
 
-document.querySelectorAll('.chip').forEach(chip => {
+customTimeInput.addEventListener('input', () => {
+  whenChips.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+});
+
+amountChips.querySelectorAll('.chip').forEach(chip => {
   chip.addEventListener('click', () => {
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    amountChips.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
     chip.classList.add('selected');
     selectedMl = Number(chip.dataset.ml);
     customMlInput.value = '';
@@ -184,15 +233,33 @@ document.querySelectorAll('.chip').forEach(chip => {
 });
 
 customMlInput.addEventListener('input', () => {
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  amountChips.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
   selectedMl = customMlInput.value ? Number(customMlInput.value) : null;
 });
 
-bottleCancel.addEventListener('click', () => { bottleModal.hidden = true; });
+intervalChips.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    selectedIntervalHours = Number(chip.dataset.hours);
+    selectChip(intervalChips, (v) => `[data-hours="${v}"]`, selectedIntervalHours);
+  });
+});
 
-bottleConfirm.addEventListener('click', () => {
-  bottleModal.hidden = true;
-  logFeed('bottle', selectedMl ? { amountMl: selectedMl } : {});
+logCancel.addEventListener('click', () => { logModal.hidden = true; });
+
+logConfirm.addEventListener('click', () => {
+  let timestamp;
+  if (customTimeInput.value) {
+    const [h, m] = customTimeInput.value.split(':').map(Number);
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    timestamp = d.getTime();
+  } else {
+    timestamp = Date.now() - selectedMinsAgo * 60000;
+  }
+
+  localStorage.setItem(INTERVAL_KEY, String(selectedIntervalHours));
+  logModal.hidden = true;
+  logFeed(timestamp, selectedMl, selectedIntervalHours);
 });
 
 btnShare.addEventListener('click', () => {
@@ -227,7 +294,7 @@ joinForm.addEventListener('submit', (e) => {
   enterApp(code);
 });
 
-setInterval(renderLastFeed, 30000);
+setInterval(() => { renderLastFeed(); renderNextFeed(); }, 30000);
 
 const existingCode = getHouseholdCode();
 if (existingCode) {
@@ -238,6 +305,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=1').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=2').catch(() => {});
   });
 }

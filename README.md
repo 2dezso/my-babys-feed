@@ -41,10 +41,11 @@ Just open `index.html` in a browser — it's a static site, no build step, no se
 4. GitHub Pages rebuilds in ~30–60s at the repo's Pages URL.
 
 ## Data model
-Firestore: `households/{code}/feeds/{feedId}` → `{ type, timestamp, amountMl? }`
-- `type`: `breast_left` | `breast_right` | `bottle` | `solid`
-- `timestamp`: client `Date.now()` in ms
-- `amountMl`: only present for `bottle`
+Firestore: `households/{code}/feeds/{feedId}` → `{ type, timestamp, amountMl?, intervalHours }`
+- `type`: always `bottle`
+- `timestamp`: feed time in ms (client-editable via the time picker, defaults to now)
+- `amountMl`: optional bottle amount
+- `intervalHours`: how many hours until the next expected feed (chosen at log time, defaults to 3), used to compute "Next feed expected" on the home screen
 
 ## Costs
 Firebase Spark (free) plan covers this comfortably — Firestore free tier is 50K reads / 20K writes per day, far beyond what a feeding tracker for one baby will use. GitHub Pages hosting is free.
