@@ -1,7 +1,7 @@
 import { firebaseConfig } from './firebase-config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
-  getFirestore, collection, addDoc, deleteDoc, doc,
+  getFirestore, collection, addDoc, deleteDoc, doc, setDoc,
   query, orderBy, limit, onSnapshot, enableIndexedDbPersistence,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
@@ -21,6 +21,7 @@ const appScreen = document.getElementById('app-screen');
 const homeScreen = document.getElementById('home-screen');
 const milestonesScreen = document.getElementById('milestones-screen');
 const trendsScreen = document.getElementById('trends-screen');
+const profileScreen = document.getElementById('profile-screen');
 const joinForm = document.getElementById('join-form');
 const joinCodeInput = document.getElementById('join-code');
 const setupError = document.getElementById('setup-error');
@@ -50,10 +51,22 @@ const btnShare = document.getElementById('btn-share');
 const shareCodeEl = document.getElementById('share-code');
 const shareClose = document.getElementById('share-close');
 
+const profileTileLabel = document.getElementById('profile-tile-label');
+const profileNameInput = document.getElementById('profile-name');
+const profileDobInput = document.getElementById('profile-dob');
+const profileBirthWeightInput = document.getElementById('profile-birth-weight');
+const profileSaveBtn = document.getElementById('profile-save');
+const weightList = document.getElementById('weight-list');
+const weightEmpty = document.getElementById('weight-empty');
+const weightDateInput = document.getElementById('weight-date');
+const weightValueInput = document.getElementById('weight-value');
+const weightAddBtn = document.getElementById('weight-add');
+
 let selectedMl = DEFAULT_ML;
 let selectedIntervalHours = 3;
 let intervalOverridden = false;
 let latestFeeds = [];
+let latestWeights = [];
 let currentRange = 'day';
 let wheelScrollTimer = null;
 
@@ -111,6 +124,24 @@ function feedsCollection(code) {
   return collection(db, 'households', code, 'feeds');
 }
 
+function profileDocRef(code) {
+  return doc(db, 'households', code, 'profile', 'info');
+}
+
+function weightsCollection(code) {
+  return collection(db, 'households', code, 'weights');
+}
+
+function localDateStringToTimestamp(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d).getTime();
+}
+
+function todayDateString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function getHouseholdCode() {
   return localStorage.getItem(STORAGE_KEY);
 }
@@ -125,6 +156,7 @@ const SCREENS = {
   home: homeScreen,
   milestones: milestonesScreen,
   trends: trendsScreen,
+  profile: profileScreen,
 };
 
 function showScreen(name) {
@@ -154,6 +186,8 @@ function enterApp(code) {
   }
   applyRouteFromHash();
   listenToFeeds(code);
+  listenToProfile(code);
+  listenToWeights(code);
 }
 
 function listenToFeeds(code) {
@@ -167,6 +201,27 @@ function listenToFeeds(code) {
   }, (err) => {
     console.error(err);
     showToast('Sync error — check connection');
+  });
+}
+
+function listenToProfile(code) {
+  onSnapshot(profileDocRef(code), (snap) => {
+    const data = snap.data() || {};
+    profileNameInput.value = data.name || '';
+    profileDobInput.value = data.dob || '';
+    profileTileLabel.textContent = data.name || 'Profile';
+  }, (err) => {
+    console.error(err);
+  });
+}
+
+function listenToWeights(code) {
+  const q = query(weightsCollection(code), orderBy('timestamp', 'desc'), limit(200));
+  onSnapshot(q, (snapshot) => {
+    latestWeights = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderWeights();
+  }, (err) => {
+    console.error(err);
   });
 }
 
@@ -268,6 +323,82 @@ async function deleteFeed(id) {
     showToast('Could not delete');
   }
 }
+
+// --- Profile & weight log ---
+
+function renderWeights() {
+  weightList.innerHTML = '';
+  weightEmpty.hidden = latestWeights.length !== 0;
+  for (const w of latestWeights) {
+    const dateStr = new Date(w.timestamp).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span class="weight-date-val">${dateStr}${w.isBirth ? ' · Birth' : ''}</span>
+      <span class="weight-value-val">${w.weightKg}kg</span>
+      <button class="history-delete" title="Delete">✕</button>
+    `;
+    li.querySelector('.history-delete').addEventListener('click', () => deleteWeight(w.id));
+    weightList.appendChild(li);
+  }
+}
+
+async function deleteWeight(id) {
+  const code = getHouseholdCode();
+  if (!code) return;
+  try {
+    await deleteDoc(doc(db, 'households', code, 'weights', id));
+  } catch (e) {
+    console.error(e);
+    showToast('Could not delete');
+  }
+}
+
+profileSaveBtn.addEventListener('click', async () => {
+  const code = getHouseholdCode();
+  if (!code) return;
+  const name = profileNameInput.value.trim();
+  const dob = profileDobInput.value;
+  try {
+    await setDoc(profileDocRef(code), { name, dob }, { merge: true });
+    const birthWeight = profileBirthWeightInput.value;
+    const hasBirthEntry = latestWeights.some(w => w.isBirth);
+    if (birthWeight && dob && !hasBirthEntry) {
+      await addDoc(weightsCollection(code), {
+        weightKg: Number(birthWeight),
+        timestamp: localDateStringToTimestamp(dob),
+        isBirth: true,
+      });
+    }
+    profileBirthWeightInput.value = '';
+    showToast('Profile saved');
+  } catch (e) {
+    console.error(e);
+    showToast('Could not save — check connection');
+  }
+});
+
+weightAddBtn.addEventListener('click', async () => {
+  const code = getHouseholdCode();
+  if (!code) return;
+  const dateVal = weightDateInput.value;
+  const weightVal = weightValueInput.value;
+  if (!dateVal || !weightVal) {
+    showToast('Enter a date and weight');
+    return;
+  }
+  try {
+    await addDoc(weightsCollection(code), {
+      weightKg: Number(weightVal),
+      timestamp: localDateStringToTimestamp(dateVal),
+    });
+    weightDateInput.value = '';
+    weightValueInput.value = '';
+    showToast('Weight logged');
+  } catch (e) {
+    console.error(e);
+    showToast('Could not log weight — check connection');
+  }
+});
 
 // --- Amount wheel picker ---
 
@@ -372,6 +503,10 @@ logConfirm.addEventListener('click', () => {
   logFeed(timestamp, selectedMl, selectedIntervalHours);
 });
 
+weightDateInput.value = todayDateString();
+weightDateInput.max = todayDateString();
+profileDobInput.max = todayDateString();
+
 // --- Share / setup ---
 
 btnShare.addEventListener('click', () => {
@@ -417,6 +552,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=6').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=7').catch(() => {});
   });
 }
