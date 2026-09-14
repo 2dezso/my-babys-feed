@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#eafbe9">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=13">
+<link rel="manifest" href="manifest.json?v=14">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=13">
+<link rel="stylesheet" href="style.css?v=14">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -117,7 +117,7 @@
     <button id="btn-share" class="btn btn-secondary home-share-btn">Share household code</button>
 
     <button class="home-tile home-tile-small" data-nav="profile">
-      <span class="home-circle home-circle-small home-circle-gold">👶</span>
+      <span id="profile-tile-icon" class="home-circle home-circle-small home-circle-gold">👶</span>
       <span id="profile-tile-label" class="home-tile-label">Profile</span>
     </button>
   </main>
@@ -134,14 +134,25 @@
   </main>
 </div>
 
-<div id="trends-screen" class="screen home-screen" hidden>
+<div id="trends-screen" class="screen trends-screen" hidden>
   <header class="sub-header">
     <button class="icon-btn icon-btn-round" data-nav="home" title="Home">🏠</button>
   </header>
-  <main class="placeholder-main">
+  <main class="trends-main">
     <span class="placeholder-icon home-circle-peach">📈</span>
-    <h2>Trends &amp; Facts</h2>
-    <p class="muted">Coming soon — feeding patterns and fun facts as Charlie grows.</p>
+    <h2>Milk intake vs age</h2>
+    <p id="trends-summary" class="muted trends-summary"></p>
+
+    <div class="card trends-card">
+      <div id="trends-chart"></div>
+      <div class="trends-legend">
+        <span class="legend-item"><span class="legend-swatch legend-swatch-ref"></span>World average</span>
+        <span class="legend-item"><span class="legend-swatch legend-swatch-baby"></span><span id="trends-legend-name">Your baby</span></span>
+      </div>
+    </div>
+
+    <p id="trends-dob-hint" class="muted trends-hint" hidden>Add your baby's date of birth in Profile to plot their trend by age.</p>
+    <p class="muted trends-disclaimer">Illustrative general guideline based on typical published feeding ranges — not medical advice. Every baby is different; check with your pediatrician about what's right for yours.</p>
   </main>
 </div>
 
@@ -150,9 +161,18 @@
     <button class="icon-btn icon-btn-round" data-nav="home" title="Home">🏠</button>
   </header>
   <main class="placeholder-main profile-main">
-    <span class="placeholder-icon home-circle-gold">👶</span>
+    <span id="profile-icon-big" class="placeholder-icon home-circle-gold">👶</span>
     <h2>Baby's profile</h2>
 
+    <div class="modal-section">
+      <div class="section-label">Icon shade</div>
+      <div class="amount-chips" id="avatar-tone-chips">
+        <button class="tone-chip" data-tone="🏻">👶🏻</button>
+        <button class="tone-chip" data-tone="🏽">👶🏽</button>
+        <button class="tone-chip" data-tone="🏾">👶🏾</button>
+        <button class="tone-chip" data-tone="🏿">👶🏿</button>
+      </div>
+    </div>
     <div class="modal-section">
       <label class="field-label" for="profile-name">Name</label>
       <input id="profile-name" class="field-input" type="text" placeholder="e.g. Charlie">
@@ -160,6 +180,7 @@
     <div class="modal-section">
       <label class="field-label" for="profile-dob">Date of birth</label>
       <input id="profile-dob" class="field-input" type="date">
+      <div id="profile-age" class="muted profile-age"></div>
     </div>
     <button id="profile-save" class="btn btn-primary">Save profile</button>
   </main>
@@ -184,11 +205,10 @@
       <div id="last-poo-detail" class="hero-detail"></div>
     </section>
 
-    <button id="btn-log-poo" class="log-feed-btn poo-log-btn">
+    <button id="btn-log-poo" class="log-feed-btn">
       <span class="log-emoji">💩</span>
       <span>Log poo</span>
     </button>
-    <button id="btn-log-poo-custom" class="text-link-btn">Log for a different time</button>
 
     <section class="history">
       <div class="history-header">
@@ -225,6 +245,21 @@
         <input id="poo-time" type="time">
       </div>
     </div>
+
+    <div class="modal-section">
+      <div class="section-label">Size</div>
+      <div class="amount-chips" id="poo-size-chips">
+        <button class="chip" data-size="Small">Small</button>
+        <button class="chip" data-size="Medium">Medium</button>
+        <button class="chip" data-size="Big">Big</button>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <label class="field-label" for="poo-note">Note (optional)</label>
+      <input id="poo-note" class="field-input" type="text" placeholder="e.g. a little runny">
+    </div>
+
     <div class="modal-actions">
       <button id="poo-time-cancel" class="btn btn-secondary">Cancel</button>
       <button id="poo-time-confirm" class="btn btn-primary">Log poo</button>
@@ -293,6 +328,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=13"></script>
+<script type="module" src="app.js?v=14"></script>
 </body>
 </html>

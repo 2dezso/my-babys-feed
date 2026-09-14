@@ -59,14 +59,22 @@ const shareCodeEl = document.getElementById('share-code');
 const shareClose = document.getElementById('share-close');
 
 const profileTileLabel = document.getElementById('profile-tile-label');
+const profileTileIcon = document.getElementById('profile-tile-icon');
+const profileIconBig = document.getElementById('profile-icon-big');
+const avatarToneChips = document.getElementById('avatar-tone-chips');
 const profileNameInput = document.getElementById('profile-name');
 const profileDobInput = document.getElementById('profile-dob');
+const profileAgeEl = document.getElementById('profile-age');
 const profileSaveBtn = document.getElementById('profile-save');
+
+const trendsChartEl = document.getElementById('trends-chart');
+const trendsSummaryEl = document.getElementById('trends-summary');
+const trendsLegendNameEl = document.getElementById('trends-legend-name');
+const trendsDobHintEl = document.getElementById('trends-dob-hint');
 
 const sinceLastPooEl = document.getElementById('since-last-poo');
 const lastPooDetailEl = document.getElementById('last-poo-detail');
 const btnLogPoo = document.getElementById('btn-log-poo');
-const btnLogPooCustom = document.getElementById('btn-log-poo-custom');
 const pooHistoryList = document.getElementById('poo-history-list');
 const pooHistoryEmpty = document.getElementById('poo-history-empty');
 const pooHistoryRange = document.getElementById('poo-history-range');
@@ -74,6 +82,8 @@ const pooTimeModal = document.getElementById('poo-time-modal');
 const pooDateInput = document.getElementById('poo-date');
 const pooDateLabel = document.getElementById('poo-date-label');
 const pooTimeInput = document.getElementById('poo-time');
+const pooSizeChips = document.getElementById('poo-size-chips');
+const pooNoteInput = document.getElementById('poo-note');
 const pooTimeCancel = document.getElementById('poo-time-cancel');
 const pooTimeConfirm = document.getElementById('poo-time-confirm');
 
@@ -84,6 +94,9 @@ let latestFeeds = [];
 let latestPoos = [];
 let currentRange = 'today';
 let currentPooRange = 'today';
+let selectedAvatarTone = '';
+let profileDob = '';
+let selectedPooSize = '';
 let wheelScrollTimer = null;
 let editingFeedId = null;
 
@@ -203,13 +216,14 @@ function enterApp(code) {
 }
 
 function listenToFeeds(code) {
-  const q = query(feedsCollection(code), orderBy('timestamp', 'desc'), limit(500));
+  const q = query(feedsCollection(code), orderBy('timestamp', 'desc'), limit(3000));
   onSnapshot(q, (snapshot) => {
     latestFeeds = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     renderSinceLastFeed();
     renderNextFeed();
     renderTodayTotal();
     renderHistory();
+    renderTrendsChart();
   }, (err) => {
     console.error(err);
     showToast('Sync error — check connection');
@@ -221,10 +235,59 @@ function listenToProfile(code) {
     const data = snap.data() || {};
     profileNameInput.value = data.name || '';
     profileDobInput.value = data.dob || '';
+    profileDob = data.dob || '';
+    selectedAvatarTone = data.avatarTone || '';
     profileTileLabel.textContent = data.name || 'Profile';
+    trendsLegendNameEl.textContent = data.name || 'Your baby';
+    updateAvatarIcons();
+    highlightToneChip();
+    renderProfileAge();
+    renderTrendsChart();
   }, (err) => {
     console.error(err);
   });
+}
+
+function updateAvatarIcons() {
+  const icon = `👶${selectedAvatarTone}`;
+  profileTileIcon.textContent = icon;
+  profileIconBig.textContent = icon;
+}
+
+function highlightToneChip() {
+  avatarToneChips.querySelectorAll('.tone-chip').forEach(c => {
+    c.classList.toggle('selected', c.dataset.tone === selectedAvatarTone);
+  });
+}
+
+avatarToneChips.querySelectorAll('.tone-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    selectedAvatarTone = chip.dataset.tone;
+    updateAvatarIcons();
+    highlightToneChip();
+  });
+});
+
+function ageString(dobStr) {
+  const [y, m, d] = dobStr.split('-').map(Number);
+  const dob = new Date(y, m - 1, d);
+  const diffDays = Math.floor((Date.now() - dob.getTime()) / 86400000);
+  if (diffDays < 0) return '';
+  const months = Math.floor(diffDays / 30.44);
+  if (months >= 1) {
+    const remDays = Math.round(diffDays - months * 30.44);
+    return `${months} month${months !== 1 ? 's' : ''}${remDays > 0 ? `, ${remDays}d` : ''} old`;
+  }
+  const weeks = Math.floor(diffDays / 7);
+  if (weeks >= 1) {
+    const remDays = diffDays - weeks * 7;
+    return `${weeks} week${weeks !== 1 ? 's' : ''}${remDays > 0 ? `, ${remDays}d` : ''} old`;
+  }
+  return `${diffDays} day${diffDays !== 1 ? 's' : ''} old`;
+}
+
+function renderProfileAge() {
+  profileAgeEl.textContent = profileDob ? ageString(profileDob) : '';
 }
 
 function listenToPoos(code) {
@@ -250,6 +313,12 @@ function renderSinceLastPoo() {
   lastPooDetailEl.textContent = `Last at ${formatClock(last.timestamp)} · ${timeAgo(last.timestamp)}`;
 }
 
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 function renderPooHistory() {
   const cutoff = rangeCutoff(currentPooRange);
   const filtered = latestPoos.filter(p => p.timestamp >= cutoff);
@@ -263,9 +332,10 @@ function renderPooHistory() {
 
     const li = document.createElement('li');
     li.innerHTML = `
-      <span class="history-time-val">${formatClock(poo.timestamp)}</span>
+      <span class="history-time-val">${formatClock(poo.timestamp)}${poo.size ? ` · ${poo.size}` : ''}</span>
       <span class="history-gap-val">${gap}</span>
       <button class="history-delete" title="Delete">✕</button>
+      ${poo.note ? `<span class="poo-note-row">${escapeHtml(poo.note)}</span>` : ''}
     `;
     li.querySelector('.history-delete').addEventListener('click', () => deletePoo(poo.id));
     pooHistoryList.appendChild(li);
@@ -281,11 +351,15 @@ pooHistoryRange.querySelectorAll('.segment').forEach(seg => {
   });
 });
 
-async function logPoo(timestamp) {
+async function logPoo(timestamp, size, note) {
   const code = getHouseholdCode();
   if (!code) return;
   try {
-    await addDoc(poosCollection(code), { timestamp });
+    await addDoc(poosCollection(code), {
+      timestamp,
+      ...(size ? { size } : {}),
+      ...(note ? { note } : {}),
+    });
     showToast('Poo logged');
   } catch (e) {
     console.error(e);
@@ -304,14 +378,28 @@ async function deletePoo(id) {
   }
 }
 
-btnLogPoo.addEventListener('click', () => logPoo(Date.now()));
+function highlightPooSizeChip() {
+  pooSizeChips.querySelectorAll('.chip').forEach(c => {
+    c.classList.toggle('selected', c.dataset.size === selectedPooSize);
+  });
+}
 
-btnLogPooCustom.addEventListener('click', () => {
+pooSizeChips.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    selectedPooSize = selectedPooSize === chip.dataset.size ? '' : chip.dataset.size;
+    highlightPooSizeChip();
+  });
+});
+
+btnLogPoo.addEventListener('click', () => {
   const now = new Date();
   pooDateInput.value = todayDateString();
   pooDateInput.max = todayDateString();
   updateDateLabel(pooDateInput, pooDateLabel);
   pooTimeInput.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  selectedPooSize = '';
+  highlightPooSizeChip();
+  pooNoteInput.value = '';
   pooTimeModal.hidden = false;
 });
 
@@ -319,8 +407,9 @@ pooTimeCancel.addEventListener('click', () => { pooTimeModal.hidden = true; });
 
 pooTimeConfirm.addEventListener('click', () => {
   const timestamp = combineDateTimeToTimestamp(pooDateInput.value, pooTimeInput.value);
+  const note = pooNoteInput.value.trim();
   pooTimeModal.hidden = true;
-  logPoo(timestamp);
+  logPoo(timestamp, selectedPooSize, note);
 });
 
 function renderSinceLastFeed() {
@@ -500,19 +589,137 @@ async function deleteFeed(id) {
 
 // --- Profile ---
 
+profileDobInput.addEventListener('input', () => {
+  profileDob = profileDobInput.value;
+  renderProfileAge();
+});
+
 profileSaveBtn.addEventListener('click', async () => {
   const code = getHouseholdCode();
   if (!code) return;
   const name = profileNameInput.value.trim();
   const dob = profileDobInput.value;
   try {
-    await setDoc(profileDocRef(code), { name, dob }, { merge: true });
+    await setDoc(profileDocRef(code), { name, dob, avatarTone: selectedAvatarTone }, { merge: true });
     showToast('Profile saved');
   } catch (e) {
     console.error(e);
     showToast('Could not save — check connection');
   }
 });
+
+// --- Trends & Facts ---
+
+// Illustrative general guideline (approximate typical formula/bottle intake by age),
+// not medical advice. Linearly interpolated between these key points.
+const WORLD_AVG_ML_BY_WEEK = [
+  { week: 0, ml: 300 },
+  { week: 1, ml: 450 },
+  { week: 2, ml: 550 },
+  { week: 4, ml: 650 },
+  { week: 6, ml: 750 },
+  { week: 8, ml: 800 },
+  { week: 12, ml: 850 },
+  { week: 16, ml: 900 },
+  { week: 26, ml: 900 },
+  { week: 39, ml: 850 },
+  { week: 52, ml: 800 },
+];
+
+function worldAvgAtWeek(week) {
+  const pts = WORLD_AVG_ML_BY_WEEK;
+  if (week <= pts[0].week) return pts[0].ml;
+  if (week >= pts[pts.length - 1].week) return pts[pts.length - 1].ml;
+  for (let i = 0; i < pts.length - 1; i++) {
+    if (week >= pts[i].week && week <= pts[i + 1].week) {
+      const t = (week - pts[i].week) / (pts[i + 1].week - pts[i].week);
+      return pts[i].ml + t * (pts[i + 1].ml - pts[i].ml);
+    }
+  }
+  return pts[pts.length - 1].ml;
+}
+
+function computeBabyWeeklyAverages() {
+  if (!profileDob) return [];
+  const [y, m, d] = profileDob.split('-').map(Number);
+  const dobTs = new Date(y, m - 1, d).getTime();
+
+  const totals = new Map();
+  for (const f of latestFeeds) {
+    if (f.amountMl == null) continue;
+    const weekIndex = Math.floor((f.timestamp - dobTs) / (7 * 86400000));
+    if (weekIndex < 0) continue;
+    totals.set(weekIndex, (totals.get(weekIndex) || 0) + f.amountMl);
+  }
+
+  const now = Date.now();
+  const points = [];
+  for (const [weekIndex, total] of totals) {
+    const weekStart = dobTs + weekIndex * 7 * 86400000;
+    const weekEnd = weekStart + 7 * 86400000;
+    const elapsedDays = Math.max(1, Math.round((Math.min(now, weekEnd) - weekStart) / 86400000));
+    points.push({ week: weekIndex, ml: total / elapsedDays });
+  }
+  points.sort((a, b) => a.week - b.week);
+  return points;
+}
+
+function renderTrendsChart() {
+  if (!trendsChartEl) return;
+  trendsDobHintEl.hidden = !!profileDob;
+
+  const babyPoints = computeBabyWeeklyAverages();
+  const maxWeek = 52;
+  const maxMl = 1100;
+  const width = 300;
+  const height = 170;
+  const padLeft = 34;
+  const padRight = 10;
+  const padTop = 10;
+  const padBottom = 20;
+  const plotW = width - padLeft - padRight;
+  const plotH = height - padTop - padBottom;
+
+  const x = (week) => padLeft + (Math.min(week, maxWeek) / maxWeek) * plotW;
+  const y = (ml) => padTop + plotH - (Math.min(ml, maxMl) / maxMl) * plotH;
+
+  const refPoints = [];
+  for (let w = 0; w <= maxWeek; w++) refPoints.push(`${x(w)},${y(worldAvgAtWeek(w))}`);
+
+  const gridLines = [0, 300, 600, 900].map(ml => `
+    <line x1="${padLeft}" y1="${y(ml)}" x2="${width - padRight}" y2="${y(ml)}" stroke="var(--border)" stroke-width="1" />
+    <text x="${padLeft - 5}" y="${y(ml) + 3}" text-anchor="end" font-size="8" fill="var(--muted)">${ml}</text>
+  `).join('');
+
+  const xLabels = [0, 13, 26, 39, 52].map(w => `
+    <text x="${x(w)}" y="${height - 4}" text-anchor="middle" font-size="8" fill="var(--muted)">${w === 0 ? 'Birth' : w + 'w'}</text>
+  `).join('');
+
+  const babyPolyline = babyPoints.length > 1
+    ? `<polyline points="${babyPoints.map(p => `${x(p.week)},${y(p.ml)}`).join(' ')}" fill="none" stroke="var(--primary)" stroke-width="2.5" />`
+    : '';
+  const babyDots = babyPoints.map(p => `<circle cx="${x(p.week)}" cy="${y(p.ml)}" r="2.8" fill="var(--primary)" />`).join('');
+
+  trendsChartEl.innerHTML = `
+    <svg viewBox="0 0 ${width} ${height}" class="trends-svg">
+      ${gridLines}
+      ${xLabels}
+      <polyline points="${refPoints.join(' ')}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4,3" />
+      ${babyPolyline}
+      ${babyDots}
+    </svg>
+  `;
+
+  if (babyPoints.length > 0) {
+    const latest = babyPoints[babyPoints.length - 1];
+    const worldAtLatest = Math.round(worldAvgAtWeek(latest.week));
+    const babyAvg = Math.round(latest.ml);
+    const name = trendsLegendNameEl.textContent || 'Your baby';
+    trendsSummaryEl.textContent = `This week: ${name} ~${babyAvg}ml/day vs world average ~${worldAtLatest}ml/day`;
+  } else {
+    trendsSummaryEl.textContent = '';
+  }
+}
 
 // --- Amount wheel picker ---
 
@@ -693,7 +900,9 @@ joinForm.addEventListener('submit', (e) => {
   enterApp(code);
 });
 
-setInterval(() => { renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); }, 15000);
+setInterval(() => { renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderProfileAge(); }, 15000);
+
+renderTrendsChart();
 
 const existingCode = getHouseholdCode();
 if (existingCode) {
@@ -704,6 +913,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=13').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=14').catch(() => {});
   });
 }

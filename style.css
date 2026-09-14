@@ -33,6 +33,16 @@
   --poo-border: #ddc7a8;
   --poo-accent: #a9784f;
   --poo-accent-2: #8f6239;
+
+  --peach-a: #fff3ea;
+  --peach-b: #ffe0c2;
+  --peach-card: #fffaf5;
+  --peach-ink: #5a3a1e;
+  --peach-muted: #b08a63;
+  --peach-secondary: #ffe8cf;
+  --peach-border: #f5cfa0;
+  --peach-accent: #e8935a;
+  --peach-accent-2: #d97a3f;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -68,6 +78,16 @@
     --poo-border: #4a3c2a;
     --poo-accent: #c99a6c;
     --poo-accent-2: #b98352;
+
+    --peach-a: #221710;
+    --peach-b: #2a1c12;
+    --peach-card: #271a12;
+    --peach-ink: #f5e4d3;
+    --peach-muted: #c9a17a;
+    --peach-secondary: #3a2718;
+    --peach-border: #4a331e;
+    --peach-accent: #f0a56d;
+    --peach-accent-2: #dd8952;
   }
 }
 
@@ -113,6 +133,22 @@ body {
   --shadow: 0 10px 24px rgba(169, 120, 79, 0.18);
   --shadow-soft: 0 4px 14px rgba(169, 120, 79, 0.14);
   background: linear-gradient(180deg, var(--poo-a), var(--poo-b));
+  min-height: 100vh;
+  color: var(--ink);
+}
+
+.trends-screen {
+  --bg: var(--peach-a);
+  --card: var(--peach-card);
+  --ink: var(--peach-ink);
+  --muted: var(--peach-muted);
+  --secondary: var(--peach-secondary);
+  --border: var(--peach-border);
+  --primary: var(--peach-accent);
+  --primary-2: var(--peach-accent-2);
+  --shadow: 0 10px 24px rgba(232, 147, 90, 0.18);
+  --shadow-soft: 0 4px 14px rgba(232, 147, 90, 0.14);
+  background: linear-gradient(180deg, var(--peach-a), var(--peach-b));
   min-height: 100vh;
   color: var(--ink);
 }
@@ -198,6 +234,27 @@ body {
   max-width: 480px;
   margin: 0 auto;
 }
+
+.trends-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px 20px 50px;
+  gap: 6px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.muted.trends-summary { font-weight: 700; color: var(--ink); font-size: 0.95rem; margin: 4px 0 0; min-height: 1.2em; }
+.card.trends-card { width: 100%; margin: 14px 0 0; padding: 18px 14px; box-sizing: border-box; }
+.trends-svg { width: 100%; height: auto; display: block; }
+.trends-legend { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; color: var(--muted); }
+.legend-swatch { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
+.legend-swatch-ref { background: var(--muted); }
+.legend-swatch-baby { background: var(--primary); }
+.trends-hint { margin-top: 10px; }
+.muted.trends-disclaimer { font-size: 0.76rem; margin-top: 16px; line-height: 1.4; }
 .placeholder-icon {
   width: 88px;
   height: 88px;
@@ -217,6 +274,22 @@ body {
 }
 .profile-main .placeholder-icon { align-self: center; margin-bottom: 4px; }
 .profile-main h2 { text-align: center; }
+.profile-age { margin-top: 8px; font-weight: 700; }
+
+.tone-chip {
+  background: var(--secondary);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  width: 56px;
+  height: 56px;
+  font-size: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+.tone-chip.selected { border-color: var(--primary); background: var(--card); }
 
 .field-label {
   display: block;
@@ -368,22 +441,6 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
 }
 .log-feed-btn:active { transform: scale(0.97); }
 .log-emoji { font-size: 2.1rem; }
-.poo-log-btn { margin-bottom: 8px; }
-
-.text-link-btn {
-  display: block;
-  width: 100%;
-  background: none;
-  border: none;
-  color: var(--muted);
-  font-family: inherit;
-  font-weight: 700;
-  font-size: 0.9rem;
-  text-decoration: underline;
-  cursor: pointer;
-  margin: 0 0 26px;
-  padding: 4px;
-}
 
 .history-header { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
 .history-header h2 { margin: 0; }
@@ -470,6 +527,13 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
   border-top: 1px solid var(--border);
 }
 #poo-history-list li:first-child { border-top: none; }
+.poo-note-row {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-style: italic;
+}
 .history-time-val { font-weight: 800; font-size: 1.05rem; }
 .history-amount-val { text-align: right; font-weight: 700; color: var(--ink); }
 .history-gap-val { text-align: right; font-size: 0.8rem; color: var(--muted); font-weight: 700; }

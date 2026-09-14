@@ -51,16 +51,27 @@ Firestore: `households/{code}/feeds/{feedId}` → `{ type, timestamp, amountMl?,
 
 A pending feed (no `amountMl`) turns the home screen's hero card into a "Feeding now" state (tap it to add the amount) and shows "Add amount" in its Past Feeds row instead of a value.
 
-The home screen also shows time-since-last-feed live, and the total ml fed since midnight. "Past feeds" has three tabs: **Today** (calendar day, midnight to now), **1D** (rolling 24 hours), **7D** (rolling 7 days) — the sync query pulls up to the most recent 500 feeds to keep the 7-day view populated. Entries are grouped by calendar day with a header showing that day's total ml, so multi-day ranges (7D) show a running breakdown per day, not just one combined list.
+The home screen also shows time-since-last-feed live, and the total ml fed since midnight. "Past feeds" has three tabs: **Today** (calendar day, midnight to now), **1D** (rolling 24 hours), **7D** (rolling 7 days) — the sync query pulls up to the most recent 3000 feeds (roughly a year at typical feeding frequency) so both the history tabs and the Trends chart have enough to work with. Entries are grouped by calendar day with a header showing that day's total ml, so multi-day ranges (7D) show a running breakdown per day, not just one combined list.
 
-Firestore: `households/{code}/profile/info` → `{ name, dob }`
-- `name`: baby's name, also shown as the Profile tile's label on the home screen
-- `dob`: date of birth as a `YYYY-MM-DD` string (not currently used elsewhere yet — reserved for future age-aware features)
+Firestore: `households/{code}/profile/info` → `{ name, dob, avatarTone }`
+- `name`: baby's name, also shown as the Profile tile's label on the home screen and as the Trends chart's legend/summary label
+- `dob`: date of birth as a `YYYY-MM-DD` string. Drives the "X months/weeks old" age line shown under it in Profile, and is the age-zero point for the Trends chart
+- `avatarTone`: one of the four 👶 skin-tone emoji modifiers (🏻/🏽/🏾/🏿), applied to the 👶 icon on the Profile tile and the Profile screen itself
 
-Firestore: `households/{code}/poos/{pooId}` → `{ timestamp }`
+Firestore: `households/{code}/poos/{pooId}` → `{ timestamp, size?, note? }`
 - Nappy/poo log, reached via the 💩 icon next to the home button on the Baby Feed screen (its own light-brown themed page, separate from the home hub)
-- "Log poo" logs the current time instantly with no modal; "Log for a different time" opens a small date/time picker for backfilling
-- Same "since last" hero stat and Today/1D/7D history pattern as feeds, just without an amount column or day-total headers. Already covered by the wildcard Firestore rule above — no rules change needed for this one.
+- `size`: optional, one of `Small`/`Medium`/`Big` via quick-tap chips (tap again to clear)
+- `note`: optional free-text note
+- "Log poo" opens a small modal (time defaults to now, but the date/time can be changed for backfilling) with the size chips and note field; same "since last" hero stat and Today/1D/7D history pattern as feeds, just without an amount column or day-total headers. Already covered by the wildcard Firestore rule above — no rules change needed for this one.
+
+## Trends & Facts
+The Trends screen (its own peach-themed page) plots a line chart comparing:
+- **World average**: a hardcoded reference curve of typical daily milk intake by age in weeks, built from commonly-published general feeding guidelines. This is **illustrative, not medical advice** — it's a static table in `app.js` (`WORLD_AVG_ML_BY_WEEK`), not a live data source (this is a static site with no backend beyond Firestore).
+- **Your baby**: computed from actual feed data — feeds are bucketed by the baby's age in weeks (from Profile's date of birth) and averaged to a daily rate per week, so the line is a weekly average rather than noisy daily totals.
+
+Requires a date of birth to be set in Profile; without one, only the reference line shows and a hint prompts you to add it.
+
+## Costs
 
 ## Costs
 Firebase Spark (free) plan covers this comfortably — Firestore free tier is 50K reads / 20K writes per day, far beyond what a feeding tracker for one baby will use. GitHub Pages hosting is free.
