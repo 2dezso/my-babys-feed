@@ -69,9 +69,12 @@ Firestore: `households/{code}/poos/{pooId}` → `{ timestamp, size?, note? }`
 - "Log poo" opens a small modal (time defaults to now, but the date/time can be changed for backfilling) with the size chips and note field; same "since last" hero stat and Today/1D/7D history pattern as feeds, just without an amount column or day-total headers. Already covered by the wildcard Firestore rule above — no rules change needed for this one.
 
 Firestore: `households/{code}/bottle/info` → `{ madeAt }`
-- Single shared doc (not a log) — tapping the "Bottle made" pill on the Baby Feed screen sets `madeAt` to now, synced live to every caregiver's device
+- Single shared doc (not a log) — tapping the main "Bottle made" pill sets `madeAt` to now, synced live to every caregiver's device
 - The pill counts down from a 2-hour "good for" window and turns red with "Expired — discard" once time's up
-- Tapping again at any time (even mid-countdown) restarts the timer from now — there's no separate reset/clear action, tapping always means "I just made a bottle"
+- Tapping the main pill at any time (even mid-countdown) restarts the timer from now — there's no separate reset/clear action, tapping always means "I just made a bottle"
+- A small 🕐 button on the pill's edge opens a tiny "When was it made?" picker (Just now / 5 / 10 / 15 min ago) for when you forget to tap it right away — same `startBottleTimer()` path, just backdated
+
+The pill is now a `<div>` wrapping two separate `<button>`s (main tap area + the 🕐 adjust button) rather than being one button itself, since a `<button>` can't contain another interactive control.
 
 ## Trends & Facts
 At the top, a "Fun fact of the week" card picks one line from a hardcoded list (`FUN_BABY_FACTS` in `app.js`) using `floor(days-since-epoch / 7) % list.length` — deterministic, so it's the same for everyone all week and changes to the next one every 7 days, no stored state needed.

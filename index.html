@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f8f0">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=30">
+<link rel="manifest" href="manifest.json?v=31">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=30">
+<link rel="stylesheet" href="style.css?v=31">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -67,13 +67,16 @@
       </div>
     </section>
 
-    <button id="bottle-pill" class="next-feed-pill bottle-pill">
-      <span class="next-feed-icon">🍼</span>
-      <div class="next-feed-text">
-        <span class="next-feed-label">Bottle made</span>
-        <span id="bottle-status" class="next-feed-value">Tap to start</span>
-      </div>
-    </button>
+    <div id="bottle-pill" class="next-feed-pill bottle-pill">
+      <button id="bottle-pill-main" class="bottle-pill-main">
+        <span class="next-feed-icon">🍼</span>
+        <div class="next-feed-text">
+          <span class="next-feed-label">Bottle made</span>
+          <span id="bottle-status" class="next-feed-value">Tap to start</span>
+        </div>
+      </button>
+      <button id="bottle-pill-adjust" class="bottle-pill-adjust" title="Made a few minutes ago?">🕐</button>
+    </div>
 
     <button id="btn-start-feed-now" class="quickstart-btn">
       <span class="log-emoji">⚡</span>
@@ -390,6 +393,19 @@
   </div>
 </div>
 
+<div id="bottle-adjust-modal" class="modal" hidden>
+  <div class="modal-card">
+    <h2>When was it made?</h2>
+    <div class="amount-chips" id="bottle-adjust-chips">
+      <button class="chip" data-mins="0">Just now</button>
+      <button class="chip" data-mins="5">5 min ago</button>
+      <button class="chip" data-mins="10">10 min ago</button>
+      <button class="chip" data-mins="15">15 min ago</button>
+    </div>
+    <button id="bottle-adjust-cancel" class="btn btn-secondary">Cancel</button>
+  </div>
+</div>
+
 <div id="confirm-delete-modal" class="modal" hidden>
   <div class="modal-card">
     <h2>Delete this feed?</h2>
@@ -403,6 +419,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=30"></script>
+<script type="module" src="app.js?v=31"></script>
 </body>
 </html>

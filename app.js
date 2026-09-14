@@ -35,7 +35,12 @@ const lastFeedDetailEl = document.getElementById('last-feed-detail');
 const nextFeedTimeEl = document.getElementById('next-feed-time');
 const todayTotalEl = document.getElementById('today-total-value');
 const bottlePill = document.getElementById('bottle-pill');
+const bottlePillMain = document.getElementById('bottle-pill-main');
+const bottlePillAdjust = document.getElementById('bottle-pill-adjust');
 const bottleStatusEl = document.getElementById('bottle-status');
+const bottleAdjustModal = document.getElementById('bottle-adjust-modal');
+const bottleAdjustChips = document.getElementById('bottle-adjust-chips');
+const bottleAdjustCancel = document.getElementById('bottle-adjust-cancel');
 const historyList = document.getElementById('history-list');
 const historyEmpty = document.getElementById('history-empty');
 const historyRange = document.getElementById('history-range');
@@ -553,16 +558,27 @@ function renderBottleStatus() {
   }
 }
 
-bottlePill.addEventListener('click', async () => {
+async function startBottleTimer(minsAgo) {
   const code = getHouseholdCode();
   if (!code) return;
   try {
-    await setDoc(bottleDocRef(code), { madeAt: Date.now() }, { merge: true });
-    showToast('Bottle timer started');
+    await setDoc(bottleDocRef(code), { madeAt: Date.now() - minsAgo * 60000 }, { merge: true });
+    showToast(minsAgo > 0 ? `Bottle timer started (${minsAgo}m ago)` : 'Bottle timer started');
   } catch (e) {
     console.error(e);
     showToast('Could not save — check connection');
   }
+}
+
+bottlePillMain.addEventListener('click', () => startBottleTimer(0));
+
+bottlePillAdjust.addEventListener('click', () => { bottleAdjustModal.hidden = false; });
+bottleAdjustCancel.addEventListener('click', () => { bottleAdjustModal.hidden = true; });
+bottleAdjustChips.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    bottleAdjustModal.hidden = true;
+    startBottleTimer(Number(chip.dataset.mins));
+  });
 });
 
 function dayKeyForTimestamp(ts) {
@@ -1384,6 +1400,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=30').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=31').catch(() => {});
   });
 }

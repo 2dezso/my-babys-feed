@@ -537,16 +537,37 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
 .next-feed-value { font-size: 1rem; font-weight: 800; }
 .next-feed-value.next-feed-emphasis { font-size: 1.15rem; color: var(--primary-2); }
 
-.bottle-pill {
-  width: 100%;
+.bottle-pill { gap: 8px; }
+.bottle-pill-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
   font-family: inherit;
-  cursor: pointer;
   text-align: left;
+  cursor: pointer;
+}
+.bottle-pill-adjust {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--secondary);
+  color: var(--muted);
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 0;
 }
 .next-feed-pill.bottle-expired { background: linear-gradient(135deg, var(--danger), #c94f47); }
 .next-feed-pill.bottle-expired .next-feed-label,
 .next-feed-pill.bottle-expired .next-feed-value { color: #fff; }
+.next-feed-pill.bottle-expired .bottle-pill-adjust { background: rgba(255, 255, 255, 0.25); color: #fff; }
 
 .log-feed-btn {
   width: 100%;
