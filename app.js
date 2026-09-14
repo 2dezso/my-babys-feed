@@ -52,7 +52,6 @@ const amountChips = document.getElementById('amount-chips');
 const mlWheelTrack = document.getElementById('ml-wheel-track');
 const intervalChips = document.getElementById('interval-chips');
 const intervalAutoTag = document.getElementById('interval-auto-tag');
-const logStart = document.getElementById('log-start');
 const logCancel = document.getElementById('log-cancel');
 const logConfirm = document.getElementById('log-confirm');
 
@@ -80,6 +79,7 @@ const trendsChartBabyEl = document.getElementById('trends-chart-baby');
 const trendsSummaryEl = document.getElementById('trends-summary');
 const trendsLegendNameEl = document.getElementById('trends-legend-name');
 const trendsDobHintEl = document.getElementById('trends-dob-hint');
+const trendsFunFactEl = document.getElementById('trends-fun-fact');
 
 const calPrev = document.getElementById('cal-prev');
 const calNext = document.getElementById('cal-next');
@@ -733,6 +733,42 @@ profileSaveBtn.addEventListener('click', async () => {
 
 // --- Trends & Facts ---
 
+const FUN_BABY_FACTS = [
+  'Newborns blink far less often than adults — about once or twice a minute, compared to 15-20 times for grown-ups.',
+  "Babies are born with about 300 bones, but adults only have 206 — many fuse together as they grow.",
+  "A baby's sense of smell is so strong they can recognize their mother's scent within days of being born.",
+  "Newborns can't produce tears when they cry until they're about 1-3 months old.",
+  "Babies are born without kneecaps — they start as cartilage and harden into bone later.",
+  "A baby's heart beats almost twice as fast as an adult's — around 120-160 beats per minute.",
+  "Babies can recognize their mother's voice from inside the womb.",
+  "Newborns are naturally short-sighted — they focus best on things 8-12 inches away, about the distance to a parent's face while feeding.",
+  "Babies can't properly taste salt until they're about 4 months old.",
+  "A baby's brain reaches about 80% of its adult size by age 3.",
+  'Babies have more taste buds than adults, including some on the roof of the mouth and back of the throat.',
+  'Newborns sleep 16-17 hours a day on average, just in short bursts rather than one long stretch.',
+  'Babies are born with a natural reflex to hold their breath underwater, which fades by around 6 months.',
+  "A baby's skull has soft spots (fontanelles) that help them through the birth canal and allow rapid brain growth.",
+  "Babies can't feel embarrassment — that emotion doesn't develop until around age 2.",
+  'Newborns typically lose 5-10% of their birth weight in the first few days before starting to gain it back.',
+  "Babies have a strong grasp reflex — strong enough that some can briefly support their own weight gripping a finger.",
+  "A baby's hearing is fully developed before birth — they can hear sounds from around 18 weeks in the womb.",
+  'Babies are not great at regulating their own body heat yet, which is part of why swaddling and warm layers help.',
+  'The average baby triples their birth weight by their first birthday.',
+  'Babies produce about twice as much saliva as adults relative to their size, especially once teething starts.',
+  "A baby's eye color can keep changing for up to a year after birth as pigment develops.",
+];
+
+function weeklyFunFact() {
+  const daysSinceEpoch = Math.floor(Date.now() / 86400000);
+  const weekIndex = Math.floor(daysSinceEpoch / 7);
+  return FUN_BABY_FACTS[weekIndex % FUN_BABY_FACTS.length];
+}
+
+function renderFunFact() {
+  if (!trendsFunFactEl) return;
+  trendsFunFactEl.textContent = weeklyFunFact();
+}
+
 // Illustrative general guidelines (approximate typical values by age in months),
 // not medical advice and not specific to sex. Linearly interpolated between points.
 const WORLD_AVG_ML_BY_MONTH = [
@@ -1245,7 +1281,6 @@ function openLogModal(feed) {
   feedTimeInput.value = `${String(baseTime.getHours()).padStart(2, '0')}:${String(baseTime.getMinutes()).padStart(2, '0')}`;
 
   logModalTitle.textContent = feed ? 'Add amount' : 'Log a feed';
-  logStart.hidden = !!feed;
   logConfirm.textContent = feed ? 'Save amount' : 'Log feed';
 
   logModal.hidden = false;
@@ -1287,12 +1322,6 @@ btnStartFeedNow.addEventListener('click', () => {
 
 btnLogFeed.addEventListener('click', () => openLogModal());
 logCancel.addEventListener('click', () => { logModal.hidden = true; editingFeedId = null; });
-
-logStart.addEventListener('click', () => {
-  const timestamp = readModalTimestamp();
-  logModal.hidden = true;
-  startFeed(timestamp, selectedIntervalHours);
-});
 
 logConfirm.addEventListener('click', () => {
   const timestamp = readModalTimestamp();
@@ -1344,6 +1373,7 @@ joinForm.addEventListener('submit', (e) => {
 setInterval(() => { renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderProfileAge(); renderBottleStatus(); }, 15000);
 
 renderTrendsChart();
+renderFunFact();
 
 const existingCode = getHouseholdCode();
 if (existingCode) {
@@ -1354,6 +1384,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=29').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=30').catch(() => {});
   });
 }

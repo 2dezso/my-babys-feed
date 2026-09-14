@@ -46,12 +46,12 @@ Just open `index.html` in a browser — it's a static site, no build step, no se
 Firestore: `households/{code}/feeds/{feedId}` → `{ type, timestamp, amountMl?, intervalHours }`
 - `type`: always `bottle`
 - `timestamp`: feed time in ms (client-editable via the time field, defaults to now)
-- `amountMl`: bottle amount, picked via quick chips (60/90/120ml) or the scroll wheel. **Absent** while a feed is logged via "Start feed — add amount later" and hasn't been finished yet — that's what marks it as pending (not `0`, since the wheel's minimum is 20ml)
+- `amountMl`: bottle amount, picked via quick chips (60/90/120ml) or the scroll wheel in the "Log a feed" modal. **Absent** for a feed started via the pale-orange "Start feed" pill and not yet finished — that's what marks it as pending (not `0`, since the wheel's minimum is 20ml)
 - `intervalHours`: hours until the next expected feed. Auto-estimated from the amount (90ml→3h, +1h per +30ml, clamped 2–6h) but can be overridden with the interval chips. Used to compute "Next feed expected" on the home screen
 
 A pending feed (no `amountMl`) turns the home screen's hero card into a "Feeding now" state (tap it to add the amount) and shows "Add amount" in its Past Feeds row instead of a value. "Next feed expected" shows **TBC** instead of a guessed time while the latest feed is still pending, since a real estimate needs the amount.
 
-A pale-orange **"Start feed"** button sits above "Log a feed" as a one-tap shortcut for exactly this — no modal, just an instant pending feed at the current time, for logging fast mid-feed and filling in the amount later. It calls the same `startFeed()` path as the log modal's own "Start feed — add amount later" option, which also clears the "Bottle made" timer (sets `madeAt` back to `null`) — once feeding has started, the prepared bottle's 2-hour window is no longer the relevant thing to track.
+The pale-orange **"Start feed"** pill above "Log a feed" is the one-tap way to log a pending feed (`startFeed()`) — no modal, just the current time, for logging fast mid-feed and filling in the amount later (the log modal itself is "Log a feed"-only now, no separate start option inside it, since this pill covers that). Starting a feed this way also clears the "Bottle made" timer (sets `madeAt` back to `null`) — once feeding has started, the prepared bottle's 2-hour window is no longer the relevant thing to track.
 
 The home screen also shows time-since-last-feed live, and the total ml fed since midnight. "Past feeds" has three tabs: **Today** (calendar day, midnight to now), **1D** (rolling 24 hours), **7D** (rolling 7 days) — the sync query pulls up to the most recent 3000 feeds (roughly a year at typical feeding frequency) so both the history tabs and the Trends chart have enough to work with. Entries are grouped by calendar day with a header showing that day's total ml, so multi-day ranges (7D) show a running breakdown per day, not just one combined list.
 
@@ -74,7 +74,9 @@ Firestore: `households/{code}/bottle/info` → `{ madeAt }`
 - Tapping again at any time (even mid-countdown) restarts the timer from now — there's no separate reset/clear action, tapping always means "I just made a bottle"
 
 ## Trends & Facts
-The Trends screen (its own peach-themed page) has three line charts, all ml-based:
+At the top, a "Fun fact of the week" card picks one line from a hardcoded list (`FUN_BABY_FACTS` in `app.js`) using `floor(days-since-epoch / 7) % list.length` — deterministic, so it's the same for everyone all week and changes to the next one every 7 days, no stored state needed.
+
+Below that, the Trends screen (its own peach-themed page) has three line charts, all ml-based:
 1. **Average milk intake by weight** — world-average-only reference (`app.js`'s `weightMilkRefPoints()`, derived by pairing `WORLD_AVG_WEIGHT_KG_BY_MONTH` and `WORLD_AVG_ML_BY_MONTH` at the same age, so it doesn't need its own separate table). X-axis 3–9kg
 2. **Average milk intake by age** — world-average-only reference curve (`WORLD_AVG_ML_BY_MONTH`), X-axis 0–12 months
 3. **Your baby's trend** (own section below, divided by a heading) — just your baby's own milk intake, no reference line, X-axis 0–12 months. Feeds are bucketed by the baby's age in months (from Profile's date of birth) and averaged to a daily rate per month, so the line is a monthly average rather than noisy daily totals. Underneath, a sentence compares that month's average to the age-based world average (chart 2), phrased as "about/a little/quite a bit more or less than", always paired with a reminder that it's a general average and every baby differs
