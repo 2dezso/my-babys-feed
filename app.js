@@ -501,6 +501,10 @@ function renderNextFeed() {
     return;
   }
   const last = latestFeeds[0];
+  if (last.amountMl == null) {
+    nextFeedTimeEl.textContent = 'TBC';
+    return;
+  }
   const intervalHours = last.intervalHours || 3;
   const nextTs = last.timestamp + intervalHours * 60 * 60 * 1000;
   const diffMs = nextTs - Date.now();
@@ -657,6 +661,13 @@ async function startFeed(timestamp, intervalHours) {
   } catch (e) {
     console.error(e);
     showToast('Could not start feed — check connection');
+    return;
+  }
+  // The prepared bottle is now in use — its "good for 2 hours" timer no longer applies.
+  try {
+    await setDoc(bottleDocRef(code), { madeAt: null }, { merge: true });
+  } catch (e) {
+    console.error(e);
   }
 }
 
@@ -1343,6 +1354,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=28').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=29').catch(() => {});
   });
 }
