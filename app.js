@@ -2,7 +2,7 @@ import { firebaseConfig } from './firebase-config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc,
-  query, orderBy, limit, onSnapshot, enableIndexedDbPersistence,
+  query, where, orderBy, limit, documentId, onSnapshot, enableIndexedDbPersistence,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 const app = initializeApp(firebaseConfig);
@@ -74,6 +74,22 @@ const trendsSummaryEl = document.getElementById('trends-summary');
 const trendsLegendNameEl = document.getElementById('trends-legend-name');
 const trendsDobHintEl = document.getElementById('trends-dob-hint');
 
+const calPrev = document.getElementById('cal-prev');
+const calNext = document.getElementById('cal-next');
+const calMonthLabel = document.getElementById('cal-month-label');
+const calGrid = document.getElementById('cal-grid');
+const calDobHint = document.getElementById('cal-dob-hint');
+
+const milestoneModal = document.getElementById('milestone-modal');
+const milestoneModalTitle = document.getElementById('milestone-modal-title');
+const milestonePhotoPreview = document.getElementById('milestone-photo-preview');
+const milestonePhotoBtn = document.getElementById('milestone-photo-btn');
+const milestonePhotoInput = document.getElementById('milestone-photo-input');
+const milestoneCaption = document.getElementById('milestone-caption');
+const milestoneCancel = document.getElementById('milestone-cancel');
+const milestoneSave = document.getElementById('milestone-save');
+const milestoneDelete = document.getElementById('milestone-delete');
+
 const sinceLastPooEl = document.getElementById('since-last-poo');
 const lastPooDetailEl = document.getElementById('last-poo-detail');
 const btnLogPoo = document.getElementById('btn-log-poo');
@@ -100,6 +116,13 @@ let selectedAvatarTone = '';
 let profileDob = '';
 let selectedPooSize = '';
 let bottleMadeAt = null;
+let calendarInitialized = false;
+let currentCalYear = 0;
+let currentCalMonth = 0;
+let currentMonthMilestones = new Map();
+let currentMonthUnsub = null;
+let editingDateKey = null;
+let pendingPhotoDataUrl = null;
 let wheelScrollTimer = null;
 let editingFeedId = null;
 
@@ -199,6 +222,7 @@ function showScreen(name) {
 function applyRouteFromHash() {
   const name = (location.hash || '').slice(1);
   showScreen(name in SCREENS ? name : 'feed');
+  if (name === 'milestones') ensureCalendarInitialized();
 }
 
 function goTo(name) {
@@ -251,6 +275,7 @@ function listenToProfile(code) {
     highlightToneChip();
     renderProfileAge();
     renderTrendsChart();
+    if (calendarInitialized) renderCalendar();
   }, (err) => {
     console.error(err);
   });
@@ -769,6 +794,228 @@ function renderTrendsChart() {
   }
 }
 
+// --- Milestones ---
+
+function milestonesCollection(code) {
+  return collection(db, 'households', code, 'milestones');
+}
+
+function dateKeyFor(year, month, day) {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function computeFirstYearBounds() {
+  if (!profileDob) return null;
+  const [y, m] = profileDob.split('-').map(Number);
+  const startIdx = y * 12 + (m - 1);
+  const endIdx = startIdx + 11;
+  return {
+    startYear: y, startMonth: m - 1,
+    endYear: Math.floor(endIdx / 12), endMonth: endIdx % 12,
+  };
+}
+
+function isMonthInBounds(year, month) {
+  const bounds = computeFirstYearBounds();
+  if (!bounds) return true;
+  const idx = year * 12 + month;
+  return idx >= bounds.startYear * 12 + bounds.startMonth && idx <= bounds.endYear * 12 + bounds.endMonth;
+}
+
+function ensureCalendarInitialized() {
+  if (calendarInitialized) {
+    renderCalendar();
+    return;
+  }
+  calendarInitialized = true;
+  if (profileDob) {
+    const [y, m] = profileDob.split('-').map(Number);
+    currentCalYear = y;
+    currentCalMonth = m - 1;
+  } else {
+    const now = new Date();
+    currentCalYear = now.getFullYear();
+    currentCalMonth = now.getMonth();
+  }
+  loadMonth(currentCalYear, currentCalMonth);
+}
+
+function loadMonth(year, month) {
+  if (currentMonthUnsub) {
+    currentMonthUnsub();
+    currentMonthUnsub = null;
+  }
+  currentMonthMilestones = new Map();
+  renderCalendar();
+
+  const code = getHouseholdCode();
+  if (!code) return;
+  const startKey = dateKeyFor(year, month, 1);
+  const nextMonth = new Date(year, month + 1, 1);
+  const endKey = dateKeyFor(nextMonth.getFullYear(), nextMonth.getMonth(), 1);
+  const q = query(
+    milestonesCollection(code),
+    where(documentId(), '>=', startKey),
+    where(documentId(), '<', endKey)
+  );
+  currentMonthUnsub = onSnapshot(q, (snapshot) => {
+    currentMonthMilestones = new Map(snapshot.docs.map(d => [d.id, d.data()]));
+    renderCalendar();
+  }, (err) => {
+    console.error(err);
+    showToast('Sync error — check connection');
+  });
+}
+
+function renderCalendar() {
+  calMonthLabel.textContent = new Date(currentCalYear, currentCalMonth, 1).toLocaleDateString([], { month: 'long', year: 'numeric' });
+  calDobHint.hidden = !!profileDob;
+
+  const bounds = computeFirstYearBounds();
+  const idx = currentCalYear * 12 + currentCalMonth;
+  calPrev.disabled = !!bounds && idx <= bounds.startYear * 12 + bounds.startMonth;
+  calNext.disabled = !!bounds && idx >= bounds.endYear * 12 + bounds.endMonth;
+
+  calGrid.innerHTML = '';
+  const firstOfMonth = new Date(currentCalYear, currentCalMonth, 1);
+  const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+  const firstWeekday = (firstOfMonth.getDay() + 6) % 7; // Mon=0..Sun=6
+
+  for (let i = 0; i < firstWeekday; i++) {
+    const filler = document.createElement('span');
+    filler.className = 'cal-day out-of-range';
+    calGrid.appendChild(filler);
+  }
+
+  const todayKey = todayDateString();
+  for (let day = 1; day <= daysInMonth; day++) {
+    const key = dateKeyFor(currentCalYear, currentCalMonth, day);
+    const entry = currentMonthMilestones.get(key);
+    const btn = document.createElement('button');
+    btn.className = 'cal-day';
+    btn.textContent = String(day);
+    if (key === todayKey) btn.classList.add('today-marker');
+    if (entry) {
+      btn.classList.add('has-entry');
+      if (entry.photoDataUrl) {
+        btn.classList.add('has-photo');
+        btn.style.backgroundImage = `url(${entry.photoDataUrl})`;
+      }
+    }
+    btn.addEventListener('click', () => openMilestoneModal(key));
+    calGrid.appendChild(btn);
+  }
+}
+
+calPrev.addEventListener('click', () => {
+  let year = currentCalYear;
+  let month = currentCalMonth - 1;
+  if (month < 0) { month = 11; year -= 1; }
+  if (!isMonthInBounds(year, month)) return;
+  currentCalYear = year;
+  currentCalMonth = month;
+  loadMonth(year, month);
+});
+
+calNext.addEventListener('click', () => {
+  let year = currentCalYear;
+  let month = currentCalMonth + 1;
+  if (month > 11) { month = 0; year += 1; }
+  if (!isMonthInBounds(year, month)) return;
+  currentCalYear = year;
+  currentCalMonth = month;
+  loadMonth(year, month);
+});
+
+function openMilestoneModal(dateKey) {
+  editingDateKey = dateKey;
+  pendingPhotoDataUrl = null;
+  const entry = currentMonthMilestones.get(dateKey);
+  const [y, m, d] = dateKey.split('-').map(Number);
+  milestoneModalTitle.textContent = new Date(y, m - 1, d).toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' });
+  milestoneCaption.value = entry?.caption || '';
+  if (entry?.photoDataUrl) {
+    milestonePhotoPreview.src = entry.photoDataUrl;
+    milestonePhotoPreview.hidden = false;
+  } else {
+    milestonePhotoPreview.hidden = true;
+    milestonePhotoPreview.src = '';
+  }
+  milestoneDelete.hidden = !entry;
+  milestonePhotoInput.value = '';
+  milestoneModal.hidden = false;
+}
+
+milestonePhotoBtn.addEventListener('click', () => milestonePhotoInput.click());
+
+milestonePhotoInput.addEventListener('change', () => {
+  const file = milestonePhotoInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 1000;
+      let { width, height } = img;
+      if (width > height && width > maxDim) {
+        height = Math.round(height * maxDim / width);
+        width = maxDim;
+      } else if (height > maxDim) {
+        width = Math.round(width * maxDim / height);
+        height = maxDim;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      pendingPhotoDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      milestonePhotoPreview.src = pendingPhotoDataUrl;
+      milestonePhotoPreview.hidden = false;
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+milestoneCancel.addEventListener('click', () => { milestoneModal.hidden = true; });
+
+milestoneSave.addEventListener('click', async () => {
+  const code = getHouseholdCode();
+  if (!code || !editingDateKey) return;
+  const caption = milestoneCaption.value.trim();
+  const existing = currentMonthMilestones.get(editingDateKey);
+  const photoDataUrl = pendingPhotoDataUrl || existing?.photoDataUrl || null;
+  if (!caption && !photoDataUrl) {
+    showToast('Add a photo or a note first');
+    return;
+  }
+  try {
+    await setDoc(doc(db, 'households', code, 'milestones', editingDateKey), {
+      ...(photoDataUrl ? { photoDataUrl } : {}),
+      ...(caption ? { caption } : {}),
+      updatedAt: Date.now(),
+    });
+    showToast('Milestone saved');
+    milestoneModal.hidden = true;
+  } catch (e) {
+    console.error(e);
+    showToast('Could not save — photo may be too large, or check connection');
+  }
+});
+
+milestoneDelete.addEventListener('click', async () => {
+  const code = getHouseholdCode();
+  if (!code || !editingDateKey) return;
+  try {
+    await deleteDoc(doc(db, 'households', code, 'milestones', editingDateKey));
+    showToast('Milestone deleted');
+    milestoneModal.hidden = true;
+  } catch (e) {
+    console.error(e);
+    showToast('Could not delete');
+  }
+});
+
 // --- Amount wheel picker ---
 
 const wheelValues = [];
@@ -961,6 +1208,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=15').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=16').catch(() => {});
   });
 }

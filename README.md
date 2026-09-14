@@ -76,7 +76,15 @@ The Trends screen (its own peach-themed page) plots a line chart comparing:
 
 Requires a date of birth to be set in Profile; without one, only the reference line shows and a hint prompts you to add it.
 
-## Costs
+## Milestones
+The Milestones screen (its own lavender-themed page) is a month calendar, styled after Instagram's Stories Archive — one entry per day, days with an entry show a thumbnail circle, tap any day to add/edit/delete it.
+
+Firestore: `households/{code}/milestones/{dateKey}` → `{ photoDataUrl?, caption?, updatedAt }`
+- `dateKey` is the date itself as `YYYY-MM-DD`, so there's exactly one document per day
+- `photoDataUrl`: optional, a compressed photo stored **inline in Firestore** as a base64 JPEG data URI (resized client-side to a max 1000px edge, ~70% quality — typically 100–300KB). This was a deliberate choice over Firebase Storage: Storage now requires the project to be on the Blaze (pay-as-you-go) plan even to stay within its free quota, while Firestore works entirely on the free Spark plan already in use. A full year of daily photos this way runs well under Firestore's 1GB free storage. If photo quality ever becomes limiting, swapping to Storage later only means changing where this field's value comes from, not a redesign
+- `caption`: optional free-text note
+- The calendar only fetches the currently-viewed month's milestones (a Firestore range query on the document ID), not the whole collection at once, so browsing doesn't pull a year of photos into memory just to show one month
+- Bounded to the baby's first year (birth month → +11 months) when a date of birth is set in Profile; otherwise defaults to the current month with unbounded navigation
 
 ## Costs
 Firebase Spark (free) plan covers this comfortably — Firestore free tier is 50K reads / 20K writes per day, far beyond what a feeding tracker for one baby will use. GitHub Pages hosting is free.

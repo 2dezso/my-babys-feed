@@ -43,6 +43,16 @@
   --peach-border: #f5cfa0;
   --peach-accent: #e8935a;
   --peach-accent-2: #d97a3f;
+
+  --lav-a: #f3f0fc;
+  --lav-b: #e2daf5;
+  --lav-card: #fbfaff;
+  --lav-ink: #392e52;
+  --lav-muted: #8d80ad;
+  --lav-secondary: #e9e2f7;
+  --lav-border: #d6c9ee;
+  --lav-accent: #9c86cf;
+  --lav-accent-2: #8570bb;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -88,6 +98,16 @@
     --peach-border: #4a331e;
     --peach-accent: #f0a56d;
     --peach-accent-2: #dd8952;
+
+    --lav-a: #1c1830;
+    --lav-b: #221c3a;
+    --lav-card: #201a37;
+    --lav-ink: #e9e4f7;
+    --lav-muted: #ac9fd0;
+    --lav-secondary: #2c2549;
+    --lav-border: #382f57;
+    --lav-accent: #b09fe0;
+    --lav-accent-2: #9c86cf;
   }
 }
 
@@ -149,6 +169,22 @@ body {
   --shadow: 0 10px 24px rgba(232, 147, 90, 0.18);
   --shadow-soft: 0 4px 14px rgba(232, 147, 90, 0.14);
   background: linear-gradient(180deg, var(--peach-a), var(--peach-b));
+  min-height: 100vh;
+  color: var(--ink);
+}
+
+.milestones-screen {
+  --bg: var(--lav-a);
+  --card: var(--lav-card);
+  --ink: var(--lav-ink);
+  --muted: var(--lav-muted);
+  --secondary: var(--lav-secondary);
+  --border: var(--lav-border);
+  --primary: var(--lav-accent);
+  --primary-2: var(--lav-accent-2);
+  --shadow: 0 10px 24px rgba(156, 134, 207, 0.18);
+  --shadow-soft: 0 4px 14px rgba(156, 134, 207, 0.14);
+  background: linear-gradient(180deg, var(--lav-a), var(--lav-b));
   min-height: 100vh;
   color: var(--ink);
 }
@@ -255,6 +291,64 @@ body {
 .legend-swatch-baby { background: var(--primary); }
 .trends-hint { margin-top: 10px; }
 .muted.trends-disclaimer { font-size: 0.76rem; margin-top: 16px; line-height: 1.4; }
+
+.text-link-btn {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: center;
+  padding: 4px;
+}
+.milestone-delete-btn { color: var(--danger); margin-top: 12px; }
+
+.milestones-main { padding: 20px 16px 50px; max-width: 480px; margin: 0 auto; }
+.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.cal-nav h2 { margin: 0; font-size: 1.05rem; }
+.cal-nav .icon-btn-round { font-size: 1.1rem; }
+.cal-nav .icon-btn-round:disabled { opacity: 0.3; cursor: default; }
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 8px;
+}
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--ink);
+  background: none;
+  background-size: cover;
+  background-position: center;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.cal-day.out-of-range { visibility: hidden; pointer-events: none; }
+.cal-day.has-entry { background-color: var(--secondary); }
+.cal-day.has-photo { color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
+.cal-day.today-marker { box-shadow: 0 0 0 2px var(--primary) inset; }
+
+.milestone-photo-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.milestone-photo-preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 16px; }
+.milestone-textarea { resize: vertical; font-family: inherit; }
 .placeholder-icon {
   width: 88px;
   height: 88px;

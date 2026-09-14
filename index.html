@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#eafbe9">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=15">
+<link rel="manifest" href="manifest.json?v=16">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=15">
+<link rel="stylesheet" href="style.css?v=16">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -131,15 +131,45 @@
   </main>
 </div>
 
-<div id="milestones-screen" class="screen home-screen" hidden>
+<div id="milestones-screen" class="screen milestones-screen" hidden>
   <header class="sub-header">
     <button class="icon-btn icon-btn-round" data-nav="home" title="Home">🏠</button>
   </header>
-  <main class="placeholder-main">
-    <span class="placeholder-icon home-circle-lavender">📅</span>
-    <h2>Milestones</h2>
-    <p class="muted">Coming soon — first smile, rolling over, first tooth and more.</p>
+  <main class="milestones-main">
+    <div class="cal-nav">
+      <button id="cal-prev" class="icon-btn icon-btn-round" title="Previous month">‹</button>
+      <h2 id="cal-month-label">—</h2>
+      <button id="cal-next" class="icon-btn icon-btn-round" title="Next month">›</button>
+    </div>
+    <div class="cal-weekdays">
+      <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+    </div>
+    <div id="cal-grid" class="cal-grid"></div>
+    <p id="cal-dob-hint" class="muted trends-hint" hidden>Set your baby's date of birth in Profile to keep this calendar to their first year.</p>
   </main>
+</div>
+
+<div id="milestone-modal" class="modal" hidden>
+  <div class="modal-card">
+    <h2 id="milestone-modal-title">Milestone</h2>
+
+    <div class="modal-section milestone-photo-wrap">
+      <img id="milestone-photo-preview" class="milestone-photo-preview" hidden>
+      <button id="milestone-photo-btn" class="btn btn-secondary">Add photo</button>
+      <input id="milestone-photo-input" type="file" accept="image/*" hidden>
+    </div>
+
+    <div class="modal-section">
+      <label class="field-label" for="milestone-caption">Milestone / comment</label>
+      <textarea id="milestone-caption" class="field-input milestone-textarea" rows="3" placeholder="e.g. First smile!"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button id="milestone-cancel" class="btn btn-secondary">Cancel</button>
+      <button id="milestone-save" class="btn btn-primary">Save</button>
+    </div>
+    <button id="milestone-delete" class="text-link-btn milestone-delete-btn" hidden>Delete this entry</button>
+  </div>
 </div>
 
 <div id="trends-screen" class="screen trends-screen" hidden>
@@ -336,6 +366,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=15"></script>
+<script type="module" src="app.js?v=16"></script>
 </body>
 </html>
