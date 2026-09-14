@@ -16,8 +16,9 @@
   --shadow: 0 10px 24px rgba(87, 182, 96, 0.16);
   --shadow-soft: 0 4px 14px rgba(87, 182, 96, 0.12);
 
-  --quickstart-a: #ffb870;
-  --quickstart-b: #f0954f;
+  --quickstart-a: #f9dcc0;
+  --quickstart-b: #e9b48a;
+  --quickstart-ink: #6b4226;
 
   --pink-a: #fdf1ec;
   --pink-b: #f8ded3;
@@ -37,15 +38,15 @@
   --poo-accent: #a9784f;
   --poo-accent-2: #8f6239;
 
-  --peach-a: #fff3ea;
-  --peach-b: #ffe0c2;
+  --peach-a: #fdf3ea;
+  --peach-b: #f6e0c8;
   --peach-card: #fffaf5;
-  --peach-ink: #5a3a1e;
-  --peach-muted: #b08a63;
-  --peach-secondary: #ffe8cf;
-  --peach-border: #f5cfa0;
-  --peach-accent: #e8935a;
-  --peach-accent-2: #d97a3f;
+  --peach-ink: #6b4226;
+  --peach-muted: #b3987c;
+  --peach-secondary: #f8e8d5;
+  --peach-border: #edd3b4;
+  --peach-accent: #e9b48a;
+  --peach-accent-2: #d99b6c;
 
   --lav-a: #f3f0fc;
   --lav-b: #e2daf5;
@@ -74,8 +75,9 @@
     --shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
     --shadow-soft: 0 4px 14px rgba(0, 0, 0, 0.3);
 
-    --quickstart-a: #f0a25f;
-    --quickstart-b: #dd8340;
+    --quickstart-a: #d9a878;
+    --quickstart-b: #c48957;
+    --quickstart-ink: #2e1a0f;
 
     --pink-a: #241715;
     --pink-b: #2c1917;
@@ -102,8 +104,8 @@
     --peach-muted: #c9a17a;
     --peach-secondary: #3a2718;
     --peach-border: #4a331e;
-    --peach-accent: #f0a56d;
-    --peach-accent-2: #dd8952;
+    --peach-accent: #d9a878;
+    --peach-accent-2: #c48957;
 
     --lav-a: #1c1830;
     --lav-b: #221c3a;
@@ -172,8 +174,8 @@ body {
   --border: var(--peach-border);
   --primary: var(--peach-accent);
   --primary-2: var(--peach-accent-2);
-  --shadow: 0 10px 24px rgba(232, 147, 90, 0.18);
-  --shadow-soft: 0 4px 14px rgba(232, 147, 90, 0.14);
+  --shadow: 0 10px 24px rgba(217, 155, 108, 0.16);
+  --shadow-soft: 0 4px 14px rgba(217, 155, 108, 0.12);
   background: linear-gradient(180deg, var(--peach-a), var(--peach-b));
   min-height: 100vh;
   color: var(--ink);
@@ -501,7 +503,8 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
 .hero-detail { font-size: 0.95rem; font-weight: 700; opacity: 0.9; }
 
 .hero-card.hero-pending {
-  background: linear-gradient(160deg, #f0b429, #e0932a);
+  background: linear-gradient(160deg, var(--quickstart-a), var(--quickstart-b));
+  color: var(--quickstart-ink);
   cursor: pointer;
 }
 
@@ -553,12 +556,27 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
 .log-feed-btn:active { transform: scale(0.97); }
 .log-emoji { font-size: 2.1rem; }
 
-.log-feed-btn.quickstart-btn {
+.quickstart-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: linear-gradient(135deg, var(--quickstart-a), var(--quickstart-b));
-  color: #fff;
-  margin-bottom: 10px;
-  box-shadow: 0 10px 24px rgba(240, 149, 79, 0.28);
+  color: var(--quickstart-ink);
+  border: none;
+  border-radius: 999px;
+  padding: 13px 18px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-bottom: 14px;
+  box-shadow: 0 6px 16px rgba(217, 155, 108, 0.28);
+  transition: transform 0.12s ease;
 }
+.quickstart-btn:active { transform: scale(0.97); }
+.quickstart-btn .log-emoji { font-size: 1.2rem; }
 
 .history-header { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
 .history-header h2 { margin: 0; }
