@@ -510,7 +510,7 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
   box-shadow: var(--shadow);
 }
 .hero-label { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85; }
-.hero-time { font-size: 3rem; font-weight: 900; margin: 4px 0; line-height: 1.1; }
+.hero-time { font-size: 2.6rem; font-weight: 900; margin: 4px 0; line-height: 1.1; }
 .hero-detail { font-size: 0.95rem; font-weight: 700; opacity: 0.9; }
 
 .hero-card.hero-pending {
@@ -533,6 +533,7 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
 .next-feed-text { display: flex; flex-direction: column; text-align: left; }
 .next-feed-label { font-size: 0.75rem; color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
 .next-feed-value { font-size: 1rem; font-weight: 800; }
+.next-feed-value.next-feed-emphasis { font-size: 1.15rem; color: var(--primary-2); }
 
 .bottle-pill {
   width: 100%;
@@ -551,12 +552,12 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
   color: var(--primary-ink);
   border: none;
   border-radius: var(--radius-lg);
-  padding: 24px 8px;
+  padding: 20px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 900;
   font-family: inherit;
   cursor: pointer;
@@ -565,7 +566,7 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
   transition: transform 0.12s ease;
 }
 .log-feed-btn:active { transform: scale(0.97); }
-.log-emoji { font-size: 2.1rem; }
+.log-emoji { font-size: 1.9rem; }
 
 .quickstart-btn {
   width: 100%;
