@@ -41,6 +41,7 @@ const historyEmpty = document.getElementById('history-empty');
 const historyRange = document.getElementById('history-range');
 const toast = document.getElementById('toast');
 
+const btnStartFeedNow = document.getElementById('btn-start-feed-now');
 const btnLogFeed = document.getElementById('btn-log-feed');
 const logModal = document.getElementById('log-modal');
 const logModalTitle = document.getElementById('log-modal-title');
@@ -1139,6 +1140,10 @@ function readModalTimestamp() {
   return combineDateTimeToTimestamp(feedDateInput.value, feedTimeInput.value);
 }
 
+btnStartFeedNow.addEventListener('click', () => {
+  startFeed(Date.now(), computeAutoIntervalHours(DEFAULT_ML));
+});
+
 btnLogFeed.addEventListener('click', () => openLogModal());
 logCancel.addEventListener('click', () => { logModal.hidden = true; editingFeedId = null; });
 
@@ -1208,6 +1213,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=16').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=17').catch(() => {});
   });
 }

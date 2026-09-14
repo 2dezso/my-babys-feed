@@ -51,6 +51,8 @@ Firestore: `households/{code}/feeds/{feedId}` → `{ type, timestamp, amountMl?,
 
 A pending feed (no `amountMl`) turns the home screen's hero card into a "Feeding now" state (tap it to add the amount) and shows "Add amount" in its Past Feeds row instead of a value.
 
+A pale-orange **"Start feed"** button sits above "Log a feed" as a one-tap shortcut for exactly this — no modal, just an instant pending feed at the current time, for logging fast mid-feed and filling in the amount later. It calls the same `startFeed()` path as the log modal's own "Start feed — add amount later" option.
+
 The home screen also shows time-since-last-feed live, and the total ml fed since midnight. "Past feeds" has three tabs: **Today** (calendar day, midnight to now), **1D** (rolling 24 hours), **7D** (rolling 7 days) — the sync query pulls up to the most recent 3000 feeds (roughly a year at typical feeding frequency) so both the history tabs and the Trends chart have enough to work with. Entries are grouped by calendar day with a header showing that day's total ml, so multi-day ranges (7D) show a running breakdown per day, not just one combined list.
 
 Firestore: `households/{code}/profile/info` → `{ name, dob, avatarTone }`

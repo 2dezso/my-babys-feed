@@ -16,6 +16,9 @@
   --shadow: 0 10px 24px rgba(87, 182, 96, 0.16);
   --shadow-soft: 0 4px 14px rgba(87, 182, 96, 0.12);
 
+  --quickstart-a: #ffb870;
+  --quickstart-b: #f0954f;
+
   --pink-a: #fdf1ec;
   --pink-b: #f8ded3;
   --pink-card: #fffaf8;
@@ -70,6 +73,9 @@
     --border: #2e4228;
     --shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
     --shadow-soft: 0 4px 14px rgba(0, 0, 0, 0.3);
+
+    --quickstart-a: #f0a25f;
+    --quickstart-b: #dd8340;
 
     --pink-a: #241715;
     --pink-b: #2c1917;
@@ -546,6 +552,13 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
 }
 .log-feed-btn:active { transform: scale(0.97); }
 .log-emoji { font-size: 2.1rem; }
+
+.log-feed-btn.quickstart-btn {
+  background: linear-gradient(135deg, var(--quickstart-a), var(--quickstart-b));
+  color: #fff;
+  margin-bottom: 10px;
+  box-shadow: 0 10px 24px rgba(240, 149, 79, 0.28);
+}
 
 .history-header { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
 .history-header h2 { margin: 0; }
