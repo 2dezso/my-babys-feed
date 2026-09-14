@@ -449,6 +449,7 @@ h2 { margin: 0 0 12px; font-size: 1.15rem; font-weight: 800; }
 .btn:active { transform: scale(0.97); }
 .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: var(--primary-ink); box-shadow: var(--shadow-soft); }
 .btn-secondary { background: var(--secondary); color: var(--ink); }
+.btn-danger { background: var(--danger); color: #fff; }
 
 .setup-choice { margin-top: 20px; }
 .or-divider { text-align: center; color: var(--muted); margin: 16px 0; font-size: 0.85rem; font-weight: 700; }

@@ -61,6 +61,10 @@ const btnShare = document.getElementById('btn-share');
 const shareCodeEl = document.getElementById('share-code');
 const shareClose = document.getElementById('share-close');
 
+const confirmDeleteModal = document.getElementById('confirm-delete-modal');
+const confirmDeleteCancel = document.getElementById('confirm-delete-cancel');
+const confirmDeleteConfirm = document.getElementById('confirm-delete-confirm');
+
 const profileTileLabel = document.getElementById('profile-tile-label');
 const profileTileIcon = document.getElementById('profile-tile-icon');
 const profileIconBig = document.getElementById('profile-icon-big');
@@ -128,6 +132,7 @@ let editingDateKey = null;
 let pendingPhotoDataUrl = null;
 let wheelScrollTimer = null;
 let editingFeedId = null;
+let pendingDeleteFeedId = null;
 
 function startOfToday() {
   const d = new Date();
@@ -606,7 +611,7 @@ function renderHistory() {
         <span class="history-gap-val">${gap}</span>
         <button class="history-delete" title="Delete">✕</button>
       `;
-      li.querySelector('.history-delete').addEventListener('click', () => deleteFeed(feed.id));
+      li.querySelector('.history-delete').addEventListener('click', () => openConfirmDeleteModal(feed.id));
       li.querySelector('.add-amount-btn')?.addEventListener('click', () => openLogModal(feed));
       historyList.appendChild(li);
     }
@@ -677,6 +682,22 @@ async function deleteFeed(id) {
     showToast('Could not delete');
   }
 }
+
+function openConfirmDeleteModal(feedId) {
+  pendingDeleteFeedId = feedId;
+  confirmDeleteModal.hidden = false;
+}
+
+confirmDeleteCancel.addEventListener('click', () => {
+  confirmDeleteModal.hidden = true;
+  pendingDeleteFeedId = null;
+});
+
+confirmDeleteConfirm.addEventListener('click', () => {
+  confirmDeleteModal.hidden = true;
+  if (pendingDeleteFeedId) deleteFeed(pendingDeleteFeedId);
+  pendingDeleteFeedId = null;
+});
 
 // --- Profile ---
 
@@ -1322,6 +1343,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=27').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=28').catch(() => {});
   });
 }

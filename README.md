@@ -55,6 +55,8 @@ A pale-orange **"Start feed"** button sits above "Log a feed" as a one-tap short
 
 The home screen also shows time-since-last-feed live, and the total ml fed since midnight. "Past feeds" has three tabs: **Today** (calendar day, midnight to now), **1D** (rolling 24 hours), **7D** (rolling 7 days) — the sync query pulls up to the most recent 3000 feeds (roughly a year at typical feeding frequency) so both the history tabs and the Trends chart have enough to work with. Entries are grouped by calendar day with a header showing that day's total ml, so multi-day ranges (7D) show a running breakdown per day, not just one combined list.
 
+Tapping a feed row's ✕ opens a confirm modal ("Delete this feed? This can't be undone.") rather than deleting immediately — the confirm button uses the new `.btn-danger` style (red, matching `--danger`) to visually signal it's destructive.
+
 Firestore: `households/{code}/profile/info` → `{ name, dob, avatarTone }`
 - `name`: baby's name, also shown as the Profile tile's label on the home screen and as the Trends chart's legend/summary label
 - `dob`: date of birth as a `YYYY-MM-DD` string. Drives the "X months/weeks old" age line shown under it in Profile, and is the age-zero point for the Trends chart
