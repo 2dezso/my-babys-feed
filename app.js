@@ -896,6 +896,7 @@ function renderCalendar() {
     btn.className = 'cal-day';
     btn.textContent = String(day);
     if (key === todayKey) btn.classList.add('today-marker');
+    if (key === profileDob) btn.classList.add('birthday');
     if (entry) {
       btn.classList.add('has-entry');
       if (entry.photoDataUrl) {
@@ -1213,6 +1214,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=20').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=21').catch(() => {});
   });
 }
