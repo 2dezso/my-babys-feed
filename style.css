@@ -420,6 +420,17 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
 .next-feed-label { font-size: 0.75rem; color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
 .next-feed-value { font-size: 1rem; font-weight: 800; }
 
+.bottle-pill {
+  width: 100%;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.next-feed-pill.bottle-expired { background: linear-gradient(135deg, var(--danger), #c94f47); }
+.next-feed-pill.bottle-expired .next-feed-label,
+.next-feed-pill.bottle-expired .next-feed-value { color: #fff; }
+
 .log-feed-btn {
   width: 100%;
   background: linear-gradient(135deg, var(--primary), var(--primary-2));

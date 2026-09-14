@@ -64,6 +64,11 @@ Firestore: `households/{code}/poos/{pooId}` → `{ timestamp, size?, note? }`
 - `note`: optional free-text note
 - "Log poo" opens a small modal (time defaults to now, but the date/time can be changed for backfilling) with the size chips and note field; same "since last" hero stat and Today/1D/7D history pattern as feeds, just without an amount column or day-total headers. Already covered by the wildcard Firestore rule above — no rules change needed for this one.
 
+Firestore: `households/{code}/bottle/info` → `{ madeAt }`
+- Single shared doc (not a log) — tapping the "Bottle made" pill on the Baby Feed screen sets `madeAt` to now, synced live to every caregiver's device
+- The pill counts down from a 2-hour "good for" window and turns red with "Expired — discard" once time's up
+- Tapping again at any time (even mid-countdown) restarts the timer from now — there's no separate reset/clear action, tapping always means "I just made a bottle"
+
 ## Trends & Facts
 The Trends screen (its own peach-themed page) plots a line chart comparing:
 - **World average**: a hardcoded reference curve of typical daily milk intake by age in weeks, built from commonly-published general feeding guidelines. This is **illustrative, not medical advice** — it's a static table in `app.js` (`WORLD_AVG_ML_BY_WEEK`), not a live data source (this is a static site with no backend beyond Firestore).

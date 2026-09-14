@@ -34,6 +34,8 @@ const sinceLastFeedEl = document.getElementById('since-last-feed');
 const lastFeedDetailEl = document.getElementById('last-feed-detail');
 const nextFeedTimeEl = document.getElementById('next-feed-time');
 const todayTotalEl = document.getElementById('today-total-value');
+const bottlePill = document.getElementById('bottle-pill');
+const bottleStatusEl = document.getElementById('bottle-status');
 const historyList = document.getElementById('history-list');
 const historyEmpty = document.getElementById('history-empty');
 const historyRange = document.getElementById('history-range');
@@ -97,6 +99,7 @@ let currentPooRange = 'today';
 let selectedAvatarTone = '';
 let profileDob = '';
 let selectedPooSize = '';
+let bottleMadeAt = null;
 let wheelScrollTimer = null;
 let editingFeedId = null;
 
@@ -161,6 +164,10 @@ function poosCollection(code) {
   return collection(db, 'households', code, 'poos');
 }
 
+function bottleDocRef(code) {
+  return doc(db, 'households', code, 'bottle', 'info');
+}
+
 function getHouseholdCode() {
   return localStorage.getItem(STORAGE_KEY);
 }
@@ -213,6 +220,7 @@ function enterApp(code) {
   listenToFeeds(code);
   listenToProfile(code);
   listenToPoos(code);
+  listenToBottle(code);
 }
 
 function listenToFeeds(code) {
@@ -464,6 +472,46 @@ function renderTodayTotal() {
     .reduce((sum, f) => sum + (f.amountMl || 0), 0);
   todayTotalEl.textContent = `${total}ml`;
 }
+
+const BOTTLE_GOOD_FOR_MS = 2 * 60 * 60 * 1000;
+
+function listenToBottle(code) {
+  onSnapshot(bottleDocRef(code), (snap) => {
+    const data = snap.data() || {};
+    bottleMadeAt = data.madeAt || null;
+    renderBottleStatus();
+  }, (err) => {
+    console.error(err);
+  });
+}
+
+function renderBottleStatus() {
+  if (!bottleMadeAt) {
+    bottleStatusEl.textContent = 'Tap to start';
+    bottlePill.classList.remove('bottle-expired');
+    return;
+  }
+  const remaining = BOTTLE_GOOD_FOR_MS - (Date.now() - bottleMadeAt);
+  if (remaining <= 0) {
+    bottleStatusEl.textContent = 'Expired — discard';
+    bottlePill.classList.add('bottle-expired');
+  } else {
+    bottleStatusEl.textContent = `${durationString(remaining)} left`;
+    bottlePill.classList.remove('bottle-expired');
+  }
+}
+
+bottlePill.addEventListener('click', async () => {
+  const code = getHouseholdCode();
+  if (!code) return;
+  try {
+    await setDoc(bottleDocRef(code), { madeAt: Date.now() }, { merge: true });
+    showToast('Bottle timer started');
+  } catch (e) {
+    console.error(e);
+    showToast('Could not save — check connection');
+  }
+});
 
 function dayKeyForTimestamp(ts) {
   const d = new Date(ts);
@@ -900,7 +948,7 @@ joinForm.addEventListener('submit', (e) => {
   enterApp(code);
 });
 
-setInterval(() => { renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderProfileAge(); }, 15000);
+setInterval(() => { renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderProfileAge(); renderBottleStatus(); }, 15000);
 
 renderTrendsChart();
 
@@ -913,6 +961,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=14').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=15').catch(() => {});
   });
 }
