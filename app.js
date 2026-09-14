@@ -631,8 +631,15 @@ function renderHistory() {
         <span class="history-gap-val">${gap}</span>
         <button class="history-delete" title="Delete">✕</button>
       `;
-      li.querySelector('.history-delete').addEventListener('click', () => openConfirmDeleteModal(feed.id));
-      li.querySelector('.add-amount-btn')?.addEventListener('click', () => openLogModal(feed));
+      li.addEventListener('click', () => openLogModal(feed));
+      li.querySelector('.history-delete').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openConfirmDeleteModal(feed.id);
+      });
+      li.querySelector('.add-amount-btn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openLogModal(feed);
+      });
       historyList.appendChild(li);
     }
   }
@@ -692,7 +699,7 @@ async function finishFeed(id, timestamp, amountMl, intervalHours) {
   if (!code) return;
   try {
     await updateDoc(doc(db, 'households', code, 'feeds', id), { timestamp, amountMl, intervalHours });
-    showToast('Amount saved');
+    showToast('Feed updated');
   } catch (e) {
     console.error(e);
     showToast('Could not save — check connection');
@@ -1286,9 +1293,12 @@ intervalChips.querySelectorAll('.chip').forEach(chip => {
 
 function openLogModal(feed) {
   editingFeedId = feed ? feed.id : null;
-  intervalOverridden = false;
-  selectedMl = DEFAULT_ML;
-  selectedIntervalHours = computeAutoIntervalHours(DEFAULT_ML);
+  const isPending = !!feed && feed.amountMl == null;
+  const startMl = feed?.amountMl ?? DEFAULT_ML;
+
+  intervalOverridden = !!feed && !isPending;
+  selectedMl = startMl;
+  selectedIntervalHours = feed?.intervalHours || computeAutoIntervalHours(startMl);
 
   const baseTime = feed ? new Date(feed.timestamp) : new Date();
   feedDateInput.value = `${baseTime.getFullYear()}-${String(baseTime.getMonth() + 1).padStart(2, '0')}-${String(baseTime.getDate()).padStart(2, '0')}`;
@@ -1296,13 +1306,14 @@ function openLogModal(feed) {
   updateDateLabel(feedDateInput, feedDateLabel);
   feedTimeInput.value = `${String(baseTime.getHours()).padStart(2, '0')}:${String(baseTime.getMinutes()).padStart(2, '0')}`;
 
-  logModalTitle.textContent = feed ? 'Add amount' : 'Log a feed';
-  logConfirm.textContent = feed ? 'Save amount' : 'Log feed';
+  logModalTitle.textContent = isPending ? 'Add amount' : (feed ? 'Edit feed' : 'Log a feed');
+  logConfirm.textContent = isPending ? 'Save amount' : (feed ? 'Save' : 'Log feed');
 
   logModal.hidden = false;
-  scrollWheelTo(DEFAULT_ML);
-  onAmountChanged(DEFAULT_ML);
+  scrollWheelTo(startMl);
+  onAmountChanged(startMl);
   updateWheelActiveItem();
+  highlightIntervalChip();
 }
 
 function updateDateLabel(input, label) {
@@ -1400,6 +1411,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=31').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=32').catch(() => {});
   });
 }

@@ -663,8 +663,11 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
 #history-list li {
   padding: 13px 16px;
   border-top: 1px solid var(--border);
+  cursor: pointer;
 }
+#history-list li:active { background: var(--secondary); }
 #history-list li:first-child { border-top: none; }
+#history-list li.day-group-header { cursor: default; }
 
 #history-list li.day-group-header {
   display: flex;

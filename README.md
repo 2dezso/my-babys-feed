@@ -55,7 +55,7 @@ The pale-orange **"Start feed"** pill above "Log a feed" is the one-tap way to l
 
 The home screen also shows time-since-last-feed live, and the total ml fed since midnight. "Past feeds" has three tabs: **Today** (calendar day, midnight to now), **1D** (rolling 24 hours), **7D** (rolling 7 days) — the sync query pulls up to the most recent 3000 feeds (roughly a year at typical feeding frequency) so both the history tabs and the Trends chart have enough to work with. Entries are grouped by calendar day with a header showing that day's total ml, so multi-day ranges (7D) show a running breakdown per day, not just one combined list.
 
-Tapping a feed row's ✕ opens a confirm modal ("Delete this feed? This can't be undone.") rather than deleting immediately — the confirm button uses the new `.btn-danger` style (red, matching `--danger`) to visually signal it's destructive.
+Tapping anywhere on a feed row (other than the ✕) opens the same log modal in edit mode — pre-filled with that feed's time and amount — so you can correct either one, reusing `finishFeed()`. Tapping the ✕ opens a confirm modal ("Delete this feed? This can't be undone.") rather than deleting immediately — the confirm button uses the `.btn-danger` style (red, matching `--danger`) to visually signal it's destructive.
 
 Firestore: `households/{code}/profile/info` → `{ name, dob, avatarTone }`
 - `name`: baby's name, also shown as the Profile tile's label on the home screen and as the Trends chart's legend/summary label
