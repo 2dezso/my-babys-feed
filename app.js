@@ -310,22 +310,25 @@ function ageString(dobStr) {
   const now = new Date();
   if (dob.getTime() > now.getTime()) return '';
 
-  // Exact calendar months: find the largest N where dob + N months hasn't
-  // passed `now` yet, using the Date constructor's native month rollover
-  // (handles e.g. 31st-of-the-month births against shorter months safely).
-  let months = (now.getFullYear() - dob.getFullYear()) * 12 + (now.getMonth() - dob.getMonth());
-  let anchor = new Date(dob.getFullYear(), dob.getMonth() + months, dob.getDate());
-  while (anchor.getTime() > now.getTime() && months > 0) {
-    months -= 1;
-    anchor = new Date(dob.getFullYear(), dob.getMonth() + months, dob.getDate());
-  }
+  const diffDays = Math.floor((now.getTime() - dob.getTime()) / 86400000);
 
-  if (months >= 1) {
+  // Stay in weeks through the first 8 weeks regardless of calendar month
+  // length, then switch to months — otherwise a baby born in a 31-day month
+  // could flip to "1 month" a few days before a clean "5 weeks old" mark.
+  if (diffDays >= 56) {
+    // Exact calendar months: find the largest N where dob + N months hasn't
+    // passed `now` yet, using the Date constructor's native month rollover
+    // (handles e.g. 31st-of-the-month births against shorter months safely).
+    let months = (now.getFullYear() - dob.getFullYear()) * 12 + (now.getMonth() - dob.getMonth());
+    let anchor = new Date(dob.getFullYear(), dob.getMonth() + months, dob.getDate());
+    while (anchor.getTime() > now.getTime() && months > 0) {
+      months -= 1;
+      anchor = new Date(dob.getFullYear(), dob.getMonth() + months, dob.getDate());
+    }
     const days = Math.round((now.getTime() - anchor.getTime()) / 86400000);
     return `${months} month${months !== 1 ? 's' : ''}${days > 0 ? `, ${days}d` : ''} old`;
   }
 
-  const diffDays = Math.floor((now.getTime() - dob.getTime()) / 86400000);
   const weeks = Math.floor(diffDays / 7);
   if (weeks >= 1) {
     const remDays = diffDays - weeks * 7;
@@ -1319,6 +1322,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=25').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=26').catch(() => {});
   });
 }
