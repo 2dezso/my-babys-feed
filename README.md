@@ -72,12 +72,12 @@ Firestore: `households/{code}/bottle/info` → `{ madeAt }`
 - Tapping again at any time (even mid-countdown) restarts the timer from now — there's no separate reset/clear action, tapping always means "I just made a bottle"
 
 ## Trends & Facts
-The Trends screen (its own peach-themed page) has three line charts, all by age in months (0–12):
-1. **Average weight by age** — world-average-only reference curve (`WORLD_AVG_WEIGHT_KG_BY_MONTH` in `app.js`), no personalization since the app doesn't track the baby's weight
-2. **Average milk intake by age** — world-average-only reference curve (`WORLD_AVG_ML_BY_MONTH`), same idea
-3. **Your baby's trend** (own section below, divided by a heading) — just your baby's own milk intake, no reference line. Feeds are bucketed by the baby's age in months (from Profile's date of birth) and averaged to a daily rate per month, so the line is a monthly average rather than noisy daily totals
+The Trends screen (its own peach-themed page) has three line charts, all ml-based:
+1. **Average milk intake by weight** — world-average-only reference (`app.js`'s `weightMilkRefPoints()`, derived by pairing `WORLD_AVG_WEIGHT_KG_BY_MONTH` and `WORLD_AVG_ML_BY_MONTH` at the same age, so it doesn't need its own separate table). X-axis 3–9kg
+2. **Average milk intake by age** — world-average-only reference curve (`WORLD_AVG_ML_BY_MONTH`), X-axis 0–12 months
+3. **Your baby's trend** (own section below, divided by a heading) — just your baby's own milk intake, no reference line, X-axis 0–12 months. Feeds are bucketed by the baby's age in months (from Profile's date of birth) and averaged to a daily rate per month, so the line is a monthly average rather than noisy daily totals. Underneath, a sentence compares that month's average to the age-based world average (chart 2), phrased as "about/a little/quite a bit more or less than", always paired with a reminder that it's a general average and every baby differs
 
-Both reference tables are hardcoded illustrative guideline figures, **not medical advice** and not specific to sex — this is a static site with no live data source beyond Firestore. Chart 3 requires a date of birth in Profile; without one, a hint prompts you to add it (charts 1–2 don't need it, since they're pure reference).
+Both reference tables are hardcoded illustrative guideline figures, **not medical advice** and not specific to sex — this is a static site with no live data source beyond Firestore. Chart 3 (and its comparison sentence) requires a date of birth in Profile; without one, a hint prompts you to add it (charts 1–2 don't need it, since they're pure reference).
 
 ## Milestones
 The Milestones screen (its own lavender-themed page) is a month calendar, styled after Instagram's Stories Archive — one entry per day, days with an entry show a thumbnail circle, tap any day to add/edit/delete it.

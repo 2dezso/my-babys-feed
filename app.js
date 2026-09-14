@@ -70,7 +70,7 @@ const profileDobInput = document.getElementById('profile-dob');
 const profileAgeEl = document.getElementById('profile-age');
 const profileSaveBtn = document.getElementById('profile-save');
 
-const trendsChartWeightEl = document.getElementById('trends-chart-weight');
+const trendsChartMilkByWeightEl = document.getElementById('trends-chart-milk-by-weight');
 const trendsChartMilkEl = document.getElementById('trends-chart-milk');
 const trendsChartBabyEl = document.getElementById('trends-chart-baby');
 const trendsSummaryEl = document.getElementById('trends-summary');
@@ -759,7 +759,24 @@ function computeBabyMonthlyAverages() {
   return points;
 }
 
-function buildLineChartSvg({ refTable, refKey, babyPoints, maxMonth, maxVal, gridValues, unitFormat, showRef = true }) {
+function ageRefPoints(table, key) {
+  const pts = [];
+  for (let mo = 0; mo <= 12; mo++) pts.push({ x: mo, y: interpolateAtMonth(table, mo, key) });
+  return pts;
+}
+
+function weightMilkRefPoints() {
+  const pts = [];
+  for (let mo = 0; mo <= 12; mo += 0.25) {
+    pts.push({
+      x: interpolateAtMonth(WORLD_AVG_WEIGHT_KG_BY_MONTH, mo, 'kg'),
+      y: interpolateAtMonth(WORLD_AVG_ML_BY_MONTH, mo, 'ml'),
+    });
+  }
+  return pts;
+}
+
+function buildLineChartSvg({ refPoints, babyPoints, xMin = 0, xMax, yMax, yGridValues, yTickFormat, xTicks, xTickFormat, showRef = true }) {
   const width = 300;
   const height = 170;
   const padLeft = 34;
@@ -769,31 +786,26 @@ function buildLineChartSvg({ refTable, refKey, babyPoints, maxMonth, maxVal, gri
   const plotW = width - padLeft - padRight;
   const plotH = height - padTop - padBottom;
 
-  const x = (month) => padLeft + (Math.min(month, maxMonth) / maxMonth) * plotW;
-  const y = (val) => padTop + plotH - (Math.min(val, maxVal) / maxVal) * plotH;
+  const x = (val) => padLeft + ((Math.min(Math.max(val, xMin), xMax) - xMin) / (xMax - xMin)) * plotW;
+  const y = (val) => padTop + plotH - (Math.min(val, yMax) / yMax) * plotH;
 
-  const refPoints = [];
-  if (showRef) {
-    for (let mo = 0; mo <= maxMonth; mo++) refPoints.push(`${x(mo)},${y(interpolateAtMonth(refTable, mo, refKey))}`);
-  }
-
-  const gridLines = gridValues.map(val => `
+  const gridLines = yGridValues.map(val => `
     <line x1="${padLeft}" y1="${y(val)}" x2="${width - padRight}" y2="${y(val)}" stroke="var(--border)" stroke-width="1" />
-    <text x="${padLeft - 5}" y="${y(val) + 3}" text-anchor="end" font-size="8" fill="var(--muted)">${unitFormat(val)}</text>
+    <text x="${padLeft - 5}" y="${y(val) + 3}" text-anchor="end" font-size="8" fill="var(--muted)">${yTickFormat(val)}</text>
   `).join('');
 
-  const xLabels = [0, 3, 6, 9, 12].map(mo => `
-    <text x="${x(mo)}" y="${height - 4}" text-anchor="middle" font-size="8" fill="var(--muted)">${mo === 0 ? 'Birth' : mo + 'mo'}</text>
+  const xLabels = xTicks.map(t => `
+    <text x="${x(t)}" y="${height - 4}" text-anchor="middle" font-size="8" fill="var(--muted)">${xTickFormat(t)}</text>
   `).join('');
 
+  const refLine = showRef && refPoints
+    ? `<polyline points="${refPoints.map(p => `${x(p.x)},${y(p.y)}`).join(' ')}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4,3" />`
+    : '';
   const babyPolyline = babyPoints && babyPoints.length > 1
-    ? `<polyline points="${babyPoints.map(p => `${x(p.month)},${y(p.ml)}`).join(' ')}" fill="none" stroke="var(--primary)" stroke-width="2.5" />`
+    ? `<polyline points="${babyPoints.map(p => `${x(p.x)},${y(p.y)}`).join(' ')}" fill="none" stroke="var(--primary)" stroke-width="2.5" />`
     : '';
   const babyDots = babyPoints
-    ? babyPoints.map(p => `<circle cx="${x(p.month)}" cy="${y(p.ml)}" r="2.8" fill="var(--primary)" />`).join('')
-    : '';
-  const refLine = showRef
-    ? `<polyline points="${refPoints.join(' ')}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4,3" />`
+    ? babyPoints.map(p => `<circle cx="${x(p.x)}" cy="${y(p.y)}" r="2.8" fill="var(--primary)" />`).join('')
     : '';
 
   return `
@@ -807,44 +819,59 @@ function buildLineChartSvg({ refTable, refKey, babyPoints, maxMonth, maxVal, gri
   `;
 }
 
-function renderTrendsChart() {
-  if (!trendsChartWeightEl) return;
+function comparisonPhrase(babyAvg, worldAvg) {
+  const diffPct = ((babyAvg - worldAvg) / worldAvg) * 100;
+  if (Math.abs(diffPct) < 10) return 'about the same as';
+  if (diffPct >= 25) return 'quite a bit more than';
+  if (diffPct >= 10) return 'a little more than';
+  if (diffPct <= -25) return 'quite a bit less than';
+  return 'a little less than';
+}
 
-  trendsChartWeightEl.innerHTML = buildLineChartSvg({
-    refTable: WORLD_AVG_WEIGHT_KG_BY_MONTH,
-    refKey: 'kg',
-    maxMonth: 12,
-    maxVal: 10,
-    gridValues: [0, 3, 6, 9],
-    unitFormat: (v) => `${v}kg`,
+function renderTrendsChart() {
+  if (!trendsChartMilkByWeightEl) return;
+
+  trendsChartMilkByWeightEl.innerHTML = buildLineChartSvg({
+    refPoints: weightMilkRefPoints(),
+    xMin: 3,
+    xMax: 9,
+    yMax: 1100,
+    yGridValues: [0, 300, 600, 900],
+    yTickFormat: (v) => `${v}`,
+    xTicks: [3, 5, 7, 9],
+    xTickFormat: (v) => `${v}kg`,
   });
 
   trendsChartMilkEl.innerHTML = buildLineChartSvg({
-    refTable: WORLD_AVG_ML_BY_MONTH,
-    refKey: 'ml',
-    maxMonth: 12,
-    maxVal: 1100,
-    gridValues: [0, 300, 600, 900],
-    unitFormat: (v) => `${v}`,
+    refPoints: ageRefPoints(WORLD_AVG_ML_BY_MONTH, 'ml'),
+    xMax: 12,
+    yMax: 1100,
+    yGridValues: [0, 300, 600, 900],
+    yTickFormat: (v) => `${v}`,
+    xTicks: [0, 3, 6, 9, 12],
+    xTickFormat: (mo) => (mo === 0 ? 'Birth' : mo + 'mo'),
   });
 
   trendsDobHintEl.hidden = !!profileDob;
-  const babyPoints = computeBabyMonthlyAverages();
+  const babyPoints = computeBabyMonthlyAverages().map(p => ({ x: p.month, y: p.ml }));
   trendsChartBabyEl.innerHTML = buildLineChartSvg({
     babyPoints,
-    maxMonth: 12,
-    maxVal: 1100,
-    gridValues: [0, 300, 600, 900],
-    unitFormat: (v) => `${v}`,
+    xMax: 12,
+    yMax: 1100,
+    yGridValues: [0, 300, 600, 900],
+    yTickFormat: (v) => `${v}`,
+    xTicks: [0, 3, 6, 9, 12],
+    xTickFormat: (mo) => (mo === 0 ? 'Birth' : mo + 'mo'),
     showRef: false,
   });
 
   if (babyPoints.length > 0) {
     const latest = babyPoints[babyPoints.length - 1];
-    const worldAtLatest = Math.round(interpolateAtMonth(WORLD_AVG_ML_BY_MONTH, latest.month, 'ml'));
-    const babyAvg = Math.round(latest.ml);
+    const worldAtLatest = interpolateAtMonth(WORLD_AVG_ML_BY_MONTH, latest.x, 'ml');
+    const babyAvg = latest.y;
     const name = trendsLegendNameEl.textContent || 'Your baby';
-    trendsSummaryEl.textContent = `This month: ${name} ~${babyAvg}ml/day vs world average ~${worldAtLatest}ml/day`;
+    const phrase = comparisonPhrase(babyAvg, worldAtLatest);
+    trendsSummaryEl.textContent = `${name} is averaging about ${Math.round(babyAvg)}ml/day this month — ${phrase} the ${Math.round(worldAtLatest)}ml/day average for babies around this age. This is just a general average though — every baby is different, so there's no need to worry if yours doesn't match.`;
   } else {
     trendsSummaryEl.textContent = '';
   }
@@ -1269,6 +1296,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=22').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=23').catch(() => {});
   });
 }
