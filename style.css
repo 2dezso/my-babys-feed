@@ -289,8 +289,10 @@ body {
   max-width: 480px;
   margin: 0 auto;
 }
-.muted.trends-summary { font-weight: 700; color: var(--ink); font-size: 0.95rem; margin: 4px 0 0; min-height: 1.2em; }
-.card.trends-card { width: 100%; margin: 14px 0 0; padding: 18px 14px; box-sizing: border-box; }
+.muted.trends-summary { font-weight: 700; color: var(--ink); font-size: 0.95rem; margin: 10px 0 0; min-height: 1.2em; }
+.card.trends-card { width: 100%; margin: 14px 0 0; padding: 18px 14px; box-sizing: border-box; text-align: left; }
+.trends-chart-title { margin: 0 0 6px; font-size: 0.95rem; text-align: center; }
+.trends-section-heading { width: 100%; text-align: center; font-size: 1.05rem; margin: 28px 0 0; padding-top: 16px; border-top: 1px solid var(--border); }
 .trends-svg { width: 100%; height: auto; display: block; }
 .trends-legend { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
 .legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; color: var(--muted); }

@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f8f0">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=21">
+<link rel="manifest" href="manifest.json?v=22">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=21">
+<link rel="stylesheet" href="style.css?v=22">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -183,19 +183,37 @@
   </header>
   <main class="trends-main">
     <span class="placeholder-icon home-circle-peach">📈</span>
-    <h2>Milk intake vs age</h2>
-    <p id="trends-summary" class="muted trends-summary"></p>
+    <h2>Trends &amp; Facts</h2>
 
     <div class="card trends-card">
-      <div id="trends-chart"></div>
+      <h3 class="trends-chart-title">Average weight by age</h3>
+      <div id="trends-chart-weight"></div>
       <div class="trends-legend">
         <span class="legend-item"><span class="legend-swatch legend-swatch-ref"></span>World average</span>
+      </div>
+    </div>
+
+    <div class="card trends-card">
+      <h3 class="trends-chart-title">Average milk intake by age</h3>
+      <div id="trends-chart-milk"></div>
+      <div class="trends-legend">
+        <span class="legend-item"><span class="legend-swatch legend-swatch-ref"></span>World average</span>
+      </div>
+    </div>
+
+    <h2 class="trends-section-heading">Your baby's trend</h2>
+
+    <div class="card trends-card">
+      <h3 class="trends-chart-title">Milk intake trend</h3>
+      <div id="trends-chart-baby"></div>
+      <p id="trends-summary" class="muted trends-summary"></p>
+      <div class="trends-legend">
         <span class="legend-item"><span class="legend-swatch legend-swatch-baby"></span><span id="trends-legend-name">Your baby</span></span>
       </div>
     </div>
 
-    <p id="trends-dob-hint" class="muted trends-hint" hidden>Add your baby's date of birth in Profile to plot their trend by age.</p>
-    <p class="muted trends-disclaimer">Illustrative general guideline based on typical published feeding ranges — not medical advice. Every baby is different; check with your pediatrician about what's right for yours.</p>
+    <p id="trends-dob-hint" class="muted trends-hint" hidden>Add your baby's date of birth in Profile to see their own trend here.</p>
+    <p class="muted trends-disclaimer">Illustrative general guideline based on typical published ranges — not medical advice, and not specific to your baby's sex. Every baby is different; check with your pediatrician about what's right for yours.</p>
   </main>
 </div>
 
@@ -371,6 +389,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=21"></script>
+<script type="module" src="app.js?v=22"></script>
 </body>
 </html>

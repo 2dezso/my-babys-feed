@@ -72,11 +72,12 @@ Firestore: `households/{code}/bottle/info` → `{ madeAt }`
 - Tapping again at any time (even mid-countdown) restarts the timer from now — there's no separate reset/clear action, tapping always means "I just made a bottle"
 
 ## Trends & Facts
-The Trends screen (its own peach-themed page) plots a line chart comparing:
-- **World average**: a hardcoded reference curve of typical daily milk intake by age in weeks, built from commonly-published general feeding guidelines. This is **illustrative, not medical advice** — it's a static table in `app.js` (`WORLD_AVG_ML_BY_WEEK`), not a live data source (this is a static site with no backend beyond Firestore).
-- **Your baby**: computed from actual feed data — feeds are bucketed by the baby's age in weeks (from Profile's date of birth) and averaged to a daily rate per week, so the line is a weekly average rather than noisy daily totals.
+The Trends screen (its own peach-themed page) has three line charts, all by age in months (0–12):
+1. **Average weight by age** — world-average-only reference curve (`WORLD_AVG_WEIGHT_KG_BY_MONTH` in `app.js`), no personalization since the app doesn't track the baby's weight
+2. **Average milk intake by age** — world-average-only reference curve (`WORLD_AVG_ML_BY_MONTH`), same idea
+3. **Your baby's trend** (own section below, divided by a heading) — just your baby's own milk intake, no reference line. Feeds are bucketed by the baby's age in months (from Profile's date of birth) and averaged to a daily rate per month, so the line is a monthly average rather than noisy daily totals
 
-Requires a date of birth to be set in Profile; without one, only the reference line shows and a hint prompts you to add it.
+Both reference tables are hardcoded illustrative guideline figures, **not medical advice** and not specific to sex — this is a static site with no live data source beyond Firestore. Chart 3 requires a date of birth in Profile; without one, a hint prompts you to add it (charts 1–2 don't need it, since they're pure reference).
 
 ## Milestones
 The Milestones screen (its own lavender-themed page) is a month calendar, styled after Instagram's Stories Archive — one entry per day, days with an entry show a thumbnail circle, tap any day to add/edit/delete it.
