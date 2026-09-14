@@ -5,16 +5,16 @@
   --card: #fffdf8;
   --ink: #34392d;
   --muted: #8b9a80;
-  --primary: #7fa873;
-  --primary-2: #5e8c56;
+  --primary: #6fb868;
+  --primary-2: #4c9a4e;
   --primary-ink: #ffffff;
   --secondary: #edf2e6;
   --border: #dde6d2;
   --danger: #e0685f;
   --radius: 22px;
   --radius-lg: 28px;
-  --shadow: 0 10px 24px rgba(94, 140, 86, 0.16);
-  --shadow-soft: 0 4px 14px rgba(94, 140, 86, 0.12);
+  --shadow: 0 10px 24px rgba(76, 154, 78, 0.18);
+  --shadow-soft: 0 4px 14px rgba(76, 154, 78, 0.13);
 
   --quickstart-a: #f9dcc0;
   --quickstart-b: #e9b48a;
@@ -67,9 +67,9 @@
     --card: #232819;
     --ink: #ece7da;
     --muted: #a6af99;
-    --primary: #93b686;
-    --primary-2: #79a06c;
-    --primary-ink: #12170d;
+    --primary: #86c67a;
+    --primary-2: #67aa5e;
+    --primary-ink: #10160b;
     --secondary: #2b3121;
     --border: #3a4230;
     --shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
@@ -254,7 +254,7 @@ body {
   font-size: 2.6rem;
   box-shadow: var(--shadow-soft);
 }
-.home-circle-green { background: linear-gradient(135deg, #7fa873, #5e8c56); }
+.home-circle-green { background: linear-gradient(135deg, #6fb868, #4c9a4e); }
 .home-circle-lavender { background: linear-gradient(135deg, #b9a6e0, #9c86cf); }
 .home-circle-peach { background: linear-gradient(135deg, #f5b98a, #f0985f); }
 .home-circle-gold { background: linear-gradient(135deg, #f0cf8a, #e0ab5f); }
