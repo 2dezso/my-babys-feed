@@ -752,11 +752,22 @@ function computeBabyMonthlyAverages() {
   for (const [monthIndex, total] of totals) {
     const monthStart = dobTs + monthIndex * MONTH_MS;
     const monthEnd = monthStart + MONTH_MS;
-    const elapsedDays = Math.max(1, Math.round((Math.min(now, monthEnd) - monthStart) / 86400000));
+    const elapsedDays = inclusiveCalendarDays(monthStart, Math.min(now, monthEnd));
     points.push({ month: monthIndex, ml: total / elapsedDays });
   }
   points.sort((a, b) => a.month - b.month);
   return points;
+}
+
+// Counts calendar dates touched from startMs through endMs, inclusive — e.g. a baby
+// born Monday morning and it's now Wednesday afternoon has fed across 3 calendar
+// dates (Mon/Tue/Wed), not the ~2.x raw elapsed days between the two timestamps.
+function inclusiveCalendarDays(startMs, endMs) {
+  const startDay = new Date(startMs);
+  startDay.setHours(0, 0, 0, 0);
+  const endDay = new Date(endMs);
+  endDay.setHours(0, 0, 0, 0);
+  return Math.max(1, Math.round((endDay.getTime() - startDay.getTime()) / 86400000) + 1);
 }
 
 function ageRefPoints(table, key) {
@@ -1296,6 +1307,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=23').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=24').catch(() => {});
   });
 }
