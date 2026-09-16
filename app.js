@@ -245,6 +245,7 @@ const SCREENS = {
 function showScreen(name) {
   Object.values(SCREENS).forEach(el => { el.hidden = true; });
   (SCREENS[name] || SCREENS.feed).hidden = false;
+  feedbackFab.hidden = name !== 'home';
 }
 
 function applyRouteFromHash() {
@@ -265,7 +266,6 @@ document.querySelectorAll('[data-nav]').forEach(el => {
 
 function enterApp(code) {
   setupScreen.hidden = true;
-  feedbackFab.hidden = false;
   if (!(location.hash.slice(1) in SCREENS)) {
     history.replaceState(null, '', '#feed');
   }
@@ -1475,6 +1475,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=36').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=37').catch(() => {});
   });
 }

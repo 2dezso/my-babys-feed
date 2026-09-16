@@ -77,7 +77,7 @@ Firestore: `households/{code}/bottle/info` → `{ madeAt }`
 The pill is now a `<div>` wrapping two separate `<button>`s (main tap area + the 🕐 adjust button) rather than being one button itself, since a `<button>` can't contain another interactive control.
 
 ## Feedback
-A bouncing 💬 button floats in the bottom-right corner on every screen once you're in a household (hidden on the join/setup screen). Tapping it opens a small modal with an Idea/Problem toggle and a message box.
+A bouncing 💬 button floats in the bottom-right corner of the home screen only, for now. Tapping it opens a small modal with an Idea/Problem toggle and a message box.
 
 Firestore: `households/{code}/feedback/{feedbackId}` → `{ type, message, timestamp }`
 - `type`: `idea` or `problem`, picked via the two chips (defaults to `idea`)
