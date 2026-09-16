@@ -11,9 +11,11 @@ try { enableIndexedDbPersistence(db); } catch (e) { /* multiple tabs open, fine 
 
 const STORAGE_KEY = 'babyfeed_household_code';
 const DEFAULT_ML = 90;
-const ML_MIN = 20;
+const ML_MIN = 10;
 const ML_MAX = 300;
-const ML_STEP = 10;
+const ML_STEP_LOW = 5;
+const ML_STEP_HIGH_THRESHOLD = 120;
+const ML_STEP_HIGH = 10;
 const WHEEL_ITEM_HEIGHT = 40;
 
 const setupScreen = document.getElementById('setup-screen');
@@ -69,6 +71,8 @@ const confirmDeleteModal = document.getElementById('confirm-delete-modal');
 const confirmDeleteCancel = document.getElementById('confirm-delete-cancel');
 const confirmDeleteConfirm = document.getElementById('confirm-delete-confirm');
 
+const appTitleEl = document.getElementById('app-title');
+const homeTitleEl = document.getElementById('home-title');
 const profileTileLabel = document.getElementById('profile-tile-label');
 const profileTileIcon = document.getElementById('profile-tile-icon');
 const profileIconBig = document.getElementById('profile-icon-big');
@@ -122,7 +126,7 @@ let selectedIntervalHours = 3;
 let intervalOverridden = false;
 let latestFeeds = [];
 let latestPoos = [];
-let currentRange = 'today';
+let currentRange = '1d';
 let currentPooRange = 'today';
 let selectedAvatarTone = '';
 let profileDob = '';
@@ -284,6 +288,10 @@ function listenToProfile(code) {
     selectedAvatarTone = data.avatarTone || '';
     profileTileLabel.textContent = data.name || 'Profile';
     trendsLegendNameEl.textContent = data.name || 'Your baby';
+    const babyTitleName = data.name || 'Charlie';
+    const possessive = babyTitleName + (babyTitleName.endsWith('s') ? '’' : '’s');
+    appTitleEl.textContent = `${possessive} First Year`;
+    homeTitleEl.textContent = `${possessive} First Year`;
     updateAvatarIcons();
     highlightToneChip();
     renderProfileAge();
@@ -1220,7 +1228,7 @@ milestoneDelete.addEventListener('click', async () => {
 // --- Amount wheel picker ---
 
 const wheelValues = [];
-for (let v = ML_MIN; v <= ML_MAX; v += ML_STEP) wheelValues.push(v);
+for (let v = ML_MIN; v <= ML_MAX; v += (v < ML_STEP_HIGH_THRESHOLD ? ML_STEP_LOW : ML_STEP_HIGH)) wheelValues.push(v);
 
 wheelValues.forEach((v) => {
   const item = document.createElement('div');
@@ -1231,7 +1239,7 @@ wheelValues.forEach((v) => {
 });
 
 function wheelIndexForValue(v) {
-  return Math.round((v - ML_MIN) / ML_STEP);
+  return wheelValues.indexOf(v);
 }
 
 function scrollWheelTo(value, smooth = false) {
@@ -1411,6 +1419,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=32').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=33').catch(() => {});
   });
 }
