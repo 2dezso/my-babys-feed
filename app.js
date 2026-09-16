@@ -17,6 +17,9 @@ const ML_STEP_LOW = 5;
 const ML_STEP_HIGH_THRESHOLD = 120;
 const ML_STEP_HIGH = 10;
 const WHEEL_ITEM_HEIGHT = 40;
+const INTERVAL_MIN = 1;
+const INTERVAL_MAX = 8;
+const INTERVAL_STEP = 0.5;
 
 const setupScreen = document.getElementById('setup-screen');
 const appScreen = document.getElementById('app-screen');
@@ -58,6 +61,7 @@ const feedTimeInput = document.getElementById('feed-time');
 const amountChips = document.getElementById('amount-chips');
 const mlWheelTrack = document.getElementById('ml-wheel-track');
 const intervalChips = document.getElementById('interval-chips');
+const intervalWheelTrack = document.getElementById('interval-wheel-track');
 const intervalAutoTag = document.getElementById('interval-auto-tag');
 const logCancel = document.getElementById('log-cancel');
 const logConfirm = document.getElementById('log-confirm');
@@ -147,6 +151,7 @@ let currentMonthUnsub = null;
 let editingDateKey = null;
 let pendingPhotoDataUrl = null;
 let wheelScrollTimer = null;
+let intervalWheelScrollTimer = null;
 let editingFeedId = null;
 let pendingDeleteFeedId = null;
 
@@ -1343,6 +1348,7 @@ function highlightIntervalChip() {
     c.classList.toggle('selected', Number(c.dataset.hours) === selectedIntervalHours);
   });
   intervalAutoTag.hidden = intervalOverridden;
+  scrollIntervalWheelTo(selectedIntervalHours);
 }
 
 intervalChips.querySelectorAll('.chip').forEach(chip => {
@@ -1351,6 +1357,58 @@ intervalChips.querySelectorAll('.chip').forEach(chip => {
     intervalOverridden = true;
     highlightIntervalChip();
   });
+});
+
+// --- Interval wheel picker ---
+
+const intervalWheelValues = [];
+for (let v = INTERVAL_MIN; v <= INTERVAL_MAX; v += INTERVAL_STEP) intervalWheelValues.push(v);
+
+function formatIntervalLabel(hours) {
+  const whole = Math.floor(hours);
+  return hours % 1 === 0 ? `${whole}h` : `${whole}h 30m`;
+}
+
+intervalWheelValues.forEach((v) => {
+  const item = document.createElement('div');
+  item.className = 'wheel-item';
+  item.textContent = formatIntervalLabel(v);
+  item.dataset.value = v;
+  intervalWheelTrack.appendChild(item);
+});
+
+function intervalWheelIndexForValue(v) {
+  return Math.round((v - INTERVAL_MIN) / INTERVAL_STEP);
+}
+
+function scrollIntervalWheelTo(value, smooth = false) {
+  const index = intervalWheelIndexForValue(value);
+  intervalWheelTrack.scrollTo({ top: index * WHEEL_ITEM_HEIGHT, behavior: smooth ? 'smooth' : 'auto' });
+}
+
+function updateIntervalWheelActiveItem() {
+  const index = Math.round(intervalWheelTrack.scrollTop / WHEEL_ITEM_HEIGHT);
+  const clamped = Math.max(0, Math.min(intervalWheelValues.length - 1, index));
+  const value = intervalWheelValues[clamped];
+  intervalWheelTrack.querySelectorAll('.wheel-item').forEach((el, i) => {
+    el.classList.toggle('active', i === clamped);
+  });
+  return value;
+}
+
+function onIntervalChanged(value) {
+  selectedIntervalHours = value;
+  intervalOverridden = true;
+  intervalChips.querySelectorAll('.chip').forEach(c => {
+    c.classList.toggle('selected', Number(c.dataset.hours) === value);
+  });
+  intervalAutoTag.hidden = true;
+}
+
+intervalWheelTrack.addEventListener('scroll', () => {
+  const value = updateIntervalWheelActiveItem();
+  clearTimeout(intervalWheelScrollTimer);
+  intervalWheelScrollTimer = setTimeout(() => onIntervalChanged(value), 120);
 });
 
 // --- Log modal ---
@@ -1378,6 +1436,7 @@ function openLogModal(feed) {
   onAmountChanged(startMl);
   updateWheelActiveItem();
   highlightIntervalChip();
+  updateIntervalWheelActiveItem();
 }
 
 function updateDateLabel(input, label) {
@@ -1475,6 +1534,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=37').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=38').catch(() => {});
   });
 }

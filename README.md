@@ -46,8 +46,8 @@ Just open `index.html` in a browser — it's a static site, no build step, no se
 Firestore: `households/{code}/feeds/{feedId}` → `{ type, timestamp, amountMl?, intervalHours }`
 - `type`: always `bottle`
 - `timestamp`: feed time in ms (client-editable via the time field, defaults to now)
-- `amountMl`: bottle amount, picked via quick chips (60/90/120ml) or the scroll wheel in the "Log a feed" modal. **Absent** for a feed started via the pale-orange "Start feed" pill and not yet finished — that's what marks it as pending (not `0`, since the wheel's minimum is 20ml)
-- `intervalHours`: hours until the next expected feed. Auto-estimated from the amount (90ml→3h, +1h per +30ml, clamped 2–6h) but can be overridden with the interval chips. Used to compute "Next feed expected" on the home screen
+- `amountMl`: bottle amount, picked via quick chips (60/90/120ml) or the scroll wheel (10ml, then 5ml steps to 120ml, then 10ml steps to 300ml) in the "Log a feed" modal. **Absent** for a feed started via the pale-orange "Start feed" pill and not yet finished — that's what marks it as pending (not `0`, since the wheel's minimum is 10ml)
+- `intervalHours`: hours until the next expected feed, in half-hour increments. Auto-estimated from the amount (90ml→3h, +1h per +30ml, clamped 2–6h, always a whole hour) but can be overridden either with the quick chips (2h–6h) or the scroll wheel below them (1h–8h in 30-minute steps, same chips+wheel pattern as Amount). Used to compute "Next feed expected" on the home screen
 
 A pending feed (no `amountMl`) turns the home screen's hero card into a "Feeding now" state (tap it to add the amount) and shows "Add amount" in its Past Feeds row instead of a value. "Next feed expected" shows **TBC** instead of a guessed time while the latest feed is still pending, since a real estimate needs the amount.
 
