@@ -896,6 +896,30 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
   margin: 16px 0;
 }
 
+.feedback-fab {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  color: var(--primary-ink);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  z-index: 9;
+  animation: feedback-fab-bounce 2.4s ease-in-out infinite;
+}
+.feedback-fab:active { transform: scale(0.9); }
+.feedback-fab[hidden] { display: none !important; }
+@keyframes feedback-fab-bounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(-8deg); }
+}
+
 .toast {
   position: fixed;
   bottom: 24px;

@@ -71,6 +71,13 @@ const confirmDeleteModal = document.getElementById('confirm-delete-modal');
 const confirmDeleteCancel = document.getElementById('confirm-delete-cancel');
 const confirmDeleteConfirm = document.getElementById('confirm-delete-confirm');
 
+const feedbackFab = document.getElementById('feedback-fab');
+const feedbackModal = document.getElementById('feedback-modal');
+const feedbackTypeChips = document.getElementById('feedback-type-chips');
+const feedbackMessage = document.getElementById('feedback-message');
+const feedbackCancel = document.getElementById('feedback-cancel');
+const feedbackSend = document.getElementById('feedback-send');
+
 const appTitleEl = document.getElementById('app-title');
 const homeTitleEl = document.getElementById('home-title');
 const profileTileLabel = document.getElementById('profile-tile-label');
@@ -208,6 +215,10 @@ function bottleDocRef(code) {
   return doc(db, 'households', code, 'bottle', 'info');
 }
 
+function feedbackCollection(code) {
+  return collection(db, 'households', code, 'feedback');
+}
+
 function getHouseholdCode() {
   return localStorage.getItem(STORAGE_KEY);
 }
@@ -254,6 +265,7 @@ document.querySelectorAll('[data-nav]').forEach(el => {
 
 function enterApp(code) {
   setupScreen.hidden = true;
+  feedbackFab.hidden = false;
   if (!(location.hash.slice(1) in SCREENS)) {
     history.replaceState(null, '', '#feed');
   }
@@ -739,6 +751,50 @@ confirmDeleteConfirm.addEventListener('click', () => {
   confirmDeleteModal.hidden = true;
   if (pendingDeleteFeedId) deleteFeed(pendingDeleteFeedId);
   pendingDeleteFeedId = null;
+});
+
+// --- Feedback ---
+
+let selectedFeedbackType = 'idea';
+
+feedbackFab.addEventListener('click', () => {
+  selectedFeedbackType = 'idea';
+  feedbackMessage.value = '';
+  feedbackTypeChips.querySelectorAll('.chip').forEach(c => {
+    c.classList.toggle('selected', c.dataset.type === selectedFeedbackType);
+  });
+  feedbackModal.hidden = false;
+});
+
+feedbackTypeChips.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    selectedFeedbackType = chip.dataset.type;
+    feedbackTypeChips.querySelectorAll('.chip').forEach(c => {
+      c.classList.toggle('selected', c === chip);
+    });
+  });
+});
+
+feedbackCancel.addEventListener('click', () => {
+  feedbackModal.hidden = true;
+});
+
+feedbackSend.addEventListener('click', async () => {
+  const code = getHouseholdCode();
+  const message = feedbackMessage.value.trim();
+  if (!code || !message) return;
+  try {
+    await addDoc(feedbackCollection(code), {
+      type: selectedFeedbackType,
+      message,
+      timestamp: Date.now(),
+    });
+    feedbackModal.hidden = true;
+    showToast('Thanks for the feedback!');
+  } catch (e) {
+    console.error(e);
+    showToast('Could not send — check connection');
+  }
 });
 
 // --- Profile ---
@@ -1419,6 +1475,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=35').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=36').catch(() => {});
   });
 }

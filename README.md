@@ -53,7 +53,7 @@ A pending feed (no `amountMl`) turns the home screen's hero card into a "Feeding
 
 The pale-orange **"Start feed"** pill above "Log a feed" is the one-tap way to log a pending feed (`startFeed()`) — no modal, just the current time, for logging fast mid-feed and filling in the amount later (the log modal itself is "Log a feed"-only now, no separate start option inside it, since this pill covers that). Starting a feed this way also clears the "Bottle made" timer (sets `madeAt` back to `null`) — once feeding has started, the prepared bottle's 2-hour window is no longer the relevant thing to track.
 
-The home screen also shows time-since-last-feed live, and the total ml fed since midnight. "Past feeds" has three tabs: **Today** (calendar day, midnight to now), **1D** (rolling 24 hours), **7D** (rolling 7 days) — the sync query pulls up to the most recent 3000 feeds (roughly a year at typical feeding frequency) so both the history tabs and the Trends chart have enough to work with. Entries are grouped by calendar day with a header showing that day's total ml, so multi-day ranges (7D) show a running breakdown per day, not just one combined list.
+The home screen also shows time-since-last-feed live, and the total ml fed since midnight. "Past feeds" has two tabs: **1D** (rolling 24 hours, default) and **7D** (rolling 7 days) — the sync query pulls up to the most recent 3000 feeds (roughly a year at typical feeding frequency) so both the history tabs and the Trends chart have enough to work with. Entries are grouped by calendar day with a header showing that day's total ml, so multi-day ranges (7D) show a running breakdown per day, not just one combined list.
 
 Tapping anywhere on a feed row (other than the ✕) opens the same log modal in edit mode — pre-filled with that feed's time and amount — so you can correct either one, reusing `finishFeed()`. Tapping the ✕ opens a confirm modal ("Delete this feed? This can't be undone.") rather than deleting immediately — the confirm button uses the `.btn-danger` style (red, matching `--danger`) to visually signal it's destructive.
 
@@ -75,6 +75,15 @@ Firestore: `households/{code}/bottle/info` → `{ madeAt }`
 - A small 🕐 button on the pill's edge opens a tiny "When was it made?" picker (Just now / 5 / 10 / 15 min ago) for when you forget to tap it right away — same `startBottleTimer()` path, just backdated
 
 The pill is now a `<div>` wrapping two separate `<button>`s (main tap area + the 🕐 adjust button) rather than being one button itself, since a `<button>` can't contain another interactive control.
+
+## Feedback
+A bouncing 💬 button floats in the bottom-right corner on every screen once you're in a household (hidden on the join/setup screen). Tapping it opens a small modal with an Idea/Problem toggle and a message box.
+
+Firestore: `households/{code}/feedback/{feedbackId}` → `{ type, message, timestamp }`
+- `type`: `idea` or `problem`, picked via the two chips (defaults to `idea`)
+- `message`: free-text
+- Already covered by the wildcard Firestore rule above — no rules change needed for this one
+- There's no in-app viewer for this by design — read it straight from the **Firebase Console** (Firestore Database → `households` → your code → `feedback`), since it's just you checking in occasionally rather than something worth building a dedicated screen for
 
 ## Trends & Facts
 At the top, a "Fun fact of the week" card picks one line from a hardcoded list (`FUN_BABY_FACTS` in `app.js`) using `floor(days-since-epoch / 7) % list.length` — deterministic, so it's the same for everyone all week and changes to the next one every 7 days, no stored state needed.
