@@ -1419,6 +1419,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=34').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=35').catch(() => {});
   });
 }
