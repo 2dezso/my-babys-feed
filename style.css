@@ -592,6 +592,7 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
   transition: transform 0.12s ease;
 }
 .feed-action-btn:active { transform: scale(0.97); }
+.feed-action-btn[hidden] { display: none !important; }
 .log-emoji { font-size: 1.9rem; }
 
 .feed-action-start {
