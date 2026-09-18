@@ -55,8 +55,9 @@ const historyRange = document.getElementById('history-range');
 const toast = document.getElementById('toast');
 
 const btnStartFeedNow = document.getElementById('btn-start-feed-now');
+const btnStartFeedIcon = document.getElementById('btn-start-feed-icon');
+const btnStartFeedLabel = document.getElementById('btn-start-feed-label');
 const btnLogFeed = document.getElementById('btn-log-feed');
-const btnCompleteFeed = document.getElementById('btn-complete-feed');
 const logModal = document.getElementById('log-modal');
 const logModalTitle = document.getElementById('log-modal-title');
 const feedDateInput = document.getElementById('feed-date');
@@ -521,9 +522,10 @@ pooTimeConfirm.addEventListener('click', () => {
 });
 
 function updateFeedActionButtons(isPending) {
-  btnStartFeedNow.hidden = isPending;
   btnLogFeed.hidden = isPending;
-  btnCompleteFeed.hidden = !isPending;
+  btnStartFeedNow.classList.toggle('feed-action-complete', isPending);
+  btnStartFeedIcon.textContent = isPending ? '✅' : '⚡';
+  btnStartFeedLabel.textContent = isPending ? 'Complete feed' : 'Start feed';
 }
 
 function renderSinceLastFeed() {
@@ -1542,15 +1544,14 @@ function readModalTimestamp() {
 }
 
 btnStartFeedNow.addEventListener('click', () => {
-  startFeed(Date.now(), computeAutoIntervalHours(DEFAULT_ML));
+  if (latestFeeds.length && latestFeeds[0].amountMl == null) {
+    openLogModal(latestFeeds[0]);
+  } else {
+    startFeed(Date.now(), computeAutoIntervalHours(DEFAULT_ML));
+  }
 });
 
 btnLogFeed.addEventListener('click', () => openLogModal());
-btnCompleteFeed.addEventListener('click', () => {
-  if (latestFeeds.length && latestFeeds[0].amountMl == null) {
-    openLogModal(latestFeeds[0]);
-  }
-});
 logCancel.addEventListener('click', () => { logModal.hidden = true; editingFeedId = null; });
 
 logConfirm.addEventListener('click', () => {
@@ -1614,6 +1615,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=40').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=41').catch(() => {});
   });
 }

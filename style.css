@@ -569,6 +569,45 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
 .next-feed-pill.bottle-expired .next-feed-value { color: #fff; }
 .next-feed-pill.bottle-expired .bottle-pill-adjust { background: rgba(255, 255, 255, 0.25); color: #fff; }
 
+.feed-action-row {
+  display: flex;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 26px;
+}
+.feed-action-btn {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  padding: 20px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.05rem;
+  font-weight: 900;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.feed-action-btn:active { transform: scale(0.97); }
+.log-emoji { font-size: 1.9rem; }
+
+.feed-action-start {
+  background: linear-gradient(135deg, var(--quickstart-a), var(--quickstart-b));
+  color: var(--quickstart-ink);
+}
+.feed-action-start.feed-action-complete {
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  color: var(--primary-ink);
+}
+.feed-action-log {
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  color: var(--primary-ink);
+  border-left: 2px solid rgba(0, 0, 0, 0.08);
+}
+
 .log-feed-btn {
   width: 100%;
   background: linear-gradient(135deg, var(--primary), var(--primary-2));
@@ -589,29 +628,6 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
   transition: transform 0.12s ease;
 }
 .log-feed-btn:active { transform: scale(0.97); }
-.log-emoji { font-size: 1.9rem; }
-
-.quickstart-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: linear-gradient(135deg, var(--quickstart-a), var(--quickstart-b));
-  color: var(--quickstart-ink);
-  border: none;
-  border-radius: 999px;
-  padding: 13px 18px;
-  font-family: inherit;
-  font-weight: 800;
-  font-size: 0.95rem;
-  cursor: pointer;
-  margin-bottom: 14px;
-  box-shadow: 0 6px 16px rgba(217, 155, 108, 0.28);
-  transition: transform 0.12s ease;
-}
-.quickstart-btn:active { transform: scale(0.97); }
-.quickstart-btn .log-emoji { font-size: 1.2rem; }
 
 .history-header { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
 .history-header h2 { margin: 0; }
