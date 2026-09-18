@@ -53,6 +53,8 @@ A pending feed (no `amountMl`) turns the home screen's hero card into a "Feeding
 
 The pale-orange **"Start feed"** pill above "Log a feed" is the one-tap way to log a pending feed (`startFeed()`) — no modal, just the current time, for logging fast mid-feed and filling in the amount later (the log modal itself is "Log a feed"-only now, no separate start option inside it, since this pill covers that). Starting a feed this way also clears the "Bottle made" timer (sets `madeAt` back to `null`) — once feeding has started, the prepared bottle's 2-hour window is no longer the relevant thing to track.
 
+While a feed is pending, the "Start feed" and "Log a feed" buttons disappear entirely and are replaced by a single **"✅ Complete feed"** button, which opens the same log modal (in "Add amount" mode) that tapping the hero card already does. This avoids the confusing state where those two buttons used to sit there unchanged during a pending feed — tapping "Start feed" again would silently create a second orphaned pending feed, and "Log a feed" would open an unrelated new entry instead of finishing the one in progress.
+
 The home screen also shows time-since-last-feed live, and the total ml fed since midnight. "Past feeds" has two tabs: **1D** (rolling 24 hours, default) and **7D** (rolling 7 days) — the sync query pulls up to the most recent 3000 feeds (roughly a year at typical feeding frequency) so both the history tabs and the Trends chart have enough to work with. Entries are grouped by calendar day with a header showing that day's total ml, so multi-day ranges (7D) show a running breakdown per day, not just one combined list.
 
 Tapping anywhere on a feed row (other than the ✕) opens the same log modal in edit mode — pre-filled with that feed's time and amount — so you can correct either one, reusing `finishFeed()`. Tapping the ✕ opens a confirm modal ("Delete this feed? This can't be undone.") rather than deleting immediately — the confirm button uses the `.btn-danger` style (red, matching `--danger`) to visually signal it's destructive.
@@ -66,13 +68,13 @@ Firestore: `households/{code}/poos/{pooId}` → `{ timestamp, size?, note? }`
 - Nappy/poo log, reached via the 💩 icon next to the home button on the Baby Feed screen (its own light-brown themed page, separate from the home hub)
 - `size`: optional, one of `Small`/`Medium`/`Big` via quick-tap chips (tap again to clear)
 - `note`: optional free-text note
-- "Log poo" opens a small modal (time defaults to now, but the date/time can be changed for backfilling) with the size chips and note field; same "since last" hero stat and Today/1D/7D history pattern as feeds, just without an amount column or day-total headers. Already covered by the wildcard Firestore rule above — no rules change needed for this one.
+- "Log poo" opens a small modal (time defaults to now, but the date/time can be changed for backfilling) with the size chips and note field; same "since last" hero stat, Today/1D/7D history pattern, and day-group headers as feeds (showing that day's poo count instead of an ml total), just without an amount column. Already covered by the wildcard Firestore rule above — no rules change needed for this one.
 
 Firestore: `households/{code}/bottle/info` → `{ madeAt }`
 - Single shared doc (not a log) — tapping the main "Bottle made" pill sets `madeAt` to now, synced live to every caregiver's device
 - The pill counts down from a 2-hour "good for" window and turns red with "Expired — discard" once time's up
 - Tapping the main pill at any time (even mid-countdown) restarts the timer from now — there's no separate reset/clear action, tapping always means "I just made a bottle"
-- A small 🕐 button on the pill's edge opens a tiny "When was it made?" picker (Just now / 5 / 10 / 15 min ago) for when you forget to tap it right away — same `startBottleTimer()` path, just backdated
+- A small 🕐 button on the pill's edge opens a "When was it made?" scroll wheel (0–120 minutes ago, 5-minute steps) for when you forget to tap it right away — same `startBottleTimer()` path, just backdated. The main pill tap is untouched and still instant ("just made it now", no modal) — the wheel only replaces the old four-chip picker behind the 🕐 button
 
 The pill is now a `<div>` wrapping two separate `<button>`s (main tap area + the 🕐 adjust button) rather than being one button itself, since a `<button>` can't contain another interactive control.
 

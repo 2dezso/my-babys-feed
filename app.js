@@ -20,6 +20,8 @@ const WHEEL_ITEM_HEIGHT = 40;
 const INTERVAL_MIN = 1;
 const INTERVAL_MAX = 8;
 const INTERVAL_STEP = 0.5;
+const BOTTLE_ADJUST_MAX_MINS = 120;
+const BOTTLE_ADJUST_STEP_MINS = 5;
 
 const setupScreen = document.getElementById('setup-screen');
 const appScreen = document.getElementById('app-screen');
@@ -44,8 +46,9 @@ const bottlePillMain = document.getElementById('bottle-pill-main');
 const bottlePillAdjust = document.getElementById('bottle-pill-adjust');
 const bottleStatusEl = document.getElementById('bottle-status');
 const bottleAdjustModal = document.getElementById('bottle-adjust-modal');
-const bottleAdjustChips = document.getElementById('bottle-adjust-chips');
+const bottleAdjustWheelTrack = document.getElementById('bottle-adjust-wheel-track');
 const bottleAdjustCancel = document.getElementById('bottle-adjust-cancel');
+const bottleAdjustConfirm = document.getElementById('bottle-adjust-confirm');
 const historyList = document.getElementById('history-list');
 const historyEmpty = document.getElementById('history-empty');
 const historyRange = document.getElementById('history-range');
@@ -53,6 +56,7 @@ const toast = document.getElementById('toast');
 
 const btnStartFeedNow = document.getElementById('btn-start-feed-now');
 const btnLogFeed = document.getElementById('btn-log-feed');
+const btnCompleteFeed = document.getElementById('btn-complete-feed');
 const logModal = document.getElementById('log-modal');
 const logModalTitle = document.getElementById('log-modal-title');
 const feedDateInput = document.getElementById('feed-date');
@@ -143,6 +147,7 @@ let selectedAvatarTone = '';
 let profileDob = '';
 let selectedPooSize = '';
 let bottleMadeAt = null;
+let selectedBottleMinsAgo = 0;
 let calendarInitialized = false;
 let currentCalYear = 0;
 let currentCalMonth = 0;
@@ -152,6 +157,7 @@ let editingDateKey = null;
 let pendingPhotoDataUrl = null;
 let wheelScrollTimer = null;
 let intervalWheelScrollTimer = null;
+let bottleAdjustWheelScrollTimer = null;
 let editingFeedId = null;
 let pendingDeleteFeedId = null;
 
@@ -410,21 +416,37 @@ function renderPooHistory() {
   const filtered = latestPoos.filter(p => p.timestamp >= cutoff);
   pooHistoryList.innerHTML = '';
   pooHistoryEmpty.hidden = filtered.length !== 0;
-  for (let i = 0; i < filtered.length; i++) {
-    const poo = filtered[i];
-    const fullIndex = latestPoos.indexOf(poo);
-    const older = latestPoos[fullIndex + 1];
-    const gap = older ? durationString(poo.timestamp - older.timestamp) : '—';
 
-    const li = document.createElement('li');
-    li.innerHTML = `
-      <span class="history-time-val">${formatClock(poo.timestamp)}${poo.size ? ` · ${poo.size}` : ''}</span>
-      <span class="history-gap-val">${gap}</span>
-      <button class="history-delete" title="Delete">✕</button>
-      ${poo.note ? `<span class="poo-note-row">${escapeHtml(poo.note)}</span>` : ''}
-    `;
-    li.querySelector('.history-delete').addEventListener('click', () => deletePoo(poo.id));
-    pooHistoryList.appendChild(li);
+  const groups = new Map();
+  for (const poo of filtered) {
+    const key = dayKeyForTimestamp(poo.timestamp);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(poo);
+  }
+
+  for (const key of Array.from(groups.keys()).sort((a, b) => b - a)) {
+    const dayPoos = groups.get(key);
+
+    const headerLi = document.createElement('li');
+    headerLi.className = 'day-group-header';
+    headerLi.innerHTML = `<span class="day-group-label">${dayLabelForKey(key)}</span><span class="day-group-total">${dayPoos.length} 💩</span>`;
+    pooHistoryList.appendChild(headerLi);
+
+    for (const poo of dayPoos) {
+      const fullIndex = latestPoos.indexOf(poo);
+      const older = latestPoos[fullIndex + 1];
+      const gap = older ? durationString(poo.timestamp - older.timestamp) : '—';
+
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span class="history-time-val">${formatClock(poo.timestamp)}${poo.size ? ` · ${poo.size}` : ''}</span>
+        <span class="history-gap-val">${gap}</span>
+        <button class="history-delete" title="Delete">✕</button>
+        ${poo.note ? `<span class="poo-note-row">${escapeHtml(poo.note)}</span>` : ''}
+      `;
+      li.querySelector('.history-delete').addEventListener('click', () => deletePoo(poo.id));
+      pooHistoryList.appendChild(li);
+    }
   }
 }
 
@@ -498,24 +520,32 @@ pooTimeConfirm.addEventListener('click', () => {
   logPoo(timestamp, selectedPooSize, note);
 });
 
+function updateFeedActionButtons(isPending) {
+  btnStartFeedNow.hidden = isPending;
+  btnLogFeed.hidden = isPending;
+  btnCompleteFeed.hidden = !isPending;
+}
+
 function renderSinceLastFeed() {
   if (latestFeeds.length === 0) {
     heroCard.classList.remove('hero-pending');
     heroLabelEl.textContent = 'Since last feed';
     sinceLastFeedEl.textContent = '—';
     lastFeedDetailEl.textContent = 'No feeds yet';
+    updateFeedActionButtons(false);
     return;
   }
   const last = latestFeeds[0];
   const isPending = last.amountMl == null;
   heroCard.classList.toggle('hero-pending', isPending);
   sinceLastFeedEl.textContent = durationString(Date.now() - last.timestamp);
+  updateFeedActionButtons(isPending);
   if (isPending) {
     heroLabelEl.textContent = 'Feeding now';
     lastFeedDetailEl.textContent = 'Tap to add amount';
   } else {
     heroLabelEl.textContent = 'Since last feed';
-    lastFeedDetailEl.textContent = `Last fed at ${formatClock(last.timestamp)} · ${last.amountMl}ml · ${timeAgo(last.timestamp)}`;
+    lastFeedDetailEl.textContent = `Last fed at ${formatClock(last.timestamp)} · ${last.amountMl}ml`;
   }
 }
 
@@ -597,13 +627,58 @@ async function startBottleTimer(minsAgo) {
 
 bottlePillMain.addEventListener('click', () => startBottleTimer(0));
 
-bottlePillAdjust.addEventListener('click', () => { bottleAdjustModal.hidden = false; });
-bottleAdjustCancel.addEventListener('click', () => { bottleAdjustModal.hidden = true; });
-bottleAdjustChips.querySelectorAll('.chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    bottleAdjustModal.hidden = true;
-    startBottleTimer(Number(chip.dataset.mins));
+// --- Bottle adjust wheel picker ---
+
+const bottleAdjustWheelValues = [];
+for (let v = 0; v <= BOTTLE_ADJUST_MAX_MINS; v += BOTTLE_ADJUST_STEP_MINS) bottleAdjustWheelValues.push(v);
+
+function formatBottleAdjustLabel(mins) {
+  return mins === 0 ? 'Just now' : `${mins}m ago`;
+}
+
+bottleAdjustWheelValues.forEach((v) => {
+  const item = document.createElement('div');
+  item.className = 'wheel-item';
+  item.textContent = formatBottleAdjustLabel(v);
+  item.dataset.value = v;
+  bottleAdjustWheelTrack.appendChild(item);
+});
+
+function bottleAdjustWheelIndexForValue(v) {
+  return Math.round(v / BOTTLE_ADJUST_STEP_MINS);
+}
+
+function scrollBottleAdjustWheelTo(value, smooth = false) {
+  const index = bottleAdjustWheelIndexForValue(value);
+  bottleAdjustWheelTrack.scrollTo({ top: index * WHEEL_ITEM_HEIGHT, behavior: smooth ? 'smooth' : 'auto' });
+}
+
+function updateBottleAdjustWheelActiveItem() {
+  const index = Math.round(bottleAdjustWheelTrack.scrollTop / WHEEL_ITEM_HEIGHT);
+  const clamped = Math.max(0, Math.min(bottleAdjustWheelValues.length - 1, index));
+  const value = bottleAdjustWheelValues[clamped];
+  bottleAdjustWheelTrack.querySelectorAll('.wheel-item').forEach((el, i) => {
+    el.classList.toggle('active', i === clamped);
   });
+  return value;
+}
+
+bottleAdjustWheelTrack.addEventListener('scroll', () => {
+  const value = updateBottleAdjustWheelActiveItem();
+  clearTimeout(bottleAdjustWheelScrollTimer);
+  bottleAdjustWheelScrollTimer = setTimeout(() => { selectedBottleMinsAgo = value; }, 120);
+});
+
+bottlePillAdjust.addEventListener('click', () => {
+  selectedBottleMinsAgo = 0;
+  bottleAdjustModal.hidden = false;
+  scrollBottleAdjustWheelTo(0);
+  updateBottleAdjustWheelActiveItem();
+});
+bottleAdjustCancel.addEventListener('click', () => { bottleAdjustModal.hidden = true; });
+bottleAdjustConfirm.addEventListener('click', () => {
+  bottleAdjustModal.hidden = true;
+  startBottleTimer(selectedBottleMinsAgo);
 });
 
 function dayKeyForTimestamp(ts) {
@@ -1471,6 +1546,11 @@ btnStartFeedNow.addEventListener('click', () => {
 });
 
 btnLogFeed.addEventListener('click', () => openLogModal());
+btnCompleteFeed.addEventListener('click', () => {
+  if (latestFeeds.length && latestFeeds[0].amountMl == null) {
+    openLogModal(latestFeeds[0]);
+  }
+});
 logCancel.addEventListener('click', () => { logModal.hidden = true; editingFeedId = null; });
 
 logConfirm.addEventListener('click', () => {
@@ -1534,6 +1614,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=39').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=40').catch(() => {});
   });
 }
