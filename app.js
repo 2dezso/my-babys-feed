@@ -524,7 +524,7 @@ pooTimeConfirm.addEventListener('click', () => {
 function updateFeedActionButtons(isPending) {
   btnLogFeed.hidden = isPending;
   btnStartFeedNow.classList.toggle('feed-action-complete', isPending);
-  btnStartFeedIcon.textContent = isPending ? '✅' : '⚡';
+  btnStartFeedIcon.textContent = isPending ? '🍼' : '⚡';
   btnStartFeedLabel.textContent = isPending ? 'Complete feed' : 'Start feed';
 }
 
@@ -1615,6 +1615,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=41').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=42').catch(() => {});
   });
 }
