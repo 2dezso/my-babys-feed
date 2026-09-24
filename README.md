@@ -89,6 +89,12 @@ Firestore: `households/{code}/feedback/{feedbackId}` → `{ type, message, times
 - Already covered by the wildcard Firestore rule above — no rules change needed for this one
 - There's no in-app viewer for this by design — read it straight from the **Firebase Console** (Firestore Database → `households` → your code → `feedback`), since it's just you checking in occasionally rather than something worth building a dedicated screen for
 
+## Add to Home Screen
+A "📲 Add to Home Screen" button on the home screen, shown only when relevant:
+- **Android/Chrome**: hidden until the browser fires `beforeinstallprompt` (the standard signal a PWA is installable), at which point tapping the button calls `.prompt()` for a real native install dialog — no custom UI needed, the OS handles it
+- **iOS Safari**: `beforeinstallprompt` doesn't exist on iOS at all — Apple gives no programmatic way to trigger "Add to Home Screen". Detected via user agent (`iPad|iPhone|iPod`, plus the iPadOS-reports-as-Mac case via `navigator.platform === 'MacIntel' && maxTouchPoints > 1`) and shown unconditionally for those devices, since there's no installability signal to wait for. Tapping it opens an instructional modal ("Tap Share, then Add to Home Screen") since that's the only path Safari allows
+- Hidden entirely once already installed, checked via `display-mode: standalone` (Android/desktop) or the iOS-only `navigator.standalone` property, and re-hidden immediately on the `appinstalled` event after a successful Android install
+
 ## Trends & Facts
 At the top, a "Fun fact of the week" card picks one line from a hardcoded list (`FUN_BABY_FACTS` in `app.js`) using `floor(days-since-epoch / 7) % list.length` — deterministic, so it's the same for everyone all week and changes to the next one every 7 days, no stored state needed.
 

@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f8f0">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=44">
+<link rel="manifest" href="manifest.json?v=45">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=44">
+<link rel="stylesheet" href="style.css?v=45">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -132,6 +132,8 @@
     </nav>
 
     <button id="btn-share" class="btn btn-secondary home-share-btn">Share household code</button>
+
+    <button id="btn-install-app" class="btn btn-secondary home-share-btn" hidden>📲 Add to Home Screen</button>
 
     <button class="home-tile home-tile-small" data-nav="profile">
       <span id="profile-tile-icon" class="home-circle home-circle-small home-circle-gold">👶</span>
@@ -409,6 +411,20 @@
   </div>
 </div>
 
+<div id="install-modal" class="modal" hidden>
+  <div class="modal-card">
+    <h2>Add to Home Screen</h2>
+    <p class="muted">Safari doesn't let apps install themselves — just two taps and you're set:</p>
+    <ol class="install-steps">
+      <li>Tap the <strong>Share</strong> button 📤 in Safari's toolbar</li>
+      <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
+    </ol>
+    <div class="modal-actions">
+      <button id="install-modal-close" class="btn btn-primary">Got it</button>
+    </div>
+  </div>
+</div>
+
 <div id="bottle-adjust-modal" class="modal" hidden>
   <div class="modal-card">
     <h2>When was it made?</h2>
@@ -455,6 +471,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=44"></script>
+<script type="module" src="app.js?v=45"></script>
 </body>
 </html>

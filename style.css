@@ -350,6 +350,7 @@ body.gender-pink #bottle-adjust-modal .modal-card {
   text-align: center;
   padding: 4px;
 }
+.text-link-btn[hidden] { display: none !important; }
 .milestone-delete-btn { color: var(--danger); margin-top: 12px; }
 
 .milestones-main { padding: 20px 16px 50px; max-width: 480px; margin: 0 auto; }
@@ -469,6 +470,10 @@ h1 { margin: 0 0 8px; font-size: 1.7rem; font-weight: 900; }
 h2 { margin: 0 0 12px; font-size: 1.15rem; font-weight: 800; }
 .muted { color: var(--muted); font-size: 0.9rem; }
 
+.install-steps { margin: 14px 0 4px; padding-left: 22px; }
+.install-steps li { margin-bottom: 10px; font-size: 0.95rem; line-height: 1.4; }
+.install-steps li:last-child { margin-bottom: 0; }
+
 .btn {
   display: block;
   width: 100%;
@@ -482,6 +487,7 @@ h2 { margin: 0 0 12px; font-size: 1.15rem; font-weight: 800; }
   transition: transform 0.12s ease;
 }
 .btn:active { transform: scale(0.97); }
+.btn[hidden] { display: none !important; }
 .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: var(--primary-ink); box-shadow: var(--shadow-soft); }
 .btn-secondary { background: var(--secondary); color: var(--ink); }
 .btn-danger { background: var(--danger); color: #fff; }

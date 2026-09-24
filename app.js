@@ -76,6 +76,10 @@ const btnShare = document.getElementById('btn-share');
 const shareCodeEl = document.getElementById('share-code');
 const shareClose = document.getElementById('share-close');
 
+const installModal = document.getElementById('install-modal');
+const btnInstallApp = document.getElementById('btn-install-app');
+const installModalClose = document.getElementById('install-modal-close');
+
 const confirmDeleteModal = document.getElementById('confirm-delete-modal');
 const confirmDeleteCancel = document.getElementById('confirm-delete-cancel');
 const confirmDeleteConfirm = document.getElementById('confirm-delete-confirm');
@@ -1633,6 +1637,47 @@ shareCodeEl.addEventListener('click', () => {
   navigator.clipboard?.writeText(getHouseholdCode()).then(() => showToast('Code copied'));
 });
 
+// --- Add to Home Screen ---
+
+function isIosDevice() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function isRunningStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+let deferredInstallPrompt = null;
+
+if (!isRunningStandalone() && isIosDevice()) {
+  btnInstallApp.hidden = false;
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (!isRunningStandalone()) btnInstallApp.hidden = false;
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  btnInstallApp.hidden = true;
+});
+
+btnInstallApp.addEventListener('click', async () => {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    btnInstallApp.hidden = true;
+  } else if (isIosDevice()) {
+    installModal.hidden = false;
+  }
+});
+
+installModalClose.addEventListener('click', () => { installModal.hidden = true; });
+
 btnCreateHousehold.addEventListener('click', () => {
   const code = generateHouseholdCode();
   localStorage.setItem(STORAGE_KEY, code);
@@ -1670,6 +1715,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=44').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=45').catch(() => {});
   });
 }
