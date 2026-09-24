@@ -59,16 +59,18 @@ The home screen also shows time-since-last-feed live, and the total ml fed since
 
 Tapping anywhere on a feed row (other than the ✕) opens the same log modal in edit mode — pre-filled with that feed's time and amount — so you can correct either one, reusing `finishFeed()`. Tapping the ✕ opens a confirm modal ("Delete this feed? This can't be undone.") rather than deleting immediately — the confirm button uses the `.btn-danger` style (red, matching `--danger`) to visually signal it's destructive.
 
-Firestore: `households/{code}/profile/info` → `{ name, dob, avatarTone }`
-- `name`: baby's name, also shown as the Profile tile's label on the home screen and as the Trends chart's legend/summary label
+Firestore: `households/{code}/profile/info` → `{ firstName, lastName, dob, avatarTone, gender }`
+- `firstName`/`lastName`: separate fields in Profile, but only `firstName` is ever shown in the app (Profile tile label, Trends legend, and the "X's First Year" title on both the Baby Feed header and home screen) — `lastName` is captured for the record but has no display surface yet. Falls back to the older `name` field (pre-split households) if `firstName` is unset, so nothing breaks for existing data — there's no migration step, the fallback is permanent
 - `dob`: date of birth as a `YYYY-MM-DD` string. Drives the "X months/weeks old" age line shown under it in Profile, and is the age-zero point for the Trends chart
 - `avatarTone`: one of the four 👶 skin-tone emoji modifiers (🏻/🏽/🏾/🏿), applied to the 👶 icon on the Profile tile and the Profile screen itself
+- `gender`: `male`, `female`, or unset, via the Boy/Girl chips (tap again to clear, same pattern as the poo size chips). `female` swaps the Baby Feed screen (`#app-screen`) to a pink/white palette (`body.gender-pink #app-screen` in style.css) along with the three modals opened from that screen (Log/Edit feed, confirm delete, bottle adjust) — everywhere else (Home, Poo, Milestones, Trends, the feedback modal) keeps its own fixed theme regardless of gender. `male` or unset keeps the default green scheme
 
 Firestore: `households/{code}/poos/{pooId}` → `{ timestamp, size?, note? }`
 - Nappy/poo log, reached via the 💩 icon next to the home button on the Baby Feed screen (its own light-brown themed page, separate from the home hub)
 - `size`: optional, one of `Small`/`Medium`/`Big` via quick-tap chips (tap again to clear)
 - `note`: optional free-text note
 - "Log poo" opens a small modal (time defaults to now, but the date/time can be changed for backfilling) with the size chips and note field; same "since last" hero stat, Today/1D/7D history pattern, and day-group headers as feeds (showing that day's poo count instead of an ml total), just without an amount column. Already covered by the wildcard Firestore rule above — no rules change needed for this one.
+- Tapping anywhere on a poo row (other than the ✕) opens the same modal in edit mode — pre-filled with that entry's time, size, and note — mirroring how feed rows are editable. Clearing a previously-set size or note on save actually removes that field via `deleteField()` rather than leaving a stale value behind, since `updateDoc` (unlike a fresh `addDoc`) merges into the existing document instead of replacing it.
 
 Firestore: `households/{code}/bottle/info` → `{ madeAt }`
 - Single shared doc (not a log) — tapping the main "Bottle made" pill sets `madeAt` to now, synced live to every caregiver's device

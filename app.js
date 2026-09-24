@@ -1,7 +1,7 @@
 import { firebaseConfig } from './firebase-config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
-  getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc,
+  getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
   query, where, orderBy, limit, documentId, onSnapshot, enableIndexedDbPersistence,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
@@ -94,7 +94,9 @@ const profileTileIcon = document.getElementById('profile-tile-icon');
 const profileIconBig = document.getElementById('profile-icon-big');
 const avatarToneChips = document.getElementById('avatar-tone-chips');
 const profileNameInput = document.getElementById('profile-name');
+const profileLastNameInput = document.getElementById('profile-last-name');
 const profileDobInput = document.getElementById('profile-dob');
+const genderChips = document.getElementById('gender-chips');
 const profileAgeEl = document.getElementById('profile-age');
 const profileSaveBtn = document.getElementById('profile-save');
 
@@ -129,6 +131,7 @@ const pooHistoryList = document.getElementById('poo-history-list');
 const pooHistoryEmpty = document.getElementById('poo-history-empty');
 const pooHistoryRange = document.getElementById('poo-history-range');
 const pooTimeModal = document.getElementById('poo-time-modal');
+const pooTimeModalTitle = document.getElementById('poo-time-modal-title');
 const pooDateInput = document.getElementById('poo-date');
 const pooDateLabel = document.getElementById('poo-date-label');
 const pooTimeInput = document.getElementById('poo-time');
@@ -145,6 +148,7 @@ let latestPoos = [];
 let currentRange = '1d';
 let currentPooRange = 'today';
 let selectedAvatarTone = '';
+let selectedGender = '';
 let profileDob = '';
 let selectedPooSize = '';
 let bottleMadeAt = null;
@@ -161,6 +165,7 @@ let intervalWheelScrollTimer = null;
 let bottleAdjustWheelScrollTimer = null;
 let editingFeedId = null;
 let pendingDeleteFeedId = null;
+let editingPooId = null;
 
 function startOfToday() {
   const d = new Date();
@@ -306,18 +311,23 @@ function listenToFeeds(code) {
 function listenToProfile(code) {
   onSnapshot(profileDocRef(code), (snap) => {
     const data = snap.data() || {};
-    profileNameInput.value = data.name || '';
+    const firstName = data.firstName || data.name || '';
+    profileNameInput.value = firstName;
+    profileLastNameInput.value = data.lastName || '';
     profileDobInput.value = data.dob || '';
     profileDob = data.dob || '';
     selectedAvatarTone = data.avatarTone || '';
-    profileTileLabel.textContent = data.name || 'Profile';
-    trendsLegendNameEl.textContent = data.name || 'Your baby';
-    const babyTitleName = data.name || 'Charlie';
+    selectedGender = data.gender || '';
+    profileTileLabel.textContent = firstName || 'Profile';
+    trendsLegendNameEl.textContent = firstName || 'Your baby';
+    const babyTitleName = firstName || 'Charlie';
     const possessive = babyTitleName + (babyTitleName.endsWith('s') ? '’' : '’s');
     appTitleEl.textContent = `${possessive} First Year`;
     homeTitleEl.textContent = `${possessive} First Year`;
+    document.body.classList.toggle('gender-pink', selectedGender === 'female');
     updateAvatarIcons();
     highlightToneChip();
+    highlightGenderChip();
     renderProfileAge();
     renderTrendsChart();
     if (calendarInitialized) renderCalendar();
@@ -343,6 +353,20 @@ avatarToneChips.querySelectorAll('.tone-chip').forEach(chip => {
     selectedAvatarTone = chip.dataset.tone;
     updateAvatarIcons();
     highlightToneChip();
+  });
+});
+
+function highlightGenderChip() {
+  genderChips.querySelectorAll('.chip').forEach(c => {
+    c.classList.toggle('selected', c.dataset.gender === selectedGender);
+  });
+}
+
+genderChips.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    selectedGender = selectedGender === chip.dataset.gender ? '' : chip.dataset.gender;
+    highlightGenderChip();
+    document.body.classList.toggle('gender-pink', selectedGender === 'female');
   });
 });
 
@@ -445,7 +469,11 @@ function renderPooHistory() {
         <button class="history-delete" title="Delete">✕</button>
         ${poo.note ? `<span class="poo-note-row">${escapeHtml(poo.note)}</span>` : ''}
       `;
-      li.querySelector('.history-delete').addEventListener('click', () => deletePoo(poo.id));
+      li.addEventListener('click', () => openPooTimeModal(poo));
+      li.querySelector('.history-delete').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deletePoo(poo.id);
+      });
       pooHistoryList.appendChild(li);
     }
   }
@@ -476,6 +504,22 @@ async function logPoo(timestamp, size, note) {
   }
 }
 
+async function updatePoo(id, timestamp, size, note) {
+  const code = getHouseholdCode();
+  if (!code) return;
+  try {
+    await updateDoc(doc(db, 'households', code, 'poos', id), {
+      timestamp,
+      size: size || deleteField(),
+      note: note || deleteField(),
+    });
+    showToast('Poo updated');
+  } catch (e) {
+    console.error(e);
+    showToast('Could not save — check connection');
+  }
+}
+
 async function deletePoo(id) {
   const code = getHouseholdCode();
   if (!code) return;
@@ -500,25 +544,35 @@ pooSizeChips.querySelectorAll('.chip').forEach(chip => {
   });
 });
 
-btnLogPoo.addEventListener('click', () => {
-  const now = new Date();
-  pooDateInput.value = todayDateString();
+function openPooTimeModal(poo) {
+  editingPooId = poo ? poo.id : null;
+  const baseTime = poo ? new Date(poo.timestamp) : new Date();
+  pooDateInput.value = `${baseTime.getFullYear()}-${String(baseTime.getMonth() + 1).padStart(2, '0')}-${String(baseTime.getDate()).padStart(2, '0')}`;
   pooDateInput.max = todayDateString();
   updateDateLabel(pooDateInput, pooDateLabel);
-  pooTimeInput.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  selectedPooSize = '';
+  pooTimeInput.value = `${String(baseTime.getHours()).padStart(2, '0')}:${String(baseTime.getMinutes()).padStart(2, '0')}`;
+  selectedPooSize = poo?.size || '';
   highlightPooSizeChip();
-  pooNoteInput.value = '';
+  pooNoteInput.value = poo?.note || '';
+  pooTimeModalTitle.textContent = poo ? 'Edit poo' : 'Log poo';
+  pooTimeConfirm.textContent = poo ? 'Save' : 'Log poo';
   pooTimeModal.hidden = false;
-});
+}
 
-pooTimeCancel.addEventListener('click', () => { pooTimeModal.hidden = true; });
+btnLogPoo.addEventListener('click', () => openPooTimeModal());
+
+pooTimeCancel.addEventListener('click', () => { pooTimeModal.hidden = true; editingPooId = null; });
 
 pooTimeConfirm.addEventListener('click', () => {
   const timestamp = combineDateTimeToTimestamp(pooDateInput.value, pooTimeInput.value);
   const note = pooNoteInput.value.trim();
   pooTimeModal.hidden = true;
-  logPoo(timestamp, selectedPooSize, note);
+  if (editingPooId) {
+    updatePoo(editingPooId, timestamp, selectedPooSize, note);
+    editingPooId = null;
+  } else {
+    logPoo(timestamp, selectedPooSize, note);
+  }
 });
 
 function updateFeedActionButtons(isPending) {
@@ -889,10 +943,11 @@ profileDobInput.addEventListener('input', () => {
 profileSaveBtn.addEventListener('click', async () => {
   const code = getHouseholdCode();
   if (!code) return;
-  const name = profileNameInput.value.trim();
+  const firstName = profileNameInput.value.trim();
+  const lastName = profileLastNameInput.value.trim();
   const dob = profileDobInput.value;
   try {
-    await setDoc(profileDocRef(code), { name, dob, avatarTone: selectedAvatarTone }, { merge: true });
+    await setDoc(profileDocRef(code), { firstName, lastName, dob, avatarTone: selectedAvatarTone, gender: selectedGender }, { merge: true });
     showToast('Profile saved');
   } catch (e) {
     console.error(e);
@@ -1615,6 +1670,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=43').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=44').catch(() => {});
   });
 }
