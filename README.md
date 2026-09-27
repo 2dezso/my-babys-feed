@@ -78,7 +78,9 @@ Firestore: `households/{code}/poos/{pooId}` → `{ timestamp, size?, note? }`
 - Nappy/poo log, reached via the 💩 icon next to the home button on the Baby Feed screen (its own light-brown themed page, separate from the home hub)
 - `size`: optional, one of `Small`/`Medium`/`Big` via quick-tap chips (tap again to clear)
 - `note`: optional free-text note
-- "Log poo" opens a small modal (time defaults to now, but the date/time can be changed for backfilling) with the size chips and note field; same "since last" hero stat, Today/1D/7D history pattern, and day-group headers as feeds (showing that day's poo count instead of an ml total), just without an amount column. Already covered by the wildcard Firestore rule above — no rules change needed for this one.
+- "Log poo" opens a small modal (time defaults to now, but the date/time can be changed for backfilling) with the size chips and note field. Already covered by the wildcard Firestore rule above — no rules change needed for this one.
+- The screen mirrors Baby Feed: date under the title, a hero with just the time since the last poo, then a Today card (poos since midnight, average gap over the last 7 days). Past has the same 1D/7D tabs and day-group headers (showing that day's poo count). Rows show time, size as a small tag, and gap, with any note on its own line underneath.
+- A "Last 7 days" card sits between Today and the Log poo button: one column per day (rolling, ending today) with a dot per poo, capped at 5 dots plus a "+N" label. A day with none shows a dashed ring, and a note underneath names those days ("No poo on Thursday"). Today is excluded from that note, since the day isn't over.
 - Tapping anywhere on a poo row (other than the ✕) opens the same modal in edit mode — pre-filled with that entry's time, size, and note — mirroring how feed rows are editable. Clearing a previously-set size or note on save actually removes that field via `deleteField()` rather than leaving a stale value behind, since `updateDoc` (unlike a fresh `addDoc`) merges into the existing document instead of replacing it.
 
 Firestore: `households/{code}/bottle/info` → `{ madeAt }`

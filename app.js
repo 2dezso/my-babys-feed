@@ -140,6 +140,12 @@ const milestoneDelete = document.getElementById('milestone-delete');
 
 const sinceLastPooEl = document.getElementById('since-last-poo');
 const lastPooDetailEl = document.getElementById('last-poo-detail');
+const pooDateEl = document.getElementById('poo-date');
+const pooTodayCountEl = document.getElementById('poo-today-count');
+const pooAvgGapEl = document.getElementById('poo-avg-gap');
+const pooWeekCols = document.getElementById('poo-week-cols');
+const pooWeekTotal = document.getElementById('poo-week-total');
+const pooWeekNote = document.getElementById('poo-week-note');
 const btnLogPoo = document.getElementById('btn-log-poo');
 const pooHistoryList = document.getElementById('poo-history-list');
 const pooHistoryEmpty = document.getElementById('poo-history-empty');
@@ -160,7 +166,7 @@ let intervalOverridden = false;
 let latestFeeds = [];
 let latestPoos = [];
 let currentRange = '1d';
-let currentPooRange = 'today';
+let currentPooRange = '1d';
 let selectedAvatarTone = '';
 let selectedGender = '';
 let profileOnboarding = false;
@@ -213,18 +219,6 @@ function durationString(ms) {
   const remMins = mins % 60;
   if (hours < 1) return `${remMins}m`;
   return `${hours}h ${remMins}m`;
-}
-
-function timeAgo(ts) {
-  const diffMs = Date.now() - ts;
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  const remMins = mins % 60;
-  if (hours < 24) return `${hours}h ${remMins}m ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
 }
 
 function formatClock(ts) {
@@ -448,6 +442,7 @@ function listenToPoos(code) {
   onSnapshot(q, (snapshot) => {
     latestPoos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     renderSinceLastPoo();
+    renderPooStats();
     renderPooHistory();
   }, (err) => {
     console.error(err);
@@ -461,9 +456,60 @@ function renderSinceLastPoo() {
     lastPooDetailEl.textContent = 'No poos yet';
     return;
   }
-  const last = latestPoos[0];
-  sinceLastPooEl.textContent = durationString(Date.now() - last.timestamp);
-  lastPooDetailEl.textContent = `Last at ${formatClock(last.timestamp)} · ${timeAgo(last.timestamp)}`;
+  sinceLastPooEl.textContent = durationString(Date.now() - latestPoos[0].timestamp);
+  lastPooDetailEl.textContent = '';
+}
+
+const POO_WEEK_MAX_DOTS = 5;
+
+function renderPooStats() {
+  const today = startOfToday();
+  const todayCount = latestPoos.filter(p => p.timestamp >= today).length;
+  pooTodayCountEl.textContent = todayCount === 1 ? '1 poo' : `${todayCount} poos`;
+
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const recent = latestPoos.filter(p => p.timestamp >= weekAgo);
+  pooAvgGapEl.textContent = recent.length < 2
+    ? '—'
+    : durationString((recent[0].timestamp - recent[recent.length - 1].timestamp) / (recent.length - 1));
+
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const start = new Date(today);
+    start.setDate(start.getDate() - i);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    const count = latestPoos.filter(p => p.timestamp >= start.getTime() && p.timestamp < end.getTime()).length;
+    days.push({ start, count, isToday: i === 0 });
+  }
+
+  pooWeekCols.innerHTML = '';
+  for (const day of days) {
+    const col = document.createElement('div');
+    col.className = `poo-week-day${day.isToday ? ' today' : ''}`;
+    const dots = document.createElement('div');
+    dots.className = 'poo-week-dots';
+    if (day.count === 0) {
+      dots.innerHTML = '<i class="empty"></i>';
+    } else {
+      dots.innerHTML = '<i></i>'.repeat(Math.min(day.count, POO_WEEK_MAX_DOTS));
+      if (day.count > POO_WEEK_MAX_DOTS) dots.insertAdjacentHTML('beforeend', `<span class="more">+${day.count - POO_WEEK_MAX_DOTS}</span>`);
+    }
+    const label = document.createElement('span');
+    label.textContent = day.start.toLocaleDateString([], { weekday: 'narrow' });
+    col.title = `${day.start.toLocaleDateString([], { weekday: 'long' })}: ${day.count}`;
+    col.append(dots, label);
+    pooWeekCols.appendChild(col);
+  }
+
+  const total = days.reduce((sum, d) => sum + d.count, 0);
+  pooWeekTotal.textContent = total === 1 ? '1 poo' : `${total} poos`;
+
+  const missed = days.filter(d => !d.isToday && d.count === 0)
+    .map(d => d.start.toLocaleDateString([], { weekday: 'long' }));
+  pooWeekNote.hidden = missed.length === 0;
+  if (missed.length === 1) pooWeekNote.textContent = `No poo on ${missed[0]}`;
+  else if (missed.length > 1) pooWeekNote.textContent = `No poo on ${missed.slice(0, -1).join(', ')} or ${missed[missed.length - 1]}`;
 }
 
 function escapeHtml(str) {
@@ -500,7 +546,8 @@ function renderPooHistory() {
 
       const li = document.createElement('li');
       li.innerHTML = `
-        <span class="history-time-val">${formatClock(poo.timestamp)}${poo.size ? ` · ${poo.size}` : ''}</span>
+        <span class="history-time-val">${formatClock(poo.timestamp)}</span>
+        ${poo.size ? `<span class="poo-size-tag">${escapeHtml(poo.size)}</span>` : '<span></span>'}
         <span class="history-gap-val">${gap}</span>
         <button class="history-delete" title="Delete">✕</button>
         ${poo.note ? `<span class="poo-note-row">${escapeHtml(poo.note)}</span>` : ''}
@@ -685,7 +732,9 @@ function renderTodayTotal() {
 }
 
 function renderHeaderDate() {
-  appDateEl.textContent = new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' });
+  const label = new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' });
+  appDateEl.textContent = label;
+  pooDateEl.textContent = label;
 }
 
 const BOTTLE_GOOD_FOR_MS = 2 * 60 * 60 * 1000;
@@ -1762,7 +1811,7 @@ joinForm.addEventListener('submit', (e) => {
 });
 
 renderHeaderDate();
-setInterval(() => { renderHeaderDate(); renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderProfileAge(); renderBottleStatus(); }, 15000);
+setInterval(() => { renderHeaderDate(); renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderPooStats(); renderProfileAge(); renderBottleStatus(); }, 15000);
 
 renderTrendsChart();
 renderFunFact();
@@ -1776,6 +1825,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=49').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=50').catch(() => {});
   });
 }
