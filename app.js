@@ -40,10 +40,17 @@ const heroLabelEl = document.getElementById('hero-label');
 const sinceLastFeedEl = document.getElementById('since-last-feed');
 const lastFeedDetailEl = document.getElementById('last-feed-detail');
 const nextFeedTimeEl = document.getElementById('next-feed-time');
+const nextFeedInEl = document.getElementById('next-feed-in');
+const heroProgress = document.getElementById('hero-progress');
+const heroProgressFill = document.getElementById('hero-progress-fill');
 const todayTotalEl = document.getElementById('today-total-value');
+const todayFeedCountEl = document.getElementById('today-feed-count');
+const avgGapEl = document.getElementById('avg-gap-value');
+const appDateEl = document.getElementById('app-date');
 const bottlePill = document.getElementById('bottle-pill');
 const bottlePillMain = document.getElementById('bottle-pill-main');
 const bottlePillAdjust = document.getElementById('bottle-pill-adjust');
+const bottlePillClear = document.getElementById('bottle-pill-clear');
 const bottleStatusEl = document.getElementById('bottle-status');
 const bottleAdjustModal = document.getElementById('bottle-adjust-modal');
 const bottleAdjustWheelTrack = document.getElementById('bottle-adjust-wheel-track');
@@ -581,7 +588,6 @@ pooTimeConfirm.addEventListener('click', () => {
 
 function updateFeedActionButtons(isPending) {
   btnLogFeed.hidden = isPending;
-  btnStartFeedNow.classList.toggle('feed-action-complete', isPending);
   btnStartFeedIcon.textContent = isPending ? '🍼' : '⚡';
   btnStartFeedLabel.textContent = isPending ? 'Complete feed' : 'Start feed';
 }
@@ -616,33 +622,45 @@ heroCard.addEventListener('click', () => {
 });
 
 function renderNextFeed() {
-  if (latestFeeds.length === 0) {
-    nextFeedTimeEl.textContent = '—';
-    return;
-  }
   const last = latestFeeds[0];
-  if (last.amountMl == null) {
-    nextFeedTimeEl.textContent = 'TBC';
+  if (!last || last.amountMl == null) {
+    heroProgress.hidden = true;
     return;
   }
-  const intervalHours = last.intervalHours || 3;
-  const nextTs = last.timestamp + intervalHours * 60 * 60 * 1000;
+  const intervalMs = (last.intervalHours || 3) * 60 * 60 * 1000;
+  const nextTs = last.timestamp + intervalMs;
   const diffMs = nextTs - Date.now();
-  const clock = formatClock(nextTs);
+  const fraction = Math.min(1, Math.max(0, (Date.now() - last.timestamp) / intervalMs));
+  heroProgress.hidden = false;
+  heroProgressFill.style.width = `${fraction * 100}%`;
+  nextFeedTimeEl.textContent = `Next feed ~${formatClock(nextTs)}`;
   if (diffMs <= 0) {
     const overdueMins = Math.floor(-diffMs / 60000);
-    nextFeedTimeEl.textContent = overdueMins < 1 ? `${clock} · due now` : `${clock} · overdue ${overdueMins}m`;
+    nextFeedInEl.textContent = overdueMins < 1 ? 'due now' : `overdue ${durationString(-diffMs)}`;
   } else {
-    nextFeedTimeEl.textContent = `${clock} · in ${durationString(diffMs)}`;
+    nextFeedInEl.textContent = `in ${durationString(diffMs)}`;
   }
 }
 
 function renderTodayTotal() {
   const today = startOfToday();
-  const total = latestFeeds
-    .filter(f => f.timestamp >= today)
-    .reduce((sum, f) => sum + (f.amountMl || 0), 0);
+  const todayFeeds = latestFeeds.filter(f => f.timestamp >= today);
+  const total = todayFeeds.reduce((sum, f) => sum + (f.amountMl || 0), 0);
   todayTotalEl.textContent = `${total}ml`;
+  todayFeedCountEl.textContent = todayFeeds.length === 1 ? '1 feed' : `${todayFeeds.length} feeds`;
+
+  const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+  const recent = latestFeeds.filter(f => f.timestamp >= dayAgo);
+  if (recent.length < 2) {
+    avgGapEl.textContent = '—';
+  } else {
+    const spanMs = recent[0].timestamp - recent[recent.length - 1].timestamp;
+    avgGapEl.textContent = durationString(spanMs / (recent.length - 1));
+  }
+}
+
+function renderHeaderDate() {
+  appDateEl.textContent = new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' });
 }
 
 const BOTTLE_GOOD_FOR_MS = 2 * 60 * 60 * 1000;
@@ -658,6 +676,7 @@ function listenToBottle(code) {
 }
 
 function renderBottleStatus() {
+  bottlePillClear.hidden = !bottleMadeAt;
   if (!bottleMadeAt) {
     bottleStatusEl.textContent = 'Tap to start';
     bottlePill.classList.remove('bottle-expired');
@@ -686,6 +705,18 @@ async function startBottleTimer(minsAgo) {
 }
 
 bottlePillMain.addEventListener('click', () => startBottleTimer(0));
+
+bottlePillClear.addEventListener('click', async () => {
+  const code = getHouseholdCode();
+  if (!code) return;
+  try {
+    await setDoc(bottleDocRef(code), { madeAt: null }, { merge: true });
+    showToast('Bottle timer cleared');
+  } catch (e) {
+    console.error(e);
+    showToast('Could not save — check connection');
+  }
+});
 
 // --- Bottle adjust wheel picker ---
 
@@ -1701,7 +1732,8 @@ joinForm.addEventListener('submit', (e) => {
   enterApp(code);
 });
 
-setInterval(() => { renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderProfileAge(); renderBottleStatus(); }, 15000);
+renderHeaderDate();
+setInterval(() => { renderHeaderDate(); renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderProfileAge(); renderBottleStatus(); }, 15000);
 
 renderTrendsChart();
 renderFunFact();
@@ -1715,6 +1747,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=45').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=46').catch(() => {});
   });
 }

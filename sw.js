@@ -1,9 +1,9 @@
-const CACHE_NAME = 'baby-feed-v45';
+const CACHE_NAME = 'baby-feed-v46';
 const SHELL_FILES = [
   './index.html',
-  './style.css?v=45',
-  './app.js?v=45',
-  './manifest.json?v=45',
+  './style.css?v=46',
+  './app.js?v=46',
+  './manifest.json?v=46',
 ];
 
 self.addEventListener('install', (event) => {
