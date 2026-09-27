@@ -541,6 +541,13 @@ body.gender-pink #bottle-adjust-modal .modal-card {
   color: var(--ink);
 }
 
+#profile-dob {
+  width: auto;
+  max-width: 190px;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+}
+
 .card {
   background: var(--card);
   border-radius: var(--radius-lg);
