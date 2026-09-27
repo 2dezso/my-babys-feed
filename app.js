@@ -110,6 +110,9 @@ const profileDobInput = document.getElementById('profile-dob');
 const genderChips = document.getElementById('gender-chips');
 const profileAgeEl = document.getElementById('profile-age');
 const profileSaveBtn = document.getElementById('profile-save');
+const profileSkipBtn = document.getElementById('profile-skip');
+const profileWelcome = document.getElementById('profile-welcome');
+const profileNamePreview = document.getElementById('profile-name-preview');
 
 const trendsChartMilkByWeightEl = document.getElementById('trends-chart-milk-by-weight');
 const trendsChartMilkEl = document.getElementById('trends-chart-milk');
@@ -160,6 +163,7 @@ let currentRange = '1d';
 let currentPooRange = 'today';
 let selectedAvatarTone = '';
 let selectedGender = '';
+let profileOnboarding = false;
 let profileDob = '';
 let selectedPooSize = '';
 let bottleMadeAt = null;
@@ -278,6 +282,7 @@ function showScreen(name) {
 
 function applyRouteFromHash() {
   const name = (location.hash || '').slice(1);
+  if (profileOnboarding && name !== 'profile') setProfileOnboarding(false);
   showScreen(name in SCREENS ? name : 'feed');
   if (name === 'milestones') ensureCalendarInitialized();
 }
@@ -340,6 +345,7 @@ function listenToProfile(code) {
     highlightToneChip();
     highlightGenderChip();
     renderProfileAge();
+    renderProfilePreview();
     renderTrendsChart();
     if (calendarInitialized) renderCalendar();
   }, (err) => {
@@ -368,12 +374,12 @@ avatarToneChips.querySelectorAll('.tone-chip').forEach(chip => {
 });
 
 function highlightGenderChip() {
-  genderChips.querySelectorAll('.chip').forEach(c => {
+  genderChips.querySelectorAll('.gender-card').forEach(c => {
     c.classList.toggle('selected', c.dataset.gender === selectedGender);
   });
 }
 
-genderChips.querySelectorAll('.chip').forEach(chip => {
+genderChips.querySelectorAll('.gender-card').forEach(chip => {
   chip.addEventListener('click', () => {
     selectedGender = selectedGender === chip.dataset.gender ? '' : chip.dataset.gender;
     highlightGenderChip();
@@ -416,6 +422,25 @@ function ageString(dobStr) {
 
 function renderProfileAge() {
   profileAgeEl.textContent = profileDob ? ageString(profileDob) : '';
+}
+
+function renderProfilePreview() {
+  const fullName = [profileNameInput.value.trim(), profileLastNameInput.value.trim()].filter(Boolean).join(' ');
+  profileNamePreview.textContent = fullName || 'Your baby';
+}
+
+function setProfileOnboarding(on) {
+  profileOnboarding = on;
+  profileWelcome.hidden = !on;
+  profileSkipBtn.hidden = !on;
+  profileSaveBtn.textContent = on ? 'Save and continue' : 'Save profile';
+}
+
+function finishProfileOnboarding() {
+  setProfileOnboarding(false);
+  goTo('feed');
+  shareCodeEl.textContent = getHouseholdCode();
+  shareModal.hidden = false;
 }
 
 function listenToPoos(code) {
@@ -975,6 +1000,9 @@ profileDobInput.addEventListener('input', () => {
   renderProfileAge();
 });
 
+profileNameInput.addEventListener('input', renderProfilePreview);
+profileLastNameInput.addEventListener('input', renderProfilePreview);
+
 profileSaveBtn.addEventListener('click', async () => {
   const code = getHouseholdCode();
   if (!code) return;
@@ -984,11 +1012,14 @@ profileSaveBtn.addEventListener('click', async () => {
   try {
     await setDoc(profileDocRef(code), { firstName, lastName, dob, avatarTone: selectedAvatarTone, gender: selectedGender }, { merge: true });
     showToast('Profile saved');
+    if (profileOnboarding) finishProfileOnboarding();
   } catch (e) {
     console.error(e);
     showToast('Could not save — check connection');
   }
 });
+
+profileSkipBtn.addEventListener('click', finishProfileOnboarding);
 
 // --- Trends & Facts ---
 
@@ -1712,11 +1743,9 @@ installModalClose.addEventListener('click', () => { installModal.hidden = true; 
 btnCreateHousehold.addEventListener('click', () => {
   const code = generateHouseholdCode();
   localStorage.setItem(STORAGE_KEY, code);
+  history.replaceState(null, '', '#profile');
+  setProfileOnboarding(true);
   enterApp(code);
-  setTimeout(() => {
-    shareCodeEl.textContent = code;
-    shareModal.hidden = false;
-  }, 300);
 });
 
 joinForm.addEventListener('submit', (e) => {
@@ -1747,6 +1776,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=46').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=47').catch(() => {});
   });
 }

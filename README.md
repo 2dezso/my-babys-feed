@@ -42,6 +42,13 @@ Just open `index.html` in a browser — it's a static site, no build step, no se
 3. `git push`
 4. GitHub Pages rebuilds in ~30–60s at the repo's Pages URL.
 
+Installed copies (Add to Home Screen) pick up a deploy the next time they're opened with a connection: the service worker fetches the page itself network-first and only falls back to its cached copy offline. The versioned CSS/JS/manifest are cache-first, which is safe because a new page references new `?v=N` URLs. On iOS, an app left open in the background may need swiping away and reopening to reload.
+
+## New household flow
+Tapping "Start a new household" lands on the Profile screen in a welcome mode: a short intro line, "Save and continue" instead of "Save profile", and a "Skip for now" link. Either one goes to Baby Feed and shows the household code to share. Leaving Profile any other way just drops the welcome mode. Joining an existing household skips this, since the profile is already set up.
+
+The Profile screen shows a live preview (avatar, full name as you type, age) above three cards: About (first/last name side by side, date of birth), Boy or girl (two large cards, each with a swatch of the colours it applies), and Icon (plain 👶 plus the four skin tones).
+
 ## Data model
 Firestore: `households/{code}/feeds/{feedId}` → `{ type, timestamp, amountMl?, intervalHours }`
 - `type`: always `bottle`
@@ -62,8 +69,8 @@ Tapping anywhere on a feed row (other than the ✕) opens the same log modal in 
 Firestore: `households/{code}/profile/info` → `{ firstName, lastName, dob, avatarTone, gender }`
 - `firstName`/`lastName`: separate fields in Profile, but only `firstName` is ever shown in the app (Profile tile label, Trends legend, and the "X's First Year" title on both the Baby Feed header and home screen) — `lastName` is captured for the record but has no display surface yet. Falls back to the older `name` field (pre-split households) if `firstName` is unset, so nothing breaks for existing data — there's no migration step, the fallback is permanent
 - `dob`: date of birth as a `YYYY-MM-DD` string. Drives the "X months/weeks old" age line shown under it in Profile, and is the age-zero point for the Trends chart
-- `avatarTone`: one of the four 👶 skin-tone emoji modifiers (🏻/🏽/🏾/🏿), applied to the 👶 icon on the Profile tile and the Profile screen itself
-- `gender`: `male`, `female`, or unset, via the Boy/Girl chips (tap again to clear, same pattern as the poo size chips). `female` swaps the Baby Feed screen (`#app-screen`) to a pink/white palette (`body.gender-pink #app-screen` in style.css) along with the three modals opened from that screen (Log/Edit feed, confirm delete, bottle adjust) — everywhere else (Home, Poo, Milestones, Trends, the feedback modal) keeps its own fixed theme regardless of gender. `male` or unset keeps the default green scheme
+- `avatarTone`: empty (plain 👶) or one of the four skin-tone emoji modifiers (🏻/🏽/🏾/🏿), applied to the 👶 icon on the Profile tile and the Profile screen itself
+- `gender`: `male`, `female`, or unset, via the Boy/Girl cards (tap again to clear). `female` swaps the Baby Feed screen (`#app-screen`) to a pink/white palette (`body.gender-pink #app-screen` in style.css) along with the three modals opened from that screen (Log/Edit feed, confirm delete, bottle adjust) — everywhere else (Home, Poo, Milestones, Trends, the feedback modal) keeps its own fixed theme regardless of gender. `male` or unset keeps the default green scheme
 
 Firestore: `households/{code}/poos/{pooId}` → `{ timestamp, size?, note? }`
 - Nappy/poo log, reached via the 💩 icon next to the home button on the Baby Feed screen (its own light-brown themed page, separate from the home hub)
