@@ -636,7 +636,7 @@ function renderSinceLastFeed() {
     lastFeedDetailEl.textContent = 'Tap to add amount';
   } else {
     heroLabelEl.textContent = 'Since last feed';
-    lastFeedDetailEl.textContent = `Last fed at ${formatClock(last.timestamp)} · ${last.amountMl}ml`;
+    lastFeedDetailEl.textContent = '';
   }
 }
 
@@ -1776,6 +1776,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=48').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=49').catch(() => {});
   });
 }

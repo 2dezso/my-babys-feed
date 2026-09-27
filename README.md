@@ -58,7 +58,9 @@ Firestore: `households/{code}/feeds/{feedId}` → `{ type, timestamp, amountMl?,
 
 A pending feed (no `amountMl`) turns the hero card into a "Feeding now" state (tap it to add the amount) and shows "Add amount" in its Past Feeds row instead of a value. The next-feed progress bar is hidden while a feed is pending, since a real estimate needs the amount.
 
-The hero card shows time since the last feed, plus a progress bar filling from the last feed toward the expected next one, labelled "Next feed ~4:40pm" and "in 46m" (or "due now" / "overdue 12m"). Below it, one card shows today's total ml and feed count (since midnight) next to the average gap between feeds over the last 24 hours. The header shows today's date under the title.
+The hero card shows time since the last feed, plus a progress bar filling from the last feed toward the expected next one, labelled "Next feed ~4:40pm" and "in 46m" (or "due now" / "overdue 12m"). Below it, one card shows today's total ml and feed count (since midnight) next to the average gap between feeds over the last 24 hours. The header shows today's date under the title. The hero deliberately doesn't repeat the last feed's time and amount, since that's the first row of Past feeds just below.
+
+Every card on this screen (hero, day stats, bottle row, buttons, Past feeds table) shares one corner radius (`--radius`) and 14px spacing, so the hero's colour is the only thing that sets one apart.
 
 **"Start feed"** and **"Log past"** are two separate pill buttons in `.feed-action-row`. Start feed is the larger, solid green one: the one-tap way to log a pending feed (`startFeed()`), no modal, just the current time, filling in the amount later. Log past is the lighter button and opens the modal for a fully-specified feed (own time/amount/interval).
 
