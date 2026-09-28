@@ -657,11 +657,12 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
 
 .feed-hero { text-align: left; padding: 22px 20px 18px; }
 .hero-pending-view { text-align: center; padding: 6px 0; }
-.hero-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.hero-pair { display: grid; grid-template-columns: 1.5fr 1fr; gap: 14px; align-items: end; }
 .hero-half { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .hero-half + .hero-half { border-left: 1px solid rgba(255, 255, 255, 0.25); padding-left: 14px; }
 .hero-half .hero-label { font-size: 0.75rem; }
-.hero-num { font-size: 2.1rem; font-weight: 900; line-height: 1.05; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hero-num { font-size: 2.6rem; font-weight: 900; line-height: 1.05; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hero-half + .hero-half .hero-num { font-size: 1.5rem; }
 .hero-sub { font-size: 0.88rem; font-weight: 700; opacity: 0.88; align-self: flex-start; }
 .hero-late .hero-sub.hero-late-tag { opacity: 1; font-size: 0.8rem; font-weight: 900; padding: 3px 10px; border-radius: 999px; background: var(--amber); color: var(--amber-ink); }
 
@@ -834,7 +835,6 @@ main { padding: 4px 16px 32px; max-width: 480px; margin: 0 auto; }
 }
 .history-chart[hidden] { display: none !important; }
 .chart-toggle { display: inline-flex; align-self: flex-start; gap: 2px; padding: 3px; border-radius: 999px; background: var(--secondary); }
-.chart-toggle[hidden] { display: none !important; }
 .chart-toggle-btn { border: none; background: transparent; font-family: inherit; font-size: 0.78rem; font-weight: 800; color: var(--muted); padding: 5px 12px; border-radius: 999px; cursor: pointer; }
 .chart-toggle-btn.active { background: var(--card); color: var(--ink); box-shadow: var(--shadow-soft); }
 .history-chart-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
