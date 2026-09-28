@@ -36,13 +36,22 @@ const setupError = document.getElementById('setup-error');
 const btnCreateHousehold = document.getElementById('btn-create-household');
 
 const heroCard = document.getElementById('hero-card');
-const heroLabelEl = document.getElementById('hero-label');
+const heroPendingView = document.getElementById('hero-pending-view');
+const heroMainView = document.getElementById('hero-main-view');
+const pendingTimeEl = document.getElementById('pending-time');
+const nextFeedLabelEl = document.getElementById('next-feed-label');
+const heroLine = document.getElementById('hero-line');
+const heroLineFill = document.getElementById('hero-line-fill');
+const heroLineOver = document.getElementById('hero-line-over');
+const heroLineDue = document.getElementById('hero-line-due');
+const heroLineNow = document.getElementById('hero-line-now');
+const heroCapStart = document.getElementById('hero-cap-start');
+const heroCapNow = document.getElementById('hero-cap-now');
+const heroCapEnd = document.getElementById('hero-cap-end');
 const sinceLastFeedEl = document.getElementById('since-last-feed');
 const lastFeedDetailEl = document.getElementById('last-feed-detail');
 const nextFeedTimeEl = document.getElementById('next-feed-time');
 const nextFeedInEl = document.getElementById('next-feed-in');
-const heroProgress = document.getElementById('hero-progress');
-const heroProgressFill = document.getElementById('hero-progress-fill');
 const todayTotalEl = document.getElementById('today-total-value');
 const todayFeedCountEl = document.getElementById('today-feed-count');
 const avgGapEl = document.getElementById('avg-gap-value');
@@ -59,6 +68,15 @@ const bottleAdjustConfirm = document.getElementById('bottle-adjust-confirm');
 const historyList = document.getElementById('history-list');
 const historyEmpty = document.getElementById('history-empty');
 const historyRange = document.getElementById('history-range');
+const historyChart = document.getElementById('history-chart');
+const historyChartToggle = document.getElementById('history-chart-toggle');
+const historyChartScroll = document.getElementById('history-chart-scroll');
+const historyChartSvg = document.getElementById('history-chart-svg');
+const historyChartCaption = document.getElementById('history-chart-caption');
+const chartStatEls = [1, 2, 3].map(n => ({
+  value: document.getElementById(`chart-stat-${n}`),
+  label: document.getElementById(`chart-stat-${n}-label`),
+}));
 const toast = document.getElementById('toast');
 
 const btnStartFeedNow = document.getElementById('btn-start-feed-now');
@@ -166,6 +184,8 @@ let intervalOverridden = false;
 let latestFeeds = [];
 let latestPoos = [];
 let currentRange = '1d';
+let chartGroup = 'week';
+let chartSelectedStart = null;
 let currentPooRange = '1d';
 let selectedAvatarTone = '';
 let selectedGender = '';
@@ -665,25 +685,23 @@ function updateFeedActionButtons(isPending) {
 }
 
 function renderSinceLastFeed() {
-  if (latestFeeds.length === 0) {
-    heroCard.classList.remove('hero-pending');
-    heroLabelEl.textContent = 'Since last feed';
+  const last = latestFeeds[0];
+  const isPending = !!last && last.amountMl == null;
+  heroCard.classList.toggle('hero-pending', isPending);
+  heroPendingView.hidden = !isPending;
+  heroMainView.hidden = isPending;
+  updateFeedActionButtons(isPending);
+  if (!last) {
     sinceLastFeedEl.textContent = '—';
     lastFeedDetailEl.textContent = 'No feeds yet';
-    updateFeedActionButtons(false);
     return;
   }
-  const last = latestFeeds[0];
-  const isPending = last.amountMl == null;
-  heroCard.classList.toggle('hero-pending', isPending);
-  sinceLastFeedEl.textContent = durationString(Date.now() - last.timestamp);
-  updateFeedActionButtons(isPending);
+  const since = durationString(Date.now() - last.timestamp);
   if (isPending) {
-    heroLabelEl.textContent = 'Feeding now';
-    lastFeedDetailEl.textContent = 'Tap to add amount';
+    pendingTimeEl.textContent = since;
   } else {
-    heroLabelEl.textContent = 'Since last feed';
-    lastFeedDetailEl.textContent = '';
+    sinceLastFeedEl.textContent = since;
+    lastFeedDetailEl.textContent = `ago · ${last.amountMl}ml`;
   }
 }
 
@@ -693,25 +711,53 @@ heroCard.addEventListener('click', () => {
   }
 });
 
+function formatClockShort(ts) {
+  return new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
 function renderNextFeed() {
   const last = latestFeeds[0];
+  heroCard.classList.remove('hero-late');
+  nextFeedInEl.classList.remove('hero-late-tag');
+  nextFeedLabelEl.textContent = 'Next feed';
   if (!last || last.amountMl == null) {
-    heroProgress.hidden = true;
+    heroLine.hidden = true;
+    nextFeedTimeEl.textContent = '—';
+    nextFeedInEl.textContent = '';
     return;
   }
+  const now = Date.now();
   const intervalMs = (last.intervalHours || 3) * 60 * 60 * 1000;
   const nextTs = last.timestamp + intervalMs;
-  const diffMs = nextTs - Date.now();
-  const fraction = Math.min(1, Math.max(0, (Date.now() - last.timestamp) / intervalMs));
-  heroProgress.hidden = false;
-  heroProgressFill.style.width = `${fraction * 100}%`;
-  nextFeedTimeEl.textContent = `Next feed ~${formatClock(nextTs)}`;
-  if (diffMs <= 0) {
-    const overdueMins = Math.floor(-diffMs / 60000);
-    nextFeedInEl.textContent = overdueMins < 1 ? 'due now' : `overdue ${durationString(-diffMs)}`;
+  const late = now > nextTs;
+  const diffMs = Math.abs(nextTs - now);
+
+  nextFeedTimeEl.textContent = formatClockShort(nextTs);
+  if (diffMs < 60000) {
+    nextFeedInEl.textContent = 'now';
+  } else if (late) {
+    heroCard.classList.add('hero-late');
+    nextFeedInEl.classList.add('hero-late-tag');
+    nextFeedLabelEl.textContent = 'Expected';
+    nextFeedInEl.textContent = `${durationString(diffMs)} ago`;
   } else {
     nextFeedInEl.textContent = `in ${durationString(diffMs)}`;
   }
+
+  // Before the expected time the line runs last feed -> next feed; after it, last feed -> now.
+  const spanMs = late ? now - last.timestamp : intervalMs;
+  const nowPct = late ? 100 : Math.max(0, (now - last.timestamp) / intervalMs * 100);
+  const duePct = late ? intervalMs / spanMs * 100 : 100;
+  heroLine.hidden = false;
+  heroLineFill.style.width = `${Math.min(nowPct, duePct)}%`;
+  heroLineOver.style.left = `${duePct}%`;
+  heroLineOver.style.width = late ? `${100 - duePct}%` : '0';
+  heroLineDue.style.left = `${duePct}%`;
+  heroLineNow.style.left = `${nowPct}%`;
+  heroCapStart.textContent = formatClockShort(last.timestamp);
+  heroCapEnd.textContent = late ? 'now' : formatClockShort(nextTs);
+  heroCapNow.style.left = `${nowPct}%`;
+  heroCapNow.hidden = late || nowPct < 22 || nowPct > 72;
 }
 
 function renderTodayTotal() {
@@ -859,9 +905,211 @@ function dayLabelForKey(dayStartMs) {
   return new Date(dayStartMs).toLocaleDateString([], { day: 'numeric', month: 'short' });
 }
 
-function renderHistory() {
+// --- Past feeds chart (14D / All) ---
+
+const CHART_H = 170;
+const CHART_LEFT = 30;
+const CHART_RIGHT = 8;
+const CHART_TOP = 20;
+const CHART_BOTTOM = 140;
+const CHART_MIN_WIDTH = 300;
+
+function shiftDays(ms, n) {
+  const d = new Date(ms);
+  d.setDate(d.getDate() + n);
+  return d.getTime();
+}
+
+function startOfWeekMs(ms) {
+  const d = new Date(ms);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+  return d.getTime();
+}
+
+function dailyFeedTotals() {
+  const totals = new Map();
+  for (const f of latestFeeds) {
+    if (f.amountMl == null) continue;
+    const key = dayKeyForTimestamp(f.timestamp);
+    const entry = totals.get(key) || { total: 0, count: 0 };
+    entry.total += f.amountMl;
+    entry.count += 1;
+    totals.set(key, entry);
+  }
+  return totals;
+}
+
+// Week buckets hold the average ml per day (over the days that week that have happened since the
+// first feed), so a week that has only just started doesn't read as a big drop.
+function buildChartBuckets(totals, range, group) {
+  const today = startOfToday();
+  const firstDay = totals.size ? Math.min(...totals.keys()) : today;
+  const buckets = [];
+  if (range === 'all' && group === 'week') {
+    for (let s = startOfWeekMs(firstDay); s <= today; s = shiftDays(s, 7)) {
+      let total = 0;
+      let count = 0;
+      let days = 0;
+      for (let i = 0, d = s; i < 7; i++, d = shiftDays(d, 1)) {
+        if (d < firstDay || d > today) continue;
+        days += 1;
+        const t = totals.get(d);
+        if (t) { total += t.total; count += t.count; }
+      }
+      const end = shiftDays(s, 7);
+      buckets.push({ start: s, end, value: days ? Math.round(total / days) : 0, total, count, partial: end > today });
+    }
+    return buckets;
+  }
+  const from = range === '14d' ? shiftDays(today, -13) : firstDay;
+  for (let s = from; s <= today; s = shiftDays(s, 1)) {
+    const t = totals.get(s) || { total: 0, count: 0 };
+    buckets.push({ start: s, end: shiftDays(s, 1), value: t.total, total: t.total, count: t.count, partial: s === today });
+  }
+  return buckets;
+}
+
+function chartBarLabel(bucket, index, buckets, byWeek) {
+  const d = new Date(bucket.start);
+  if (currentRange === '14d') return String(d.getDate());
+  const isMonday = (d.getDay() + 6) % 7 === 0;
+  if (!byWeek && !isMonday && index !== 0) return '';
+  const prev = index > 0 ? new Date(buckets[index - 1].start) : null;
+  const newMonth = !prev || prev.getMonth() !== d.getMonth() || !byWeek;
+  return newMonth ? d.toLocaleDateString([], { day: 'numeric', month: 'short' }) : String(d.getDate());
+}
+
+function setChartStat(i, value, label) {
+  chartStatEls[i].value.textContent = value;
+  chartStatEls[i].label.textContent = label;
+}
+
+function renderChartStats(totals, buckets) {
+  const today = startOfToday();
+  const completeDays = Array.from(totals.entries()).filter(([day]) => day !== today).map(([, t]) => t);
+  const dayAvg = arr => (arr.length ? Math.round(arr.reduce((s, t) => s + t.total, 0) / arr.length) : 0);
+
+  if (currentRange === '14d') {
+    const windowStart = buckets[0].start;
+    const inWindow = buckets.filter(b => !b.partial && b.count > 0);
+    const feedsPerDay = inWindow.length ? inWindow.reduce((s, b) => s + b.count, 0) / inWindow.length : 0;
+    const best = Math.max(0, ...buckets.map(b => b.total));
+    setChartStat(0, inWindow.length ? `${dayAvg(inWindow)}ml` : '—', 'Avg / day');
+    setChartStat(1, inWindow.length ? feedsPerDay.toFixed(1) : '—', 'Feeds / day');
+    setChartStat(2, best ? `${best}ml` : '—', 'Best day');
+    historyChartSvg.setAttribute('aria-label', `Total milk each day since ${new Date(windowStart).toLocaleDateString([], { day: 'numeric', month: 'short' })}`);
+    return;
+  }
+
+  const weeks = buildChartBuckets(totals, 'all', 'week').filter(w => !w.partial && w.count > 0);
+  setChartStat(0, completeDays.length ? `${dayAvg(completeDays)}ml` : '—', 'Avg / day');
+  if (weeks.length >= 2 && weeks[0].value > 0) {
+    const change = Math.round((weeks[weeks.length - 1].value / weeks[0].value - 1) * 100);
+    const since = new Date(weeks[0].start).toLocaleDateString([], { day: 'numeric', month: 'short' });
+    setChartStat(1, `${change >= 0 ? '+' : ''}${change}%`, `Since ${since}`);
+  } else {
+    setChartStat(1, '—', 'Change');
+  }
+  const logged = Array.from(totals.values()).reduce((s, t) => s + t.count, 0);
+  setChartStat(2, String(logged), 'Feeds logged');
+  historyChartSvg.setAttribute('aria-label', chartGroup === 'week' ? 'Average milk per day, by week' : 'Total milk each day');
+}
+
+// Draws the 14D / All chart and returns the selected bar's bucket.
+function renderHistoryChart() {
+  const totals = dailyFeedTotals();
+  const byWeek = currentRange === 'all' && chartGroup === 'week';
+  const buckets = buildChartBuckets(totals, currentRange, chartGroup);
+
+  let selectionReset = false;
+  if (!buckets.some(b => b.start === chartSelectedStart)) {
+    const withFeeds = buckets.filter(b => b.count > 0);
+    chartSelectedStart = (withFeeds.length ? withFeeds[withFeeds.length - 1] : buckets[buckets.length - 1]).start;
+    selectionReset = true;
+  }
+  const selectedIndex = buckets.findIndex(b => b.start === chartSelectedStart);
+
+  const minSlot = byWeek ? 30 : 20;
+  const plotW = Math.max(CHART_MIN_WIDTH - CHART_LEFT - CHART_RIGHT, buckets.length * minSlot);
+  const width = plotW + CHART_LEFT + CHART_RIGHT;
+  const slot = plotW / buckets.length;
+  const barW = Math.min(slot * 0.62, 26);
+
+  const complete = buckets.filter(b => !b.partial && b.count > 0);
+  const avg = complete.length ? Math.round(complete.reduce((s, b) => s + b.value, 0) / complete.length) : 0;
+  const top = Math.ceil(Math.max(200, avg, ...buckets.map(b => b.value)) / 200) * 200;
+  const y = v => CHART_BOTTOM - (v / top) * (CHART_BOTTOM - CHART_TOP);
+
+  let svg = '';
+  for (const v of [0, top / 2, top]) {
+    svg += `<line class="hc-grid" x1="${CHART_LEFT}" x2="${width - CHART_RIGHT}" y1="${y(v)}" y2="${y(v)}"/>`;
+    svg += `<text class="hc-axis" x="${CHART_LEFT - 4}" y="${y(v) + 3}" text-anchor="end">${v}</text>`;
+  }
+  if (!byWeek && avg) {
+    svg += `<line class="hc-avg" x1="${CHART_LEFT}" x2="${width - CHART_RIGHT}" y1="${y(avg)}" y2="${y(avg)}"/>`;
+    svg += `<text class="hc-axis" x="${CHART_LEFT + 4}" y="${y(avg) - 4}">avg ${avg}ml</text>`;
+  }
+  buckets.forEach((b, i) => {
+    const slotX = CHART_LEFT + i * slot;
+    const cx = slotX + slot / 2;
+    const isSel = i === selectedIndex;
+    if (b.value > 0) {
+      const cls = `hc-bar${isSel ? ' sel' : ''}${b.partial ? ' partial' : ''}`;
+      svg += `<rect class="${cls}" x="${cx - barW / 2}" y="${y(b.value)}" width="${barW}" height="${CHART_BOTTOM - y(b.value)}" rx="3"/>`;
+    }
+    const label = chartBarLabel(b, i, buckets, byWeek);
+    if (label) svg += `<text class="hc-axis${isSel ? ' hc-axis-sel' : ''}" x="${cx}" y="154" text-anchor="middle">${label}</text>`;
+    if (b.partial) svg += `<text class="hc-axis" x="${cx}" y="165" text-anchor="middle">${byWeek ? 'so far' : 'today'}</text>`;
+    svg += `<rect class="hc-hit" data-start="${b.start}" x="${slotX}" y="0" width="${slot}" height="${CHART_H}"/>`;
+  });
+  const sel = buckets[selectedIndex];
+  if (sel.value > 0) {
+    svg += `<text class="hc-val" x="${CHART_LEFT + selectedIndex * slot + slot / 2}" y="${y(sel.value) - 5}" text-anchor="middle">${sel.value}</text>`;
+  }
+
+  historyChartSvg.setAttribute('viewBox', `0 0 ${width} ${CHART_H}`);
+  historyChartSvg.style.width = width > CHART_MIN_WIDTH ? `${width}px` : '100%';
+  historyChartSvg.innerHTML = svg;
+  if (selectionReset) historyChartScroll.scrollLeft = historyChartScroll.scrollWidth;
+
+  historyChartToggle.hidden = currentRange !== 'all';
+  historyChartCaption.textContent = byWeek
+    ? 'Average ml per day, each week starting Monday. Tap a bar to see that week.'
+    : 'Total ml each day. Tap a bar to see that day.';
+  renderChartStats(totals, buckets);
+  return sel;
+}
+
+historyChartSvg.addEventListener('click', (e) => {
+  const hit = e.target.closest('.hc-hit');
+  if (!hit) return;
+  chartSelectedStart = Number(hit.dataset.start);
+  renderHistory();
+});
+
+historyChartToggle.querySelectorAll('.chart-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    chartGroup = btn.dataset.group;
+    chartSelectedStart = null;
+    historyChartToggle.querySelectorAll('.chart-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderHistory();
+  });
+});
+
+function historyFeedsToShow() {
+  const charted = currentRange === '14d' || currentRange === 'all';
+  historyChart.hidden = !charted;
+  if (charted) {
+    const sel = renderHistoryChart();
+    return latestFeeds.filter(f => f.timestamp >= sel.start && f.timestamp < sel.end);
+  }
   const cutoff = rangeCutoff(currentRange);
-  const filtered = latestFeeds.filter(f => f.timestamp >= cutoff);
+  return latestFeeds.filter(f => f.timestamp >= cutoff);
+}
+
+function renderHistory() {
+  const filtered = historyFeedsToShow();
   historyList.innerHTML = '';
   historyEmpty.hidden = filtered.length !== 0;
 
@@ -913,6 +1161,7 @@ function renderHistory() {
 historyRange.querySelectorAll('.segment').forEach(seg => {
   seg.addEventListener('click', () => {
     currentRange = seg.dataset.range;
+    chartSelectedStart = null;
     historyRange.querySelectorAll('.segment').forEach(s => s.classList.remove('active'));
     seg.classList.add('active');
     renderHistory();
@@ -1825,6 +2074,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=50').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=51').catch(() => {});
   });
 }

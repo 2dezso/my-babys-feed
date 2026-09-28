@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f8f0">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=50">
+<link rel="manifest" href="manifest.json?v=51">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=50">
+<link rel="stylesheet" href="style.css?v=51">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -48,15 +48,35 @@
   </header>
 
   <main>
-    <section id="hero-card" class="hero-card">
-      <div id="hero-label" class="hero-label">Since last feed</div>
-      <div id="since-last-feed" class="hero-time">—</div>
-      <div id="last-feed-detail" class="hero-detail"></div>
-      <div id="hero-progress" class="hero-progress" hidden>
-        <div class="hero-progress-track"><i id="hero-progress-fill"></i></div>
-        <div class="hero-progress-text">
-          <span id="next-feed-time">—</span>
-          <span id="next-feed-in"></span>
+    <section id="hero-card" class="hero-card feed-hero">
+      <div id="hero-pending-view" class="hero-pending-view" hidden>
+        <div class="hero-label">Feeding now</div>
+        <div id="pending-time" class="hero-time">—</div>
+        <div class="hero-detail">Tap to add amount</div>
+      </div>
+      <div id="hero-main-view">
+        <div class="hero-pair">
+          <div class="hero-half">
+            <span class="hero-label">Last feed</span>
+            <span id="since-last-feed" class="hero-num">—</span>
+            <span id="last-feed-detail" class="hero-sub"></span>
+          </div>
+          <div class="hero-half">
+            <span id="next-feed-label" class="hero-label">Next feed</span>
+            <span id="next-feed-time" class="hero-num">—</span>
+            <span id="next-feed-in" class="hero-sub"></span>
+          </div>
+        </div>
+        <div id="hero-line" class="hero-line" hidden>
+          <span class="hero-line-base"></span>
+          <span id="hero-line-fill" class="hero-line-fill"></span>
+          <span id="hero-line-over" class="hero-line-over"></span>
+          <span class="hero-line-dot hero-line-fed"></span>
+          <span id="hero-line-due" class="hero-line-dot hero-line-due"></span>
+          <span id="hero-line-now" class="hero-line-now"></span>
+          <span id="hero-cap-start" class="hero-cap hero-cap-start"></span>
+          <span id="hero-cap-now" class="hero-cap hero-cap-now">now</span>
+          <span id="hero-cap-end" class="hero-cap hero-cap-end"></span>
         </div>
       </div>
     </section>
@@ -110,6 +130,23 @@
         <div class="segmented" id="history-range">
           <button class="segment active" data-range="1d">1D</button>
           <button class="segment" data-range="7d">7D</button>
+          <button class="segment" data-range="14d">14D</button>
+          <button class="segment" data-range="all">All</button>
+        </div>
+      </div>
+      <div id="history-chart" class="history-chart" hidden>
+        <div id="history-chart-toggle" class="chart-toggle" hidden>
+          <button class="chart-toggle-btn" data-group="day">By day</button>
+          <button class="chart-toggle-btn active" data-group="week">By week</button>
+        </div>
+        <div id="history-chart-scroll" class="history-chart-scroll">
+          <svg id="history-chart-svg" role="img" aria-label="Milk per day"></svg>
+        </div>
+        <p id="history-chart-caption" class="history-chart-caption"></p>
+        <div class="chart-stats">
+          <div><b id="chart-stat-1"></b><span id="chart-stat-1-label"></span></div>
+          <div><b id="chart-stat-2"></b><span id="chart-stat-2-label"></span></div>
+          <div><b id="chart-stat-3"></b><span id="chart-stat-3-label"></span></div>
         </div>
       </div>
       <div class="history-table-wrap">
@@ -541,6 +578,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=50"></script>
+<script type="module" src="app.js?v=51"></script>
 </body>
 </html>
