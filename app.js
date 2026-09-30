@@ -937,8 +937,8 @@ function dailyFeedTotals() {
   return totals;
 }
 
-// Week buckets hold the average ml per day (over the days that week that have happened since the
-// first feed), so a week that has only just started doesn't read as a big drop.
+// Week buckets hold the week's total ml. `complete` is false for the current week and for a first
+// week that began before the first logged feed, so neither drags down the average.
 function buildChartBuckets(totals, group) {
   const today = startOfToday();
   const firstDay = totals.size ? Math.min(...totals.keys()) : today;
@@ -947,21 +947,19 @@ function buildChartBuckets(totals, group) {
     for (let s = startOfWeekMs(firstDay); s <= today; s = shiftDays(s, 7)) {
       let total = 0;
       let count = 0;
-      let days = 0;
       for (let i = 0, d = s; i < 7; i++, d = shiftDays(d, 1)) {
-        if (d < firstDay || d > today) continue;
-        days += 1;
         const t = totals.get(d);
         if (t) { total += t.total; count += t.count; }
       }
       const end = shiftDays(s, 7);
-      buckets.push({ start: s, end, value: days ? Math.round(total / days) : 0, total, count, partial: end > today });
+      const partial = end > today;
+      buckets.push({ start: s, end, value: total, total, count, partial, complete: !partial && s >= firstDay });
     }
     return buckets;
   }
   for (let s = firstDay; s <= today; s = shiftDays(s, 1)) {
     const t = totals.get(s) || { total: 0, count: 0 };
-    buckets.push({ start: s, end: shiftDays(s, 1), value: t.total, total: t.total, count: t.count, partial: s === today });
+    buckets.push({ start: s, end: shiftDays(s, 1), value: t.total, total: t.total, count: t.count, partial: s === today, complete: s !== today });
   }
   return buckets;
 }
@@ -985,7 +983,7 @@ function renderChartStats(totals) {
   const completeDays = Array.from(totals.entries()).filter(([day]) => day !== today).map(([, t]) => t);
   const dayAvg = completeDays.length ? Math.round(completeDays.reduce((s, t) => s + t.total, 0) / completeDays.length) : 0;
 
-  const weeks = buildChartBuckets(totals, 'week').filter(w => !w.partial && w.count > 0);
+  const weeks = buildChartBuckets(totals, 'week').filter(w => w.complete && w.count > 0);
   setChartStat(0, completeDays.length ? `${dayAvg}ml` : '—', 'Avg / day');
   if (weeks.length >= 2 && weeks[0].value > 0) {
     const change = Math.round((weeks[weeks.length - 1].value / weeks[0].value - 1) * 100);
@@ -996,7 +994,14 @@ function renderChartStats(totals) {
   }
   const logged = Array.from(totals.values()).reduce((s, t) => s + t.count, 0);
   setChartStat(2, String(logged), 'Feeds logged');
-  historyChartSvg.setAttribute('aria-label', chartGroup === 'week' ? 'Average milk per day, by week' : 'Total milk each day');
+  historyChartSvg.setAttribute('aria-label', chartGroup === 'week' ? 'Total milk per week' : 'Total milk each day');
+}
+
+function niceChartStep(maxValue) {
+  if (maxValue <= 600) return 200;
+  if (maxValue <= 1500) return 500;
+  if (maxValue <= 3000) return 1000;
+  return 2000;
 }
 
 // Draws the All-time chart and returns the selected bar's bucket.
@@ -1019,9 +1024,10 @@ function renderHistoryChart() {
   const slot = plotW / buckets.length;
   const barW = Math.min(slot * 0.62, 26);
 
-  const complete = buckets.filter(b => !b.partial && b.count > 0);
+  const complete = buckets.filter(b => b.complete);
   const avg = complete.length ? Math.round(complete.reduce((s, b) => s + b.value, 0) / complete.length) : 0;
-  const top = Math.ceil(Math.max(200, avg, ...buckets.map(b => b.value)) / 200) * 200;
+  const step = niceChartStep(Math.max(avg, ...buckets.map(b => b.value), 1));
+  const top = Math.ceil(Math.max(step, avg, ...buckets.map(b => b.value)) / step) * step;
   const y = v => CHART_BOTTOM - (v / top) * (CHART_BOTTOM - CHART_TOP);
 
   let svg = '';
@@ -1029,7 +1035,7 @@ function renderHistoryChart() {
     svg += `<line class="hc-grid" x1="${CHART_LEFT}" x2="${width - CHART_RIGHT}" y1="${y(v)}" y2="${y(v)}"/>`;
     svg += `<text class="hc-axis" x="${CHART_LEFT - 4}" y="${y(v) + 3}" text-anchor="end">${v}</text>`;
   }
-  if (!byWeek && avg) {
+  if (avg) {
     svg += `<line class="hc-avg" x1="${CHART_LEFT}" x2="${width - CHART_RIGHT}" y1="${y(avg)}" y2="${y(avg)}"/>`;
     svg += `<text class="hc-axis" x="${CHART_LEFT + 4}" y="${y(avg) - 4}">avg ${avg}ml</text>`;
   }
@@ -1057,7 +1063,7 @@ function renderHistoryChart() {
   if (selectionReset) historyChartScroll.scrollLeft = historyChartScroll.scrollWidth;
 
   historyChartCaption.textContent = byWeek
-    ? 'Average ml per day, each week starting Monday. Tap a bar to see that week.'
+    ? 'Total ml per week, each week starting Monday. Tap a bar to see that week.'
     : 'Total ml each day. Tap a bar to see that day.';
   renderChartStats(totals);
   return sel;
@@ -2056,6 +2062,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=52').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=53').catch(() => {});
   });
 }
