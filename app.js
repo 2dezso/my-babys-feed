@@ -221,14 +221,10 @@ function rangeCutoff(range) {
   return startOfToday();
 }
 
-let toastTimer = null;
 function showToast(msg) {
   toast.textContent = msg;
   toast.hidden = false;
-  // A failed save stays up longer so it isn't missed mid-feed.
-  const ms = /could not/i.test(msg) ? 5000 : 2000;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toast.hidden = true; }, ms);
+  setTimeout(() => { toast.hidden = true; }, 2000);
 }
 
 function generateHouseholdCode() {
@@ -293,26 +289,10 @@ const SCREENS = {
   poo: pooScreen,
 };
 
-const tabbar = document.getElementById('tabbar');
-const homeDateEl = document.getElementById('home-date');
-const homeNowSinceEl = document.getElementById('home-now-since');
-const homeNowSinceLabelEl = document.getElementById('home-now-since-label');
-const homeNowNextEl = document.getElementById('home-now-next');
-const homeNowNextSubEl = document.getElementById('home-now-next-sub');
-const homeTileFeedSubEl = document.getElementById('home-tile-feed-sub');
-const homeTilePooSubEl = document.getElementById('home-tile-poo-sub');
-
 function showScreen(name) {
-  if (!(name in SCREENS)) name = 'feed';
   Object.values(SCREENS).forEach(el => { el.hidden = true; });
-  SCREENS[name].hidden = false;
+  (SCREENS[name] || SCREENS.feed).hidden = false;
   feedbackFab.hidden = name !== 'home';
-  tabbar.hidden = false;
-  tabbar.querySelectorAll('.tab').forEach(t => {
-    if (t.dataset.tab === name) t.setAttribute('aria-current', 'page');
-    else t.removeAttribute('aria-current');
-  });
-  window.scrollTo(0, 0);
 }
 
 function applyRouteFromHash() {
@@ -497,9 +477,8 @@ function renderSinceLastPoo() {
     lastPooDetailEl.textContent = 'No poos yet';
     return;
   }
-  const last = latestPoos[0];
-  sinceLastPooEl.textContent = durationString(Date.now() - last.timestamp);
-  lastPooDetailEl.textContent = last.size ? `since the last poo · ${last.size.toLowerCase()}` : 'since the last poo';
+  sinceLastPooEl.textContent = durationString(Date.now() - latestPoos[0].timestamp);
+  lastPooDetailEl.textContent = '';
 }
 
 const POO_WEEK_MAX_DOTS = 5;
@@ -508,7 +487,6 @@ function renderPooStats() {
   const today = startOfToday();
   const todayCount = latestPoos.filter(p => p.timestamp >= today).length;
   pooTodayCountEl.textContent = todayCount === 1 ? '1 poo' : `${todayCount} poos`;
-  homeTilePooSubEl.textContent = `${pooTodayCountEl.textContent} today`;
 
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const recent = latestPoos.filter(p => p.timestamp >= weekAgo);
@@ -579,7 +557,7 @@ function renderPooHistory() {
 
     const headerLi = document.createElement('li');
     headerLi.className = 'day-group-header';
-    headerLi.innerHTML = `<span class="day-group-label">${dayLabelForKey(key)}</span><span class="day-group-total">${dayPoos.length === 1 ? '1 poo' : dayPoos.length + ' poos'}</span>`;
+    headerLi.innerHTML = `<span class="day-group-label">${dayLabelForKey(key)}</span><span class="day-group-total">${dayPoos.length} 💩</span>`;
     pooHistoryList.appendChild(headerLi);
 
     for (const poo of dayPoos) {
@@ -592,19 +570,10 @@ function renderPooHistory() {
         <span class="history-time-val">${formatClock(poo.timestamp)}</span>
         ${poo.size ? `<span class="poo-size-tag">${escapeHtml(poo.size)}</span>` : '<span></span>'}
         <span class="history-gap-val">${gap}</span>
-        <button class="history-delete" title="Delete entry" aria-label="Delete entry at ${formatClock(poo.timestamp)}">✕</button>
+        <button class="history-delete" title="Delete">✕</button>
         ${poo.note ? `<span class="poo-note-row">${escapeHtml(poo.note)}</span>` : ''}
       `;
-      li.tabIndex = 0;
-      li.setAttribute('role', 'button');
-      li.setAttribute('aria-label', `Edit entry at ${formatClock(poo.timestamp)}`);
       li.addEventListener('click', () => openPooTimeModal(poo));
-      li.addEventListener('keydown', (e) => {
-        if (e.target === li && (e.key === 'Enter' || e.key === ' ')) {
-          e.preventDefault();
-          openPooTimeModal(poo);
-        }
-      });
       li.querySelector('.history-delete').addEventListener('click', (e) => {
         e.stopPropagation();
         deletePoo(poo.id);
@@ -712,7 +681,7 @@ pooTimeConfirm.addEventListener('click', () => {
 
 function updateFeedActionButtons(isPending) {
   btnLogFeed.hidden = isPending;
-  btnStartFeedIcon.innerHTML = `<svg class="ico" aria-hidden="true"><use href="#i-${isPending ? 'check' : 'plus'}"/></svg>`;
+  btnStartFeedIcon.textContent = isPending ? '🍼' : '⚡';
   btnStartFeedLabel.textContent = isPending ? 'Complete feed' : 'Start feed';
 }
 
@@ -726,19 +695,14 @@ function renderSinceLastFeed() {
   if (!last) {
     sinceLastFeedEl.textContent = '—';
     lastFeedDetailEl.textContent = 'No feeds yet';
-    homeNowSinceEl.textContent = '—';
-    homeNowSinceLabelEl.textContent = 'No feeds yet';
     return;
   }
   const since = durationString(Date.now() - last.timestamp);
-  homeNowSinceEl.textContent = since;
   if (isPending) {
     pendingTimeEl.textContent = since;
-    homeNowSinceLabelEl.textContent = 'feeding now';
   } else {
     sinceLastFeedEl.textContent = since;
-    lastFeedDetailEl.textContent = `since the last feed · ${last.amountMl}ml`;
-    homeNowSinceLabelEl.textContent = 'since the last feed';
+    lastFeedDetailEl.textContent = `ago · ${last.amountMl}ml`;
   }
 }
 
@@ -757,8 +721,6 @@ function renderNextFeed() {
     heroLine.hidden = true;
     nextFeedTimeEl.textContent = '—';
     nextFeedInEl.textContent = '';
-    homeNowNextEl.textContent = last ? 'Feed in progress' : 'No feeds yet';
-    homeNowNextSubEl.textContent = last ? 'Tap to add the amount' : 'Tap to log the first one';
     return;
   }
   const now = Date.now();
@@ -778,8 +740,6 @@ function renderNextFeed() {
   } else {
     nextFeedInEl.textContent = `in ${durationString(diffMs)}`;
   }
-  homeNowNextEl.textContent = `${late ? 'Expected' : 'Next feed'} around ${formatClock(nextTs)}`;
-  homeNowNextSubEl.textContent = diffMs < 60000 ? 'Now' : late ? `${durationString(diffMs)} ago` : `In ${durationString(diffMs)}`;
 
   // Before the expected time the line runs last feed -> next feed; after it, last feed -> now.
   const spanMs = late ? now - last.timestamp : intervalMs;
@@ -803,7 +763,6 @@ function renderTodayTotal() {
   const total = todayFeeds.reduce((sum, f) => sum + (f.amountMl || 0), 0);
   todayTotalEl.textContent = `${total}ml`;
   todayFeedCountEl.textContent = todayFeeds.length === 1 ? '1 feed' : `${todayFeeds.length} feeds`;
-  homeTileFeedSubEl.textContent = `${total}ml · ${todayFeedCountEl.textContent}`;
 
   const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
   const recent = latestFeeds.filter(f => f.timestamp >= dayAgo);
@@ -819,7 +778,6 @@ function renderHeaderDate() {
   const label = new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' });
   appDateEl.textContent = label;
   pooDateEl.textContent = label;
-  homeDateEl.textContent = label;
 }
 
 const BOTTLE_GOOD_FOR_MS = 2 * 60 * 60 * 1000;
@@ -837,13 +795,13 @@ function listenToBottle(code) {
 function renderBottleStatus() {
   bottlePillClear.hidden = !bottleMadeAt;
   if (!bottleMadeAt) {
-    bottleStatusEl.textContent = 'Tap to start the 2 hour timer';
+    bottleStatusEl.textContent = 'Tap to start';
     bottlePill.classList.remove('bottle-expired');
     return;
   }
   const remaining = BOTTLE_GOOD_FOR_MS - (Date.now() - bottleMadeAt);
   if (remaining <= 0) {
-    bottleStatusEl.textContent = 'Over 2h old — make a fresh one';
+    bottleStatusEl.textContent = 'Expired — discard';
     bottlePill.classList.add('bottle-expired');
   } else {
     bottleStatusEl.textContent = `${durationString(remaining)} left`;
@@ -1172,18 +1130,9 @@ function renderHistory() {
         <span class="history-time-val">${formatClock(feed.timestamp)}</span>
         ${amountHtml}
         <span class="history-gap-val">${gap}</span>
-        <button class="history-delete" title="Delete feed" aria-label="Delete feed at ${formatClock(feed.timestamp)}">✕</button>
+        <button class="history-delete" title="Delete">✕</button>
       `;
-      li.tabIndex = 0;
-      li.setAttribute('role', 'button');
-      li.setAttribute('aria-label', `Edit feed at ${formatClock(feed.timestamp)}`);
       li.addEventListener('click', () => openLogModal(feed));
-      li.addEventListener('keydown', (e) => {
-        if (e.target === li && (e.key === 'Enter' || e.key === ' ')) {
-          e.preventDefault();
-          openLogModal(feed);
-        }
-      });
       li.querySelector('.history-delete').addEventListener('click', (e) => {
         e.stopPropagation();
         openConfirmDeleteModal(feed.id);
@@ -2001,18 +1950,11 @@ function readModalTimestamp() {
   return combineDateTimeToTimestamp(feedDateInput.value, feedTimeInput.value);
 }
 
-let startingFeed = false;
-btnStartFeedNow.addEventListener('click', async () => {
+btnStartFeedNow.addEventListener('click', () => {
   if (latestFeeds.length && latestFeeds[0].amountMl == null) {
     openLogModal(latestFeeds[0]);
-  } else if (!startingFeed) {
-    // Guard against a double-tap creating two pending feeds before the snapshot arrives.
-    startingFeed = true;
-    try {
-      await startFeed(Date.now(), computeAutoIntervalHours(DEFAULT_ML));
-    } finally {
-      setTimeout(() => { startingFeed = false; }, 1500);
-    }
+  } else {
+    startFeed(Date.now(), computeAutoIntervalHours(DEFAULT_ML));
   }
 });
 
@@ -2105,39 +2047,6 @@ joinForm.addEventListener('submit', (e) => {
   enterApp(code);
 });
 
-// Dialog semantics for every .modal without touching each open/close site:
-// they all just toggle `hidden`, so watch that. On open, move focus inside and
-// remember where it came from; on close, hand it back. Escape cancels.
-const modalReturnFocus = new WeakMap();
-document.querySelectorAll('.modal').forEach(modal => {
-  const card = modal.querySelector('.modal-card');
-  const heading = card && card.querySelector('h2');
-  card?.setAttribute('role', 'dialog');
-  card?.setAttribute('aria-modal', 'true');
-  if (heading) {
-    if (!heading.id) heading.id = `${modal.id}-heading`;
-    card.setAttribute('aria-labelledby', heading.id);
-  }
-  new MutationObserver(() => {
-    if (!modal.hidden) {
-      modalReturnFocus.set(modal, document.activeElement);
-      // Focus the dialog itself (not a field) so mobile keyboards and pickers don't pop open.
-      const target = card;
-      card.tabIndex = -1;
-      target.focus({ preventScroll: true });
-    } else {
-      const back = modalReturnFocus.get(modal);
-      if (back && document.contains(back)) back.focus({ preventScroll: true });
-      modalReturnFocus.delete(modal);
-    }
-  }).observe(modal, { attributes: true, attributeFilter: ['hidden'] });
-});
-document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape') return;
-  const open = [...document.querySelectorAll('.modal')].find(m => !m.hidden);
-  open?.querySelector('.modal-actions .btn-secondary, .modal-actions .btn-primary')?.click();
-});
-
 renderHeaderDate();
 setInterval(() => { renderHeaderDate(); renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderPooStats(); renderProfileAge(); renderBottleStatus(); }, 15000);
 
@@ -2153,6 +2062,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=56').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=57').catch(() => {});
   });
 }
