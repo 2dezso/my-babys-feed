@@ -293,10 +293,26 @@ const SCREENS = {
   poo: pooScreen,
 };
 
+const tabbar = document.getElementById('tabbar');
+const homeDateEl = document.getElementById('home-date');
+const homeNowSinceEl = document.getElementById('home-now-since');
+const homeNowSinceLabelEl = document.getElementById('home-now-since-label');
+const homeNowNextEl = document.getElementById('home-now-next');
+const homeNowNextSubEl = document.getElementById('home-now-next-sub');
+const homeTileFeedSubEl = document.getElementById('home-tile-feed-sub');
+const homeTilePooSubEl = document.getElementById('home-tile-poo-sub');
+
 function showScreen(name) {
+  if (!(name in SCREENS)) name = 'feed';
   Object.values(SCREENS).forEach(el => { el.hidden = true; });
-  (SCREENS[name] || SCREENS.feed).hidden = false;
+  SCREENS[name].hidden = false;
   feedbackFab.hidden = name !== 'home';
+  tabbar.hidden = false;
+  tabbar.querySelectorAll('.tab').forEach(t => {
+    if (t.dataset.tab === name) t.setAttribute('aria-current', 'page');
+    else t.removeAttribute('aria-current');
+  });
+  window.scrollTo(0, 0);
 }
 
 function applyRouteFromHash() {
@@ -481,8 +497,9 @@ function renderSinceLastPoo() {
     lastPooDetailEl.textContent = 'No poos yet';
     return;
   }
-  sinceLastPooEl.textContent = durationString(Date.now() - latestPoos[0].timestamp);
-  lastPooDetailEl.textContent = '';
+  const last = latestPoos[0];
+  sinceLastPooEl.textContent = durationString(Date.now() - last.timestamp);
+  lastPooDetailEl.textContent = last.size ? `since the last poo · ${last.size.toLowerCase()}` : 'since the last poo';
 }
 
 const POO_WEEK_MAX_DOTS = 5;
@@ -491,6 +508,7 @@ function renderPooStats() {
   const today = startOfToday();
   const todayCount = latestPoos.filter(p => p.timestamp >= today).length;
   pooTodayCountEl.textContent = todayCount === 1 ? '1 poo' : `${todayCount} poos`;
+  homeTilePooSubEl.textContent = `${pooTodayCountEl.textContent} today`;
 
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const recent = latestPoos.filter(p => p.timestamp >= weekAgo);
@@ -694,7 +712,7 @@ pooTimeConfirm.addEventListener('click', () => {
 
 function updateFeedActionButtons(isPending) {
   btnLogFeed.hidden = isPending;
-  btnStartFeedIcon.innerHTML = `<svg class="ico" aria-hidden="true"><use href="#i-${isPending ? 'check' : 'play'}"/></svg>`;
+  btnStartFeedIcon.innerHTML = `<svg class="ico" aria-hidden="true"><use href="#i-${isPending ? 'check' : 'plus'}"/></svg>`;
   btnStartFeedLabel.textContent = isPending ? 'Complete feed' : 'Start feed';
 }
 
@@ -708,14 +726,19 @@ function renderSinceLastFeed() {
   if (!last) {
     sinceLastFeedEl.textContent = '—';
     lastFeedDetailEl.textContent = 'No feeds yet';
+    homeNowSinceEl.textContent = '—';
+    homeNowSinceLabelEl.textContent = 'No feeds yet';
     return;
   }
   const since = durationString(Date.now() - last.timestamp);
+  homeNowSinceEl.textContent = since;
   if (isPending) {
     pendingTimeEl.textContent = since;
+    homeNowSinceLabelEl.textContent = 'feeding now';
   } else {
     sinceLastFeedEl.textContent = since;
-    lastFeedDetailEl.textContent = `ago · ${last.amountMl}ml`;
+    lastFeedDetailEl.textContent = `since the last feed · ${last.amountMl}ml`;
+    homeNowSinceLabelEl.textContent = 'since the last feed';
   }
 }
 
@@ -734,6 +757,8 @@ function renderNextFeed() {
     heroLine.hidden = true;
     nextFeedTimeEl.textContent = '—';
     nextFeedInEl.textContent = '';
+    homeNowNextEl.textContent = last ? 'Feed in progress' : 'No feeds yet';
+    homeNowNextSubEl.textContent = last ? 'Tap to add the amount' : 'Tap to log the first one';
     return;
   }
   const now = Date.now();
@@ -753,6 +778,8 @@ function renderNextFeed() {
   } else {
     nextFeedInEl.textContent = `in ${durationString(diffMs)}`;
   }
+  homeNowNextEl.textContent = `${late ? 'Expected' : 'Next feed'} around ${formatClock(nextTs)}`;
+  homeNowNextSubEl.textContent = diffMs < 60000 ? 'Now' : late ? `${durationString(diffMs)} ago` : `In ${durationString(diffMs)}`;
 
   // Before the expected time the line runs last feed -> next feed; after it, last feed -> now.
   const spanMs = late ? now - last.timestamp : intervalMs;
@@ -776,6 +803,7 @@ function renderTodayTotal() {
   const total = todayFeeds.reduce((sum, f) => sum + (f.amountMl || 0), 0);
   todayTotalEl.textContent = `${total}ml`;
   todayFeedCountEl.textContent = todayFeeds.length === 1 ? '1 feed' : `${todayFeeds.length} feeds`;
+  homeTileFeedSubEl.textContent = `${total}ml · ${todayFeedCountEl.textContent}`;
 
   const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
   const recent = latestFeeds.filter(f => f.timestamp >= dayAgo);
@@ -791,6 +819,7 @@ function renderHeaderDate() {
   const label = new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' });
   appDateEl.textContent = label;
   pooDateEl.textContent = label;
+  homeDateEl.textContent = label;
 }
 
 const BOTTLE_GOOD_FOR_MS = 2 * 60 * 60 * 1000;
@@ -808,7 +837,7 @@ function listenToBottle(code) {
 function renderBottleStatus() {
   bottlePillClear.hidden = !bottleMadeAt;
   if (!bottleMadeAt) {
-    bottleStatusEl.textContent = 'Tap to start';
+    bottleStatusEl.textContent = 'Tap to start the 2 hour timer';
     bottlePill.classList.remove('bottle-expired');
     return;
   }
@@ -2124,6 +2153,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=54').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=56').catch(() => {});
   });
 }
