@@ -329,7 +329,16 @@ body.gender-pink #bottle-adjust-modal .modal-card {
 .card.trends-card { width: 100%; margin: 14px 0 0; padding: 18px 14px; box-sizing: border-box; text-align: left; }
 .trends-chart-title { margin: 0 0 6px; font-size: 0.95rem; text-align: center; }
 .trends-fact-text { margin: 0; font-size: 0.92rem; line-height: 1.5; color: var(--ink); text-align: center; }
-.trends-section-heading { width: 100%; text-align: center; font-size: 1.05rem; margin: 28px 0 0; padding-top: 16px; border-top: 1px solid var(--border); }
+.trends-patterns { width: 100%; }
+.trends-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.trends-card-head .trends-chart-title { margin: 0; text-align: left; }
+.pattern-chip { flex: none; font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: var(--secondary); color: var(--ink); border: 1px solid var(--border); }
+.pattern-recognised { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.pattern-emerging { background: var(--secondary); color: var(--ink); border-color: var(--ink); }
+.pattern-early { background: var(--amber); color: var(--amber-ink); border-color: var(--amber); }
+.trends-caption { margin: 6px 0 0; font-size: 0.76rem; font-weight: 700; color: var(--muted); }
+.muted.trends-note { margin: 8px 0 0; font-size: 0.82rem; line-height: 1.45; }
+.trends-axis { display: flex; justify-content: space-between; margin-top: 4px; font-size: 0.7rem; font-weight: 700; color: var(--muted); }
 .trends-svg { width: 100%; height: auto; display: block; }
 .trends-legend { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
 .legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; color: var(--muted); }

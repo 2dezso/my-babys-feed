@@ -1,4 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
+import { analyse } from './patterns.js?v=58';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -132,12 +133,7 @@ const profileSkipBtn = document.getElementById('profile-skip');
 const profileWelcome = document.getElementById('profile-welcome');
 const profileNamePreview = document.getElementById('profile-name-preview');
 
-const trendsChartMilkByWeightEl = document.getElementById('trends-chart-milk-by-weight');
-const trendsChartMilkEl = document.getElementById('trends-chart-milk');
-const trendsChartBabyEl = document.getElementById('trends-chart-baby');
-const trendsSummaryEl = document.getElementById('trends-summary');
-const trendsLegendNameEl = document.getElementById('trends-legend-name');
-const trendsDobHintEl = document.getElementById('trends-dob-hint');
+const trendsPatternsEl = document.getElementById('trends-patterns');
 const trendsFunFactEl = document.getElementById('trends-fun-fact');
 
 const calPrev = document.getElementById('cal-prev');
@@ -191,6 +187,7 @@ let selectedAvatarTone = '';
 let selectedGender = '';
 let profileOnboarding = false;
 let profileDob = '';
+let profileFirstName = '';
 let selectedPooSize = '';
 let bottleMadeAt = null;
 let selectedBottleMinsAgo = 0;
@@ -332,7 +329,7 @@ function listenToFeeds(code) {
     renderNextFeed();
     renderTodayTotal();
     renderHistory();
-    renderTrendsChart();
+    renderTrends();
   }, (err) => {
     console.error(err);
     showToast('Sync error — check connection');
@@ -350,7 +347,7 @@ function listenToProfile(code) {
     selectedAvatarTone = data.avatarTone || '';
     selectedGender = data.gender || '';
     profileTileLabel.textContent = firstName || 'Profile';
-    trendsLegendNameEl.textContent = firstName || 'Your baby';
+    profileFirstName = firstName;
     const babyTitleName = firstName || 'Charlie';
     const possessive = babyTitleName + (babyTitleName.endsWith('s') ? '’' : '’s');
     appTitleEl.textContent = `${possessive} First Year`;
@@ -361,7 +358,7 @@ function listenToProfile(code) {
     highlightGenderChip();
     renderProfileAge();
     renderProfilePreview();
-    renderTrendsChart();
+    renderTrends();
     if (calendarInitialized) renderCalendar();
   }, (err) => {
     console.error(err);
@@ -1345,206 +1342,183 @@ function renderFunFact() {
   trendsFunFactEl.textContent = weeklyFunFact();
 }
 
-// Illustrative general guidelines (approximate typical values by age in months),
-// not medical advice and not specific to sex. Linearly interpolated between points.
-const WORLD_AVG_ML_BY_MONTH = [
-  { month: 0, ml: 350 },
-  { month: 1, ml: 700 },
-  { month: 2, ml: 800 },
-  { month: 3, ml: 850 },
-  { month: 4, ml: 900 },
-  { month: 5, ml: 900 },
-  { month: 6, ml: 900 },
-  { month: 7, ml: 880 },
-  { month: 8, ml: 860 },
-  { month: 9, ml: 840 },
-  { month: 10, ml: 820 },
-  { month: 11, ml: 800 },
-  { month: 12, ml: 780 },
-];
+// --- Trends: patterns read from the feed log (see patterns.js) ---
 
-const WORLD_AVG_WEIGHT_KG_BY_MONTH = [
-  { month: 0, kg: 3.3 },
-  { month: 1, kg: 4.2 },
-  { month: 2, kg: 5.1 },
-  { month: 3, kg: 5.8 },
-  { month: 4, kg: 6.4 },
-  { month: 5, kg: 6.9 },
-  { month: 6, kg: 7.3 },
-  { month: 7, kg: 7.6 },
-  { month: 8, kg: 7.9 },
-  { month: 9, kg: 8.2 },
-  { month: 10, kg: 8.5 },
-  { month: 11, kg: 8.7 },
-  { month: 12, kg: 8.9 },
-];
+const PATTERN_CHIPS = {
+  recognised: 'Recognised',
+  emerging: 'Emerging',
+  early: 'Early sign',
+  steady: 'Steady',
+};
 
-function interpolateAtMonth(table, month, key) {
-  if (month <= table[0].month) return table[0][key];
-  if (month >= table[table.length - 1].month) return table[table.length - 1][key];
-  for (let i = 0; i < table.length - 1; i++) {
-    if (month >= table[i].month && month <= table[i + 1].month) {
-      const t = (month - table[i].month) / (table[i + 1].month - table[i].month);
-      return table[i][key] + t * (table[i + 1][key] - table[i][key]);
-    }
-  }
-  return table[table.length - 1][key];
+function durationLabel(hours) {
+  const total = Math.round(hours * 60);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h === 0) return `${m}m`;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
-const MONTH_MS = 30.44 * 86400000;
-
-function computeBabyMonthlyAverages() {
-  if (!profileDob) return [];
-  const [y, m, d] = profileDob.split('-').map(Number);
-  const dobTs = new Date(y, m - 1, d).getTime();
-
-  const totals = new Map();
-  for (const f of latestFeeds) {
-    if (f.amountMl == null) continue;
-    const monthIndex = Math.floor((f.timestamp - dobTs) / MONTH_MS);
-    if (monthIndex < 0) continue;
-    totals.set(monthIndex, (totals.get(monthIndex) || 0) + f.amountMl);
-  }
-
-  const now = Date.now();
-  const points = [];
-  for (const [monthIndex, total] of totals) {
-    const monthStart = dobTs + monthIndex * MONTH_MS;
-    const monthEnd = monthStart + MONTH_MS;
-    const elapsedDays = inclusiveCalendarDays(monthStart, Math.min(now, monthEnd));
-    points.push({ month: monthIndex, ml: total / elapsedDays });
-  }
-  points.sort((a, b) => a.month - b.month);
-  return points;
+// "9:45pm" — rounded to the nearest quarter hour, since the pattern is never to the minute.
+function clockLabel(totalMinutes) {
+  const rounded = (Math.round(totalMinutes / 15) * 15) % 1440;
+  const h24 = Math.floor(rounded / 60);
+  const m = rounded % 60;
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  return `${h12}${m ? ':' + String(m).padStart(2, '0') : ''}${h24 < 12 ? 'am' : 'pm'}`;
 }
 
-// Counts calendar dates touched from startMs through endMs, inclusive — e.g. a baby
-// born Monday morning and it's now Wednesday afternoon has fed across 3 calendar
-// dates (Mon/Tue/Wed), not the ~2.x raw elapsed days between the two timestamps.
-function inclusiveCalendarDays(startMs, endMs) {
-  const startDay = new Date(startMs);
-  startDay.setHours(0, 0, 0, 0);
-  const endDay = new Date(endMs);
-  endDay.setHours(0, 0, 0, 0);
-  return Math.max(1, Math.round((endDay.getTime() - startDay.getTime()) / 86400000) + 1);
+function joinList(items) {
+  if (items.length <= 1) return items.join('');
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 }
 
-function ageRefPoints(table, key) {
-  const pts = [];
-  for (let mo = 0; mo <= 12; mo++) pts.push({ x: mo, y: interpolateAtMonth(table, mo, key) });
-  return pts;
+function patternBarsSvg(values, { max, label }) {
+  const width = 300, height = 84, gap = 4;
+  const barW = (width - gap * (values.length - 1)) / values.length;
+  const bars = values.map((v, i) => {
+    const h = Math.max(2, (v / max) * (height - 4));
+    const isLast = i === values.length - 1;
+    return `<rect x="${(i * (barW + gap)).toFixed(1)}" y="${(height - h).toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${isLast ? 'var(--primary-2)' : 'var(--primary)'}" opacity="${isLast ? 1 : 0.55}" />`;
+  }).join('');
+  return `<svg viewBox="0 0 ${width} ${height}" class="trends-svg" role="img" aria-label="${label}">${bars}</svg>`;
 }
 
-function weightMilkRefPoints() {
-  const pts = [];
-  for (let mo = 0; mo <= 12; mo += 0.25) {
-    pts.push({
-      x: interpolateAtMonth(WORLD_AVG_WEIGHT_KG_BY_MONTH, mo, 'kg'),
-      y: interpolateAtMonth(WORLD_AVG_ML_BY_MONTH, mo, 'ml'),
-    });
-  }
-  return pts;
+function feedingTimesSvg(hourly) {
+  const width = 300, height = 70, gap = 3;
+  const barW = (width - gap * 23) / 24;
+  const max = Math.max(...hourly, 0.5);
+  const bars = hourly.map((v, i) => {
+    const h = Math.max(2, (v / max) * (height - 4));
+    return `<rect x="${(i * (barW + gap)).toFixed(1)}" y="${(height - h).toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="2.5" fill="var(--primary)" opacity="${v > 0 ? 0.35 + 0.65 * (v / max) : 0.15}" />`;
+  }).join('');
+  return `<svg viewBox="0 0 ${width} ${height}" class="trends-svg" role="img" aria-label="Feeds by hour of day">${bars}</svg>
+    <div class="trends-axis"><span>12am</span><span>6am</span><span>12pm</span><span>6pm</span><span>12am</span></div>`;
 }
 
-function buildLineChartSvg({ refPoints, babyPoints, xMin = 0, xMax, yMax, yGridValues, yTickFormat, xTicks, xTickFormat, showRef = true }) {
-  const width = 300;
-  const height = 170;
-  const padLeft = 34;
-  const padRight = 10;
-  const padTop = 10;
-  const padBottom = 20;
-  const plotW = width - padLeft - padRight;
-  const plotH = height - padTop - padBottom;
-
-  const x = (val) => padLeft + ((Math.min(Math.max(val, xMin), xMax) - xMin) / (xMax - xMin)) * plotW;
-  const y = (val) => padTop + plotH - (Math.min(val, yMax) / yMax) * plotH;
-
-  const gridLines = yGridValues.map(val => `
-    <line x1="${padLeft}" y1="${y(val)}" x2="${width - padRight}" y2="${y(val)}" stroke="var(--border)" stroke-width="1" />
-    <text x="${padLeft - 5}" y="${y(val) + 3}" text-anchor="end" font-size="8" fill="var(--muted)">${yTickFormat(val)}</text>
-  `).join('');
-
-  const xLabels = xTicks.map(t => `
-    <text x="${x(t)}" y="${height - 4}" text-anchor="middle" font-size="8" fill="var(--muted)">${xTickFormat(t)}</text>
-  `).join('');
-
-  const refLine = showRef && refPoints
-    ? `<polyline points="${refPoints.map(p => `${x(p.x)},${y(p.y)}`).join(' ')}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4,3" />`
+function patternCard(title, status, bodyHtml) {
+  const chip = status && PATTERN_CHIPS[status]
+    ? `<span class="pattern-chip pattern-${status}">${PATTERN_CHIPS[status]}</span>`
     : '';
-  const babyPolyline = babyPoints && babyPoints.length > 1
-    ? `<polyline points="${babyPoints.map(p => `${x(p.x)},${y(p.y)}`).join(' ')}" fill="none" stroke="var(--primary)" stroke-width="2.5" />`
-    : '';
-  const babyDots = babyPoints
-    ? babyPoints.map(p => `<circle cx="${x(p.x)}" cy="${y(p.y)}" r="2.8" fill="var(--primary)" />`).join('')
-    : '';
-
-  return `
-    <svg viewBox="0 0 ${width} ${height}" class="trends-svg">
-      ${gridLines}
-      ${xLabels}
-      ${refLine}
-      ${babyPolyline}
-      ${babyDots}
-    </svg>
-  `;
+  return `<div class="card trends-card"><div class="trends-card-head"><h3 class="trends-chart-title">${title}</h3>${chip}</div>${bodyHtml}</div>`;
 }
 
-function comparisonPhrase(babyAvg, worldAvg) {
-  const diffPct = ((babyAvg - worldAvg) / worldAvg) * 100;
-  if (Math.abs(diffPct) < 10) return 'about the same as';
-  if (diffPct >= 25) return 'quite a bit more than';
-  if (diffPct >= 10) return 'a little more than';
-  if (diffPct <= -25) return 'quite a bit less than';
-  return 'a little less than';
+// A flat result only earns the "Steady" chip once three weeks agree.
+function chipFor(p) {
+  return p.status === 'steady' && !p.steadyWeeks ? null : p.status;
 }
 
-function renderTrendsChart() {
-  if (!trendsChartMilkByWeightEl) return;
+function overnightSentence(o, name) {
+  const now = durationLabel(o.recent);
+  const before = o.before != null ? durationLabel(o.before) : '';
+  if (o.status === 'recognised' && o.dir === 'up') {
+    return `Overnight stretches have grown two weeks running: about ${now} this week, ${before} last week and ${durationLabel(o.first)} the week before.`;
+  }
+  if (o.status === 'recognised') {
+    return `Overnight stretches have eased back over two weeks: about ${now} this week, ${before} last week and ${durationLabel(o.first)} the week before.`;
+  }
+  if (o.status === 'emerging') {
+    return o.dir === 'up'
+      ? `Longer overnight stretches this week: about ${now} on average, up from ${before}.`
+      : `Overnight stretches are a little shorter this week: about ${now} on average, down from ${before}.`;
+  }
+  if (o.status === 'early') {
+    return `Early sign: the last few nights have averaged about ${now}, compared with ${before} before that.`;
+  }
+  return `${name}'s overnight stretches are steady at around ${now}.`;
+}
 
-  trendsChartMilkByWeightEl.innerHTML = buildLineChartSvg({
-    refPoints: weightMilkRefPoints(),
-    xMin: 3,
-    xMax: 9,
-    yMax: 1100,
-    yGridValues: [0, 300, 600, 900],
-    yTickFormat: (v) => `${v}`,
-    xTicks: [3, 5, 7, 9],
-    xTickFormat: (v) => `${v}kg`,
+function renderOvernightCard(r, name) {
+  const o = r.overnight;
+  if (!o || o.status === 'none' || !r.nights || r.nights.length < 7) {
+    return patternCard('Overnight stretch', null,
+      `<p class="muted trends-summary">Once a week of nights is logged, ${name}'s longest overnight stretch will show up here.</p>`);
+  }
+  const max = Math.max(8, ...r.nights.map((n) => n.hours));
+  const chart = patternBarsSvg(r.nights.map((n) => n.hours), {
+    max,
+    label: `Longest overnight stretch for each of the last ${r.nights.length} nights`,
   });
+  const lastLine = o.last.hours >= o.best.hours
+    ? `Last night: ${durationLabel(o.last.hours)} — the longest in the last two weeks.`
+    : `Last night: ${durationLabel(o.last.hours)}. Best in the last two weeks: ${durationLabel(o.best.hours)}.`;
+  const rhythm = o.bedtimeFeed && o.stretchEnds
+    ? `<p class="muted trends-note">The feed before the longest stretch is usually around ${clockLabel(o.bedtimeFeed.hour * 60 + o.bedtimeFeed.minute)}, and the stretch usually ends around ${clockLabel(o.stretchEnds.hour * 60 + o.stretchEnds.minute)}.</p>`
+    : '';
+  return patternCard('Overnight stretch', chipFor(o),
+    `${chart}<p class="trends-caption">Longest gap between feeds, 10pm–6am, last ${r.nights.length} nights</p>
+     <p class="muted trends-summary">${overnightSentence(o, name)}</p>
+     <p class="muted trends-note">${lastLine}</p>${rhythm}`);
+}
 
-  trendsChartMilkEl.innerHTML = buildLineChartSvg({
-    refPoints: ageRefPoints(WORLD_AVG_ML_BY_MONTH, 'ml'),
-    xMax: 12,
-    yMax: 1100,
-    yGridValues: [0, 300, 600, 900],
-    yTickFormat: (v) => `${v}`,
-    xTicks: [0, 3, 6, 9, 12],
-    xTickFormat: (mo) => (mo === 0 ? 'Birth' : mo + 'mo'),
-  });
+function renderTimesCard(r) {
+  const t = r.times;
+  if (!t) return '';
+  const status = t.days >= 14 ? 'recognised' : t.days >= 10 ? 'emerging' : 'early';
+  const sentence = t.anchors.length
+    ? `Most days there's a feed around ${joinList(t.anchors.map((a) => clockLabel(a.minutes)))}.`
+    : 'Feeds are spread through the day without a set rhythm yet.';
+  return patternCard('Feeding times', status,
+    `${feedingTimesSvg(t.hourly)}
+     <p class="trends-caption">When feeds happen, last ${t.days} days</p>
+     <p class="muted trends-summary">${sentence}</p>`);
+}
 
-  trendsDobHintEl.hidden = !!profileDob;
-  const babyPoints = computeBabyMonthlyAverages().map(p => ({ x: p.month, y: p.ml }));
-  trendsChartBabyEl.innerHTML = buildLineChartSvg({
-    babyPoints,
-    xMax: 12,
-    yMax: 1100,
-    yGridValues: [0, 300, 600, 900],
-    yTickFormat: (v) => `${v}`,
-    xTicks: [0, 3, 6, 9, 12],
-    xTickFormat: (mo) => (mo === 0 ? 'Birth' : mo + 'mo'),
-    showRef: false,
-  });
-
-  if (babyPoints.length > 0) {
-    const latest = babyPoints[babyPoints.length - 1];
-    const worldAtLatest = interpolateAtMonth(WORLD_AVG_ML_BY_MONTH, latest.x, 'ml');
-    const babyAvg = latest.y;
-    const name = trendsLegendNameEl.textContent || 'Your baby';
-    const phrase = comparisonPhrase(babyAvg, worldAtLatest);
-    trendsSummaryEl.textContent = `${name} is averaging about ${Math.round(babyAvg)}ml/day this month — ${phrase} the ${Math.round(worldAtLatest)}ml/day average for babies around this age. This is just a general average though — every baby is different, so there's no need to worry if yours doesn't match.`;
+function renderVolumeCard(r) {
+  const v = r.volume;
+  if (!v || v.status === 'none' || !r.dailyTotals || r.dailyTotals.length < 7) return '';
+  const now = Math.round(v.recent);
+  const before = v.before != null ? Math.round(v.before) : null;
+  let sentence;
+  if (v.status === 'recognised') {
+    sentence = `Daily milk has ${v.dir === 'up' ? 'risen' : 'eased'} two weeks running: about ${now}ml a day this week, ${before}ml last week.`;
+  } else if (v.status === 'emerging') {
+    sentence = `${v.dir === 'up' ? 'A little more' : 'A little less'} milk this week: about ${now}ml a day, ${v.dir === 'up' ? 'up' : 'down'} from ${before}ml.`;
+  } else if (v.status === 'early') {
+    sentence = `Early sign: the last few days have averaged about ${now}ml a day, compared with ${before}ml before that.`;
   } else {
-    trendsSummaryEl.textContent = '';
+    sentence = `Daily milk is steady at around ${now}ml.`;
   }
+  const chart = patternBarsSvg(r.dailyTotals.map((d) => d.v), {
+    max: Math.max(...r.dailyTotals.map((d) => d.v)),
+    label: `Milk per day for the last ${r.dailyTotals.length} days`,
+  });
+  return patternCard('Milk per day', chipFor(v),
+    `${chart}<p class="trends-caption">Total ml per day, last ${r.dailyTotals.length} days</p>
+     <p class="muted trends-summary">${sentence}</p>`);
+}
+
+function renderGapsCard(r) {
+  const g = r.daytimeGaps;
+  if (!g || g.status === 'none') return '';
+  const now = durationLabel(g.recent);
+  const before = g.before != null ? durationLabel(g.before) : '';
+  let sentence;
+  if (g.status === 'recognised' || g.status === 'emerging') {
+    sentence = `Daytime feeds are ${g.dir === 'up' ? 'spreading out' : 'closer together'} this week: about ${now} apart, compared with ${before} last week.`;
+  } else if (g.status === 'early') {
+    sentence = `Early sign: the last few days have had feeds about ${now} apart, compared with ${before} before that.`;
+  } else {
+    sentence = `Daytime feeds are usually about ${now} apart.`;
+  }
+  return patternCard('Daytime gaps', chipFor(g),
+    `<p class="muted trends-summary">${sentence}</p>`);
+}
+
+function renderTrends() {
+  if (!trendsPatternsEl) return;
+  const name = profileFirstName || 'your baby';
+  const r = analyse(latestFeeds);
+  if (!r.nights) {
+    trendsPatternsEl.innerHTML = patternCard('Patterns', null,
+      `<p class="muted trends-summary">Log a few days of feeds and patterns will start to show up here.</p>`);
+    return;
+  }
+  trendsPatternsEl.innerHTML =
+    renderOvernightCard(r, name.charAt(0).toUpperCase() + name.slice(1)) +
+    renderTimesCard(r) +
+    renderVolumeCard(r) +
+    renderGapsCard(r);
 }
 
 // --- Milestones ---
@@ -2050,7 +2024,7 @@ joinForm.addEventListener('submit', (e) => {
 renderHeaderDate();
 setInterval(() => { renderHeaderDate(); renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderPooStats(); renderProfileAge(); renderBottleStatus(); }, 15000);
 
-renderTrendsChart();
+renderTrends();
 renderFunFact();
 
 const existingCode = getHouseholdCode();

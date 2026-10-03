@@ -1,8 +1,9 @@
-const CACHE_NAME = 'baby-feed-v57';
+const CACHE_NAME = 'baby-feed-v58';
 const SHELL_FILES = [
   './index.html',
-  './style.css?v=57',
-  './app.js?v=57',
+  './style.css?v=58',
+  './app.js?v=58',
+  './patterns.js?v=58',
   './manifest.json?v=57',
 ];
 
