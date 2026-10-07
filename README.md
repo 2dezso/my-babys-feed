@@ -99,6 +99,11 @@ Firestore: `households/{code}/bottle/info` → `{ madeAt }`
 
 The pill is now a `<div>` wrapping two separate `<button>`s (main tap area + the 🕐 adjust button) rather than being one button itself, since a `<button>` can't contain another interactive control.
 
+## Picking a past date
+The feed and poo modals share one "When" control: **Today** and **Yesterday** buttons, then a visible date field and time field. The date field used to be an invisible input laid over a text label, which some Android browsers would not open reliably; it is now a normal, visible `<input type="date">`, with the two buttons as a one-tap fallback for the common case. The date input has `max` set to today, so future days cannot be picked.
+
+If a logged entry is older than the Past feeds / Past tab being viewed (1D by default), the list switches to the first tab wide enough to include it, so a backdated entry does not appear to vanish.
+
 ## Feedback
 A bouncing 💬 button floats in the bottom-right corner of the home screen only, for now. Tapping it opens a small modal with an Idea/Problem toggle and a message box.
 

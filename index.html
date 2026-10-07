@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f8f0">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=57">
+<link rel="manifest" href="manifest.json?v=59">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=58">
+<link rel="stylesheet" href="style.css?v=59">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -401,12 +401,13 @@
     <h2 id="poo-time-modal-title">Log poo</h2>
     <div class="modal-section">
       <div class="section-label">When</div>
+      <div class="day-chips" id="poo-day-chips">
+        <button type="button" class="chip" data-offset="0">Today</button>
+        <button type="button" class="chip" data-offset="1">Yesterday</button>
+      </div>
       <div class="datetime-row">
-        <div class="date-field">
-          <input id="poo-date" type="date">
-          <span id="poo-date-label" class="date-field-label">Today</span>
-        </div>
-        <input id="poo-time" type="time">
+        <input id="poo-date" type="date" aria-label="Date">
+        <input id="poo-time" type="time" aria-label="Time">
       </div>
     </div>
 
@@ -437,12 +438,13 @@
 
     <div class="modal-section">
       <div class="section-label">When</div>
+      <div class="day-chips" id="feed-day-chips">
+        <button type="button" class="chip" data-offset="0">Today</button>
+        <button type="button" class="chip" data-offset="1">Yesterday</button>
+      </div>
       <div class="datetime-row">
-        <div class="date-field">
-          <input id="feed-date" type="date">
-          <span id="feed-date-label" class="date-field-label">Today</span>
-        </div>
-        <input id="feed-time" type="time">
+        <input id="feed-date" type="date" aria-label="Date">
+        <input id="feed-time" type="time" aria-label="Time">
       </div>
     </div>
 
@@ -552,6 +554,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=58"></script>
+<script type="module" src="app.js?v=59"></script>
 </body>
 </html>

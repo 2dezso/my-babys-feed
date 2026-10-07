@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=58';
+import { analyse } from './patterns.js?v=59';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -87,7 +87,7 @@ const btnLogFeed = document.getElementById('btn-log-feed');
 const logModal = document.getElementById('log-modal');
 const logModalTitle = document.getElementById('log-modal-title');
 const feedDateInput = document.getElementById('feed-date');
-const feedDateLabel = document.getElementById('feed-date-label');
+const feedDayChips = document.getElementById('feed-day-chips');
 const feedTimeInput = document.getElementById('feed-time');
 const amountChips = document.getElementById('amount-chips');
 const mlWheelTrack = document.getElementById('ml-wheel-track');
@@ -167,7 +167,7 @@ const pooHistoryRange = document.getElementById('poo-history-range');
 const pooTimeModal = document.getElementById('poo-time-modal');
 const pooTimeModalTitle = document.getElementById('poo-time-modal-title');
 const pooDateInput = document.getElementById('poo-date');
-const pooDateLabel = document.getElementById('poo-date-label');
+const pooDayChips = document.getElementById('poo-day-chips');
 const pooTimeInput = document.getElementById('poo-time');
 const pooSizeChips = document.getElementById('poo-size-chips');
 const pooNoteInput = document.getElementById('poo-note');
@@ -650,7 +650,7 @@ function openPooTimeModal(poo) {
   const baseTime = poo ? new Date(poo.timestamp) : new Date();
   pooDateInput.value = `${baseTime.getFullYear()}-${String(baseTime.getMonth() + 1).padStart(2, '0')}-${String(baseTime.getDate()).padStart(2, '0')}`;
   pooDateInput.max = todayDateString();
-  updateDateLabel(pooDateInput, pooDateLabel);
+  syncDayChips(pooDateInput, pooDayChips);
   pooTimeInput.value = `${String(baseTime.getHours()).padStart(2, '0')}:${String(baseTime.getMinutes()).padStart(2, '0')}`;
   selectedPooSize = poo?.size || '';
   highlightPooSizeChip();
@@ -667,6 +667,7 @@ pooTimeCancel.addEventListener('click', () => { pooTimeModal.hidden = true; edit
 pooTimeConfirm.addEventListener('click', () => {
   const timestamp = combineDateTimeToTimestamp(pooDateInput.value, pooTimeInput.value);
   const note = pooNoteInput.value.trim();
+  showRangeContaining(timestamp, pooHistoryRange, ["1d", "7d"], (r) => { currentPooRange = r; });
   pooTimeModal.hidden = true;
   if (editingPooId) {
     updatePoo(editingPooId, timestamp, selectedPooSize, note);
@@ -675,6 +676,21 @@ pooTimeConfirm.addEventListener('click', () => {
     logPoo(timestamp, selectedPooSize, note);
   }
 });
+
+// A past entry older than the tab being viewed would save but vanish from the list, so
+// move to the first tab wide enough to show it.
+function showRangeContaining(ts, segmentedEl, order, setRange) {
+  const buttons = Array.from(segmentedEl.querySelectorAll(".segment"));
+  const active = buttons.find(b => b.classList.contains("active"));
+  if (!active || active.dataset.range === "all") return;
+  if (ts >= rangeCutoff(active.dataset.range)) return;
+  const target = order.find(r => buttons.some(b => b.dataset.range === r) && ts >= rangeCutoff(r));
+  if (!target) return;
+  setRange(target);
+  buttons.forEach(b => b.classList.toggle("active", b.dataset.range === target));
+  renderHistory();
+  renderPooHistory();
+}
 
 function updateFeedActionButtons(isPending) {
   btnLogFeed.hidden = isPending;
@@ -1883,7 +1899,7 @@ function openLogModal(feed) {
   const baseTime = feed ? new Date(feed.timestamp) : new Date();
   feedDateInput.value = `${baseTime.getFullYear()}-${String(baseTime.getMonth() + 1).padStart(2, '0')}-${String(baseTime.getDate()).padStart(2, '0')}`;
   feedDateInput.max = todayDateString();
-  updateDateLabel(feedDateInput, feedDateLabel);
+  syncDayChips(feedDateInput, feedDayChips);
   feedTimeInput.value = `${String(baseTime.getHours()).padStart(2, '0')}:${String(baseTime.getMinutes()).padStart(2, '0')}`;
 
   logModalTitle.textContent = isPending ? 'Add amount' : (feed ? 'Edit feed' : 'Log a feed');
@@ -1897,17 +1913,31 @@ function openLogModal(feed) {
   updateIntervalWheelActiveItem();
 }
 
-function updateDateLabel(input, label) {
-  const val = input.value;
-  if (!val || val === todayDateString()) {
-    label.textContent = 'Today';
-    return;
-  }
-  const [y, m, d] = val.split('-').map(Number);
-  label.textContent = new Date(y, m - 1, d).toLocaleDateString([], { day: 'numeric', month: 'short' });
+function dateStringForOffset(daysAgo) {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-feedDateInput.addEventListener('change', () => updateDateLabel(feedDateInput, feedDateLabel));
+function syncDayChips(input, chipsEl) {
+  chipsEl.querySelectorAll('.chip').forEach(c => {
+    c.classList.toggle('selected', input.value === dateStringForOffset(Number(c.dataset.offset)));
+  });
+}
+
+function wireDayPicker(input, chipsEl) {
+  input.addEventListener('input', () => syncDayChips(input, chipsEl));
+  input.addEventListener('change', () => syncDayChips(input, chipsEl));
+  chipsEl.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      input.value = dateStringForOffset(Number(chip.dataset.offset));
+      syncDayChips(input, chipsEl);
+    });
+  });
+}
+
+wireDayPicker(feedDateInput, feedDayChips);
+wireDayPicker(pooDateInput, pooDayChips);
 
 function combineDateTimeToTimestamp(dateStr, timeStr) {
   const now = new Date();
@@ -1937,6 +1967,7 @@ logCancel.addEventListener('click', () => { logModal.hidden = true; editingFeedI
 
 logConfirm.addEventListener('click', () => {
   const timestamp = readModalTimestamp();
+  showRangeContaining(timestamp, historyRange, ["1d", "7d", "14d"], (r) => { currentRange = r; chartSelectedStart = null; });
   logModal.hidden = true;
   if (editingFeedId) {
     finishFeed(editingFeedId, timestamp, selectedMl, selectedIntervalHours);
@@ -2036,6 +2067,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=57').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=59').catch(() => {});
   });
 }
