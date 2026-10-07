@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=63';
+import { analyse } from './patterns.js?v=64';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -41,8 +41,7 @@ const heroMainView = document.getElementById('hero-main-view');
 const pendingTimeEl = document.getElementById('pending-time');
 const nextFeedLabelEl = document.getElementById('next-feed-label');
 const heroLine = document.getElementById('hero-line');
-const heroLineNow = document.getElementById('hero-line-now');
-const heroCapStart = document.getElementById('hero-cap-start');
+const heroLow = document.getElementById('hero-low');
 const todayBottle = document.getElementById('today-bottle');
 const tabbar = document.getElementById('tabbar');
 const homeDateEl = document.getElementById('home-date');
@@ -69,6 +68,7 @@ const bottlePillMain = document.getElementById('bottle-pill-main');
 const bottlePillAdjust = document.getElementById('bottle-pill-adjust');
 const bottlePillClear = document.getElementById('bottle-pill-clear');
 const bottleStatusEl = document.getElementById('bottle-status');
+const bottleTitleEl = document.getElementById('bottle-title');
 const bottleAdjustModal = document.getElementById('bottle-adjust-modal');
 const bottleAdjustWheelTrack = document.getElementById('bottle-adjust-wheel-track');
 const bottleAdjustCancel = document.getElementById('bottle-adjust-cancel');
@@ -205,6 +205,7 @@ let profileDob = '';
 let profileFirstName = '';
 let selectedPooSize = '';
 let bottleMadeAt = null;
+let bottleFeedStartedAt = null;
 let selectedBottleMinsAgo = 0;
 let calendarInitialized = false;
 let currentCalYear = 0;
@@ -729,6 +730,7 @@ function renderSinceLastFeed() {
   heroCard.classList.toggle('hero-pending', isPending);
   heroPendingView.hidden = !isPending;
   heroMainView.hidden = isPending;
+  heroLow.hidden = isPending;
   updateFeedActionButtons(isPending);
   if (!last) {
     sinceLastFeedEl.textContent = '—';
@@ -771,21 +773,19 @@ function renderNextFeed() {
   nextFeedTimeEl.textContent = formatClock(nextTs);
   nextFeedInEl.hidden = false;
   if (diffMs < 60000) {
-    nextFeedInEl.textContent = 'Next feed now';
+    nextFeedInEl.textContent = 'now';
   } else if (late) {
     nextFeedInEl.classList.add('late');
     heroLine.classList.add('late');
     nextFeedLabelEl.textContent = 'Expected';
-    nextFeedInEl.textContent = `Expected ${durationString(diffMs)} ago`;
+    nextFeedInEl.textContent = `${durationString(diffMs)} ago`;
   } else {
-    nextFeedInEl.textContent = `Next in ${durationString(diffMs)}`;
+    nextFeedInEl.textContent = `in ${durationString(diffMs)}`;
   }
-  // The line runs from the last feed to the next one; the marker is now. Once late, the whole line is filled.
+  // The bar fills from the last feed to the next one. Once late it stays full.
   const share = late ? 1 : Math.max(0, (now - last.timestamp) / intervalMs);
   heroLine.hidden = false;
   heroLine.style.setProperty('--p', share.toFixed(4));
-  heroLineNow.hidden = late;
-  heroCapStart.textContent = formatClock(last.timestamp);
 }
 
 // What a normal day adds up to, from the last week of finished days. Only used to scale the bottle picture.
@@ -867,12 +867,17 @@ function renderHome() {
   homeTrendS.textContent = summary.sub;
 }
 
+// A made bottle keeps for 2 hours. Once the baby starts drinking from it, it is good for 1 hour from that moment.
 const BOTTLE_GOOD_FOR_MS = 2 * 60 * 60 * 1000;
+const BOTTLE_IN_USE_MS = 60 * 60 * 1000;
+// After the hour is up the reminder to discard stays for a while, then the row goes back to idle on its own.
+const BOTTLE_IN_USE_NOTICE_MS = 30 * 60 * 1000;
 
 function listenToBottle(code) {
   onSnapshot(bottleDocRef(code), (snap) => {
     const data = snap.data() || {};
     bottleMadeAt = data.madeAt || null;
+    bottleFeedStartedAt = data.feedStartedAt || null;
     renderBottleStatus();
   }, (err) => {
     console.error(err);
@@ -880,19 +885,33 @@ function listenToBottle(code) {
 }
 
 function renderBottleStatus() {
-  bottlePillClear.hidden = !bottleMadeAt;
-  if (!bottleMadeAt) {
-    bottleStatusEl.textContent = 'Tap to start';
-    bottlePill.classList.remove('bottle-expired');
+  const now = Date.now();
+  const inUse = !bottleMadeAt && bottleFeedStartedAt && now - bottleFeedStartedAt < BOTTLE_IN_USE_MS + BOTTLE_IN_USE_NOTICE_MS;
+  bottlePillClear.hidden = !bottleMadeAt && !inUse;
+  bottlePillAdjust.hidden = !!inUse;
+  bottlePill.classList.remove('bottle-expired');
+  if (inUse) {
+    const remaining = BOTTLE_IN_USE_MS - (now - bottleFeedStartedAt);
+    bottleTitleEl.textContent = 'Bottle in use';
+    if (remaining <= 0) {
+      bottleStatusEl.textContent = 'Over 1h since the feed started. Discard what is left';
+      bottlePill.classList.add('bottle-expired');
+    } else {
+      bottleStatusEl.textContent = `Good for ${durationString(remaining)}`;
+    }
     return;
   }
-  const remaining = BOTTLE_GOOD_FOR_MS - (Date.now() - bottleMadeAt);
+  bottleTitleEl.textContent = 'Bottle made';
+  if (!bottleMadeAt) {
+    bottleStatusEl.textContent = 'Tap to start the timer';
+    return;
+  }
+  const remaining = BOTTLE_GOOD_FOR_MS - (now - bottleMadeAt);
   if (remaining <= 0) {
-    bottleStatusEl.textContent = 'Expired — discard';
+    bottleStatusEl.textContent = 'Expired. Discard';
     bottlePill.classList.add('bottle-expired');
   } else {
-    bottleStatusEl.textContent = `${durationString(remaining)} left`;
-    bottlePill.classList.remove('bottle-expired');
+    bottleStatusEl.textContent = `Good for ${durationString(remaining)}`;
   }
 }
 
@@ -900,7 +919,7 @@ async function startBottleTimer(minsAgo) {
   const code = getHouseholdCode();
   if (!code) return;
   try {
-    await setDoc(bottleDocRef(code), { madeAt: Date.now() - minsAgo * 60000 }, { merge: true });
+    await setDoc(bottleDocRef(code), { madeAt: Date.now() - minsAgo * 60000, feedStartedAt: null }, { merge: true });
     showToast(minsAgo > 0 ? `Bottle timer started (${minsAgo}m ago)` : 'Bottle timer started');
   } catch (e) {
     console.error(e);
@@ -914,7 +933,7 @@ bottlePillClear.addEventListener('click', async () => {
   const code = getHouseholdCode();
   if (!code) return;
   try {
-    await setDoc(bottleDocRef(code), { madeAt: null }, { merge: true });
+    await setDoc(bottleDocRef(code), { madeAt: null, feedStartedAt: null }, { merge: true });
     showToast('Bottle timer cleared');
   } catch (e) {
     console.error(e);
@@ -1275,9 +1294,9 @@ async function startFeed(timestamp, intervalHours) {
     showToast('Could not start feed — check connection');
     return;
   }
-  // The prepared bottle is now in use — its "good for 2 hours" timer no longer applies.
+  // The bottle is now being drunk from: the 2-hour "made" timer gives way to 1 hour from the start of the feed.
   try {
-    await setDoc(bottleDocRef(code), { madeAt: null }, { merge: true });
+    await setDoc(bottleDocRef(code), { madeAt: null, feedStartedAt: timestamp }, { merge: true });
   } catch (e) {
     console.error(e);
   }
@@ -2195,7 +2214,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=63').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=64').catch(() => {});
   });
 }
 
