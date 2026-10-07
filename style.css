@@ -443,7 +443,7 @@ textarea.field-input { padding: 12px 14px; }
 /* Bottle timer row: a formula scoop when idle; tapping it turns the scoop into a small bottle that drains as time runs out */
 .bottle { --left: 1; }
 .bottle .timer-ic { position: relative; }
-.bottle .timer-ic svg { position: absolute; inset: 0; margin: auto; width: 24px; height: 24px; transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), opacity .25s ease; }
+.bottle .timer-ic svg { position: absolute; inset: 0; margin: auto; width: 24px; height: 24px; transition: transform .45s cubic-bezier(.22, 1, .36, 1), opacity .25s ease; }
 .bottle .scoop { transform: rotate(-12deg); }
 .bottle .minibottle { opacity: 0; transform: scale(.3) rotate(-40deg); }
 .bottle .minibottle .out { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
