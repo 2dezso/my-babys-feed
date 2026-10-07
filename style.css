@@ -406,7 +406,7 @@ textarea.field-input { padding: 12px 14px; }
 .hc-pill.late { background: var(--amber); color: var(--amber-ink); }
 .hc-tl { --p: 0; --late: #c98a1a; position: relative; height: 46px; margin-top: 22px; }
 .hc-tl .ln { position: absolute; left: 7px; right: 7px; top: 6px; height: 4px; border-radius: 99px; background: var(--sec-soft); }
-.hc-tl .fill { position: absolute; left: 7px; top: 6px; height: 4px; border-radius: 99px; background: var(--sec); width: calc((100% - 14px) * var(--p)); transition: width .6s ease; }
+.hc-tl .fill { position: absolute; left: 7px; top: 6px; height: 4px; border-radius: 99px; background: var(--sec); width: calc(100% - 14px); transform-origin: 0 50%; transform: scaleX(var(--p)); transition: transform .6s ease; }
 .hc-tl .dot { position: absolute; top: 1px; width: 14px; height: 14px; border-radius: 50%; }
 .hc-tl .dot.st { left: 0; background: var(--sec); }
 .hc-tl .dot.en { right: 0; background: var(--card); border: 3px solid var(--sec); }
