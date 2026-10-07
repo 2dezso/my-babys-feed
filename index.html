@@ -3,16 +3,72 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f5f8f0">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f2f2f7">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=59">
+<link rel="manifest" href="manifest.json?v=60">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=59">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=60">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 10v9a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9"/></symbol>
+  <symbol id="i-bottle" viewBox="0 0 24 24"><path d="M10 2.5h4M10.5 2.5v2.5h3V2.5M8.5 9a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v10a2.5 2.5 0 0 1-2.5 2.5h-2A2.5 2.5 0 0 1 8.5 19zM8.5 12.5h3M8.5 16h3"/></symbol>
+  <symbol id="i-poo" viewBox="0 0 24 24"><path d="M12 2.5c1.3.8 1.7 2 .9 3.2 1.8.3 3 1.4 3 2.8 1.8.4 3.1 1.8 3.1 3.6 0 .8-.2 1.5-.6 2.1.9.7 1.4 1.7 1.4 2.8 0 2.2-1.9 3.5-4.3 3.5H8.5c-2.4 0-4.3-1.3-4.3-3.5 0-1.1.5-2.1 1.4-2.8-.4-.6-.6-1.3-.6-2.1 0-1.8 1.3-3.2 3.1-3.6 0-1.4 1.2-2.5 3-2.8-.6-1.2-.2-2.4 1.1-3.2zM9.5 16.2c1.5 1.2 3.5 1.2 5 0"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><path d="M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM4 10h16M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 4v16h16M8 15l3-4 3 2 5-6"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 4v11M8 8l4-4 4 4M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20a7.5 7.5 0 0 1 15 0"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-5 4v-4H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></symbol>
+
+  <symbol id="ill-bottle" viewBox="0 0 120 120">
+    <ellipse cx="60" cy="108" rx="30" ry="5" fill="currentColor" opacity=".12"/>
+    <path d="M52 10c0-4 3.5-6 8-6s8 2 8 6c0 4-1.5 7-1.5 10h-13C53.5 17 52 14 52 10z" fill="#ffd9c7" stroke="#2b2b30" stroke-width="2.5" stroke-linejoin="round"/>
+    <rect x="45" y="20" width="30" height="12" rx="4" fill="#9fd8b5" stroke="#2b2b30" stroke-width="2.5"/>
+    <path d="M44 32h32c4 0 7 3 7 7v56c0 6-5 11-11 11H48c-6 0-11-5-11-11V39c0-4 3-7 7-7z" fill="#ffffff" stroke="#2b2b30" stroke-width="2.5"/>
+    <path d="M37.5 62h45.5v33c0 6-5 11-11 11H48c-6 0-10.5-5-10.5-11z" fill="#fff6e3"/>
+    <path d="M37.5 62c8 3 15 3 22.5 0s15-3 23 0" fill="none" stroke="#2b2b30" stroke-width="2" stroke-linecap="round" opacity=".5"/>
+    <path d="M44 32h32c4 0 7 3 7 7v56c0 6-5 11-11 11H48c-6 0-11-5-11-11V39c0-4 3-7 7-7z" fill="none" stroke="#2b2b30" stroke-width="2.5"/>
+    <path d="M70 44h7M72 54h5M70 64h7M72 74h5" stroke="#2b2b30" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+    <path d="M45 42v20" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".9"/>
+    <circle cx="56" cy="86" r="2.2" fill="#2b2b30"/><circle cx="66" cy="86" r="2.2" fill="#2b2b30"/>
+    <path d="M57 92c2 2 5 2 7 0" fill="none" stroke="#2b2b30" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="52" cy="91" r="3" fill="#ffb3a8" opacity=".7"/><circle cx="70" cy="91" r="3" fill="#ffb3a8" opacity=".7"/>
+  </symbol>
+  <symbol id="ill-nappy" viewBox="0 0 120 120">
+    <ellipse cx="60" cy="104" rx="36" ry="5" fill="currentColor" opacity=".12"/>
+    <path d="M18 34h84v16c0 22-14 40-33 46l-9-8-9 8C32 90 18 72 18 50z" fill="#ffffff" stroke="#2b2b30" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M18 34h84v14H18z" fill="#cfe8ff" stroke="#2b2b30" stroke-width="2.5" stroke-linejoin="round"/>
+    <rect x="12" y="36" width="14" height="10" rx="3" fill="#ffd36e" stroke="#2b2b30" stroke-width="2.5"/>
+    <rect x="94" y="36" width="14" height="10" rx="3" fill="#ffd36e" stroke="#2b2b30" stroke-width="2.5"/>
+    <path d="M60 60c-3-4-10-3-10 3 0 5 10 11 10 11s10-6 10-11c0-6-7-7-10-3z" fill="#ff9fb1" stroke="#2b2b30" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M30 56c3 10 9 19 18 25" fill="none" stroke="#2b2b30" stroke-width="2" stroke-linecap="round" opacity=".35"/>
+  </symbol>
+  <symbol id="ill-moon" viewBox="0 0 120 120">
+    <path d="M74 18c-20 2-34 19-32 39s19 35 39 33c7-1 13-3 18-7-22 1-38-17-36-38 1-10 5-19 11-27z" fill="#fff3c4" stroke="#2b2b30" stroke-width="2.5" stroke-linejoin="round"/>
+    <circle cx="61" cy="56" r="2.2" fill="#2b2b30"/><path d="M58 64c3 2 6 2 8 0" fill="none" stroke="#2b2b30" stroke-width="2" stroke-linecap="round"/>
+    <path d="M28 30l2 5 5 2-5 2-2 5-2-5-5-2 5-2zM96 52l1.5 3.5 3.5 1.5-3.5 1.5L96 62l-1.5-3.5L91 57l3.5-1.5z" fill="#fff" stroke="#2b2b30" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M24 86c0-6 5-10 11-10 2-6 8-10 14-9 4-5 13-5 17 1 6 0 10 4 10 9 4 1 7 4 7 9H24z" fill="#ffffff" stroke="#2b2b30" stroke-width="2.5" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="ill-balloon" viewBox="0 0 120 120">
+    <path d="M60 14c15 0 25 12 25 27 0 17-13 30-25 32-12-2-25-15-25-32 0-15 10-27 25-27z" fill="#d7ccff" stroke="#2b2b30" stroke-width="2.5"/>
+    <path d="M56 73h8l-2 5h-4z" fill="#d7ccff" stroke="#2b2b30" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M60 78c-4 8 4 14 0 22s2 12 0 14" fill="none" stroke="#2b2b30" stroke-width="2" stroke-linecap="round"/>
+    <path d="M47 30c2-5 6-8 11-9" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+    <path d="M92 26l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z" fill="#fff3c4" stroke="#2b2b30" stroke-width="2" stroke-linejoin="round"/>
+  </symbol>
+</svg>
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card">
@@ -32,191 +88,157 @@
   </div>
 </div>
 
-<div id="app-screen" class="screen" hidden>
-  <header>
-    <div class="header-left">
-      <span class="baby-avatar">🍼</span>
-      <div class="header-titles">
-        <span id="app-title" class="app-title">Charlie's First Year</span>
-        <span id="app-date" class="app-date"></span>
-      </div>
+<!-- FEEDS -->
+<div id="app-screen" class="screen view s-feed" hidden>
+  <div class="app">
+    <div class="lt">
+      <div><small id="app-date"></small><h1>Feeds</h1></div>
+      <button class="me" data-nav="profile" aria-label="Profile">C</button>
     </div>
-    <div class="header-right">
-      <button class="icon-btn icon-btn-round" data-nav="poo" title="Nappy">💩</button>
-      <button id="btn-home" class="icon-btn icon-btn-round" data-nav="home" title="Home">🏠</button>
-    </div>
-  </header>
 
-  <main>
-    <section id="hero-card" class="hero-card feed-hero">
+    <section id="hero-card" class="hero">
+      <svg class="ill" aria-hidden="true"><use href="#ill-bottle"/></svg>
       <div id="hero-pending-view" class="hero-pending-view" hidden>
-        <div class="hero-label">Feeding now</div>
-        <div id="pending-time" class="hero-time">—</div>
-        <div class="hero-detail">Tap to add amount</div>
+        <div class="hero-l">Feeding now</div>
+        <div id="pending-time" class="hero-n">—</div>
+        <div class="hero-s">Tap to add the amount</div>
       </div>
       <div id="hero-main-view">
-        <div class="hero-pair">
-          <div class="hero-half">
-            <span class="hero-label">Last feed</span>
-            <span id="since-last-feed" class="hero-num">—</span>
-            <span id="last-feed-detail" class="hero-sub"></span>
-          </div>
-          <div class="hero-half">
-            <span id="next-feed-label" class="hero-label">Next feed</span>
-            <span id="next-feed-time" class="hero-num">—</span>
-            <span id="next-feed-in" class="hero-sub"></span>
-          </div>
+        <div class="hero-l">Last feed</div>
+        <div id="since-last-feed" class="hero-n">—</div>
+        <div id="last-feed-detail" class="hero-s"></div>
+        <div class="hero-next">
+          <div class="t"><span id="next-feed-label">Next feed</span><b id="next-feed-time">—</b></div>
+          <span id="next-feed-in" class="pill" hidden></span>
         </div>
-        <div id="hero-line" class="hero-line" hidden>
-          <span class="hero-line-base"></span>
-          <span id="hero-line-fill" class="hero-line-fill"></span>
-          <span id="hero-line-over" class="hero-line-over"></span>
-          <span class="hero-line-dot hero-line-fed"></span>
-          <span id="hero-line-due" class="hero-line-dot hero-line-due"></span>
-          <span id="hero-line-now" class="hero-line-now"></span>
-          <span id="hero-cap-start" class="hero-cap hero-cap-start"></span>
-          <span id="hero-cap-now" class="hero-cap hero-cap-now">now</span>
-          <span id="hero-cap-end" class="hero-cap hero-cap-end"></span>
-        </div>
+        <div id="hero-line" class="bar" hidden><i id="hero-line-fill"></i></div>
       </div>
     </section>
 
-    <section class="day-stats">
-      <div class="day-stat">
-        <span class="next-feed-icon">🥛</span>
-        <div class="day-stat-text">
-          <span class="next-feed-label">Today</span>
-          <b id="today-total-value">—</b>
-          <small id="today-feed-count"></small>
-        </div>
-      </div>
-      <div class="day-stat">
-        <span class="next-feed-icon">⏱️</span>
-        <div class="day-stat-text">
-          <span class="next-feed-label">Avg gap</span>
-          <b id="avg-gap-value">—</b>
-          <small>last 24h</small>
-        </div>
-      </div>
-    </section>
-
-    <div id="bottle-pill" class="next-feed-pill bottle-pill">
-      <button id="bottle-pill-main" class="bottle-pill-main">
-        <span class="next-feed-icon">🍼</span>
-        <div class="next-feed-text">
-          <span class="next-feed-label">Bottle made</span>
-          <span id="bottle-status" class="next-feed-value">Tap to start</span>
-        </div>
-      </button>
-      <button id="bottle-pill-adjust" class="bottle-pill-adjust" title="Made a few minutes ago?">🕐</button>
-      <button id="bottle-pill-clear" class="bottle-pill-adjust" title="Clear bottle timer" hidden>✕</button>
+    <div class="acts">
+      <button id="btn-start-feed-now" class="btn btn-p"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg><span id="btn-start-feed-label">Start feed</span></button>
+      <button id="btn-log-feed" class="btn btn-s"><svg class="ico" aria-hidden="true"><use href="#i-pencil"/></svg>Log past</button>
     </div>
 
-    <div class="feed-action-row">
-      <button id="btn-start-feed-now" class="feed-action-btn feed-action-start">
-        <span id="btn-start-feed-icon" class="log-emoji">⚡</span>
-        <span id="btn-start-feed-label">Start feed</span>
-      </button>
-
-      <button id="btn-log-feed" class="feed-action-btn feed-action-log">
-        <span class="log-emoji">✏️</span>
-        <span>Log past</span>
-      </button>
+    <div class="pair">
+      <div class="stat"><small>Today</small><b id="today-total-value">—</b><span id="today-feed-count"></span></div>
+      <div class="stat"><small>Average gap</small><b id="avg-gap-value">—</b><span>last 24 hours</span></div>
     </div>
 
-    <section class="history">
-      <div class="history-header">
-        <h2>Past feeds</h2>
-        <div class="segmented" id="history-range">
-          <button class="segment active" data-range="1d">1D</button>
-          <button class="segment" data-range="7d">7D</button>
-          <button class="segment" data-range="14d">14D</button>
-          <button class="segment" data-range="all">All</button>
-        </div>
+    <div id="bottle-pill" class="bottle">
+      <button id="bottle-pill-main" class="bottle-main">
+        <svg class="ill" aria-hidden="true"><use href="#ill-bottle"/></svg>
+        <span class="t"><b>Bottle made</b><span id="bottle-status">Tap to start</span></span>
+      </button>
+      <button id="bottle-pill-adjust" class="mini" title="Made a few minutes ago?">Earlier</button>
+      <button id="bottle-pill-clear" class="mini" title="Clear bottle timer" hidden>Clear</button>
+    </div>
+
+    <div class="lh">
+      <h2>Past feeds</h2>
+      <div class="seg" id="history-range" role="group" aria-label="Range">
+        <button class="segment active" data-range="1d">1D</button>
+        <button class="segment" data-range="7d">7D</button>
+        <button class="segment" data-range="14d">14D</button>
+        <button class="segment" data-range="all">All</button>
       </div>
-      <div id="history-chart" class="history-chart" hidden>
-        <div id="history-chart-toggle" class="chart-toggle">
-          <button class="chart-toggle-btn" data-group="day">By day</button>
-          <button class="chart-toggle-btn active" data-group="week">By week</button>
-        </div>
-        <div id="history-chart-scroll" class="history-chart-scroll">
-          <svg id="history-chart-svg" role="img" aria-label="Milk per day"></svg>
-        </div>
-        <p id="history-chart-caption" class="history-chart-caption"></p>
-        <div class="chart-stats">
-          <div><b id="chart-stat-1"></b><span id="chart-stat-1-label"></span></div>
-          <div><b id="chart-stat-2"></b><span id="chart-stat-2-label"></span></div>
-          <div><b id="chart-stat-3"></b><span id="chart-stat-3-label"></span></div>
-        </div>
+    </div>
+    <div id="history-chart" class="history-chart" hidden>
+      <div id="history-chart-toggle" class="seg chart-toggle" role="group" aria-label="Group by">
+        <button class="chart-toggle-btn" data-group="day">By day</button>
+        <button class="chart-toggle-btn active" data-group="week">By week</button>
       </div>
-      <div class="history-table-wrap">
-        <div class="history-table-head">
-          <span>Time</span>
-          <span>Amount</span>
-          <span>Gap</span>
-          <span></span>
-        </div>
-        <ul id="history-list"></ul>
+      <div id="history-chart-scroll" class="history-chart-scroll">
+        <svg id="history-chart-svg" role="img" aria-label="Milk per day"></svg>
       </div>
-      <p id="history-empty" class="muted" hidden>No feeds in this range.</p>
-    </section>
-  </main>
+      <p id="history-chart-caption" class="history-chart-caption"></p>
+      <div class="chart-stats">
+        <div><b id="chart-stat-1"></b><span id="chart-stat-1-label"></span></div>
+        <div><b id="chart-stat-2"></b><span id="chart-stat-2-label"></span></div>
+        <div><b id="chart-stat-3"></b><span id="chart-stat-3-label"></span></div>
+      </div>
+    </div>
+    <div class="history-table-wrap">
+      <div class="history-table-head"><span>Time</span><span>Amount</span><span>Gap</span><span></span></div>
+      <ul id="history-list" class="history-list"></ul>
+      <p id="history-empty" class="empty" hidden>No feeds in this range.</p>
+    </div>
+  </div>
 </div>
 
-<div id="home-screen" class="screen home-screen" hidden>
-  <main class="home-main">
-    <h1 id="home-title" class="home-title">Charlie's First Year</h1>
+<!-- TODAY (home) -->
+<div id="home-screen" class="screen view s-feed" hidden>
+  <div class="app">
+    <div class="lt">
+      <div><small id="home-date"></small><h1 id="home-title">Charlie</h1></div>
+      <button class="me" data-nav="profile" aria-label="Profile">C</button>
+    </div>
+    <p id="home-greet" class="greet"></p>
 
-    <nav class="home-grid">
-      <button class="home-tile" data-nav="feed">
-        <span class="home-circle home-circle-green">🍼</span>
-        <span class="home-tile-label">Baby Feed</span>
-      </button>
-      <button class="home-tile" data-nav="milestones">
-        <span class="home-circle home-circle-lavender">📅</span>
-        <span class="home-tile-label">Milestones</span>
-      </button>
-      <button class="home-tile" data-nav="trends">
-        <span class="home-circle home-circle-peach">📈</span>
-        <span class="home-tile-label">Trends &amp; Facts</span>
-      </button>
-    </nav>
-
-    <button id="btn-share" class="btn btn-secondary home-share-btn">Share household code</button>
-
-    <button id="btn-install-app" class="btn btn-secondary home-share-btn" hidden>📲 Add to Home Screen</button>
-
-    <button class="home-tile home-tile-small" data-nav="profile">
-      <span id="profile-tile-icon" class="home-circle home-circle-small home-circle-gold">👶</span>
-      <span id="profile-tile-label" class="home-tile-label">Profile</span>
+    <button class="sum s-feed" data-nav="feed">
+      <div class="sum-h"><svg class="ico" aria-hidden="true"><use href="#i-bottle"/></svg>Feeds<span class="when"><span id="home-feed-when"></span><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+      <div class="sum-v" id="home-feed-v">—</div>
+      <div class="sum-s" id="home-feed-s"></div>
+      <svg class="ill" style="color:var(--feed)" aria-hidden="true"><use href="#ill-bottle"/></svg>
     </button>
-  </main>
+    <button class="sum s-nappy" data-nav="poo">
+      <div class="sum-h"><svg class="ico" aria-hidden="true"><use href="#i-poo"/></svg>Nappies<span class="when"><span id="home-poo-when"></span><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+      <div class="sum-v" id="home-poo-v">—</div>
+      <div class="sum-s" id="home-poo-s"></div>
+      <svg class="ill" style="color:var(--nappy)" aria-hidden="true"><use href="#ill-nappy"/></svg>
+    </button>
+    <button class="sum s-mile" data-nav="milestones">
+      <div class="sum-h"><svg class="ico" aria-hidden="true"><use href="#i-cal"/></svg>Milestones<span class="when"><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+      <div class="sum-v sm">Photos and notes</div>
+      <div class="sum-s">Keep the first year, day by day</div>
+      <svg class="ill" style="color:var(--mile)" aria-hidden="true"><use href="#ill-balloon"/></svg>
+    </button>
+    <button class="sum s-trend" data-nav="trends">
+      <div class="sum-h"><svg class="ico" aria-hidden="true"><use href="#i-chart"/></svg>Trends<span class="when"><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+      <div class="sum-v sm" id="home-trend-v">Patterns</div>
+      <div class="sum-s" id="home-trend-s"></div>
+      <svg class="ill" style="color:var(--trend)" aria-hidden="true"><use href="#ill-moon"/></svg>
+    </button>
+
+    <div class="sec-label">Household</div>
+    <div class="group">
+      <button id="btn-share" class="cell"><svg class="ico" aria-hidden="true"><use href="#i-share"/></svg><span class="sp">Share household code</span><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+      <button id="btn-install-app" class="cell" hidden><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg><span class="sp">Add to Home Screen</span><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+      <button id="feedback-fab" class="cell" hidden><svg class="ico" aria-hidden="true"><use href="#i-chat"/></svg><span class="sp">Report a problem or share an idea</span><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+      <button class="cell" data-nav="profile"><span id="profile-tile-icon" aria-hidden="true">👶</span><span id="profile-tile-label" class="sp">Profile</span><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+    </div>
+  </div>
 </div>
 
-<div id="milestones-screen" class="screen milestones-screen" hidden>
-  <header class="sub-header">
-    <button class="icon-btn icon-btn-round" data-nav="home" title="Home">🏠</button>
-  </header>
-  <main class="milestones-main">
+<!-- MILESTONES -->
+<div id="milestones-screen" class="screen view s-mile" hidden>
+  <div class="app">
+    <div class="lt">
+      <div><small>Photos and notes</small><h1>Milestones</h1></div>
+      <button class="me" data-nav="profile" aria-label="Profile">C</button>
+    </div>
     <div class="cal-nav">
-      <button id="cal-prev" class="icon-btn icon-btn-round" title="Previous month">‹</button>
+      <button id="cal-prev" class="cal-btn" title="Previous month" aria-label="Previous month"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg></button>
       <h2 id="cal-month-label">—</h2>
-      <button id="cal-next" class="icon-btn icon-btn-round" title="Next month">›</button>
+      <button id="cal-next" class="cal-btn" title="Next month" aria-label="Next month"><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></button>
     </div>
-    <div class="cal-weekdays">
-      <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+    <div class="cal-card">
+      <div class="cal-weekdays">
+        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+      </div>
+      <div id="cal-grid" class="cal-grid"></div>
     </div>
-    <div id="cal-grid" class="cal-grid"></div>
-    <p id="cal-dob-hint" class="muted trends-hint" hidden>Set your baby's date of birth in Profile to keep this calendar to their first year.</p>
-  </main>
+    <p id="cal-dob-hint" class="fineprint" hidden>Set your baby's date of birth in Profile to keep this calendar to their first year.</p>
+  </div>
 </div>
 
 <div id="milestone-modal" class="modal" hidden>
   <div class="modal-card">
+    <span class="grab"></span>
     <h2 id="milestone-modal-title">Milestone</h2>
 
     <div class="modal-section milestone-photo-wrap">
-      <img id="milestone-photo-preview" class="milestone-photo-preview" hidden>
+      <img id="milestone-photo-preview" class="milestone-photo-preview" alt="" hidden>
       <button id="milestone-photo-btn" class="btn btn-secondary">Add photo</button>
       <input id="milestone-photo-input" type="file" accept="image/*" hidden>
     </div>
@@ -234,30 +256,29 @@
   </div>
 </div>
 
-<div id="trends-screen" class="screen trends-screen" hidden>
-  <header class="sub-header">
-    <button class="icon-btn icon-btn-round" data-nav="home" title="Home">🏠</button>
-  </header>
-  <main class="trends-main">
-    <span class="placeholder-icon home-circle-peach">📈</span>
-    <h2>Trends &amp; Facts</h2>
-
-    <div id="trends-patterns" class="trends-patterns"></div>
-
-    <div class="card trends-card trends-fact-card">
-      <h3 class="trends-chart-title">✨ Fun fact of the week</h3>
-      <p id="trends-fun-fact" class="trends-fact-text"></p>
+<!-- TRENDS -->
+<div id="trends-screen" class="screen view s-trend" hidden>
+  <div class="app">
+    <div class="lt">
+      <div><small id="trends-sub">From the feed log</small><h1>Trends</h1></div>
+      <button class="me" data-nav="profile" aria-label="Profile">C</button>
     </div>
-
-    <p class="muted trends-disclaimer">Patterns are read from the feeds you log and describe what has happened, nothing more. Every baby is different; check with your pediatrician about what's right for yours.</p>
-  </main>
+    <div id="trends-patterns"></div>
+    <div class="fact">
+      <h3>Fun fact of the week</h3>
+      <p id="trends-fun-fact"></p>
+    </div>
+    <p class="fineprint">Patterns are read from the feeds you log and describe what has happened, nothing more. They are not medical advice. Every baby is different; check with your pediatrician about what's right for yours.</p>
+  </div>
 </div>
 
-<div id="profile-screen" class="screen home-screen" hidden>
-  <header class="sub-header">
-    <button class="icon-btn icon-btn-round" data-nav="home" title="Home">🏠</button>
-  </header>
-  <main class="profile-main">
+<!-- PROFILE -->
+<div id="profile-screen" class="screen view s-feed" hidden>
+  <div class="app">
+    <div class="lt">
+      <div><small>Your baby</small><h1>Profile</h1></div>
+      <button class="me back" data-nav="home" aria-label="Back to Today"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg></button>
+    </div>
     <p id="profile-welcome" class="profile-welcome" hidden>Welcome! Tell us a little about your baby. You can change any of this later.</p>
 
     <section class="profile-hero">
@@ -286,7 +307,7 @@
 
     <section class="profile-card">
       <h3 class="profile-card-title">Boy or girl</h3>
-      <p class="profile-card-hint">Sets the colours on the Baby Feed screen.</p>
+      <p class="profile-card-hint">Sets the colour of the Feeds section.</p>
       <div class="gender-cards" id="gender-chips">
         <button class="gender-card" data-gender="male">
           <span class="gender-emoji">👦</span>
@@ -316,88 +337,57 @@
       <button id="profile-save" class="btn btn-primary">Save profile</button>
       <button id="profile-skip" class="text-link-btn" hidden>Skip for now</button>
     </div>
-  </main>
+  </div>
 </div>
 
-<div id="poo-screen" class="screen poo-screen" hidden>
-  <header>
-    <div class="header-left">
-      <span class="baby-avatar">💩</span>
-      <div class="header-titles">
-        <span class="app-title">Nappy</span>
-        <span id="poo-date" class="app-date"></span>
+<!-- NAPPIES -->
+<div id="poo-screen" class="screen view s-nappy" hidden>
+  <div class="app">
+    <div class="lt">
+      <div><small id="poo-header-date"></small><h1>Nappies</h1></div>
+      <button class="me" data-nav="profile" aria-label="Profile">C</button>
+    </div>
+
+    <section class="hero">
+      <svg class="ill" aria-hidden="true"><use href="#ill-nappy"/></svg>
+      <div class="hero-l">Last poo</div>
+      <div id="since-last-poo" class="hero-n">—</div>
+      <div id="last-poo-detail" class="hero-s"></div>
+    </section>
+
+    <div class="acts one">
+      <button id="btn-log-poo" class="btn btn-p"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>Log a poo</button>
+    </div>
+
+    <div class="pair">
+      <div class="stat"><small>Today</small><b id="poo-today-count">—</b><span>since midnight</span></div>
+      <div class="stat"><small>Average gap</small><b id="poo-avg-gap">—</b><span>last 7 days</span></div>
+    </div>
+
+    <section class="week">
+      <div class="week-h">Last 7 days <span id="poo-week-total"></span></div>
+      <div id="poo-week-cols" class="wcols"></div>
+      <div id="poo-week-note" class="week-note" hidden></div>
+    </section>
+
+    <div class="lh">
+      <h2>Past</h2>
+      <div class="seg" id="poo-history-range" role="group" aria-label="Range">
+        <button class="segment active" data-range="1d">1D</button>
+        <button class="segment" data-range="7d">7D</button>
       </div>
     </div>
-    <div class="header-right">
-      <button class="icon-btn icon-btn-round" data-nav="feed" title="Baby Feed">🍼</button>
-      <button class="icon-btn icon-btn-round" data-nav="home" title="Home">🏠</button>
+    <div class="history-table-wrap">
+      <div class="history-table-head"><span>Time</span><span>Size</span><span>Gap</span><span></span></div>
+      <ul id="poo-history-list" class="history-list"></ul>
+      <p id="poo-history-empty" class="empty" hidden>No poos logged in this range.</p>
     </div>
-  </header>
-
-  <main>
-    <section class="hero-card">
-      <div class="hero-label">Since last poo</div>
-      <div id="since-last-poo" class="hero-time">—</div>
-      <div id="last-poo-detail" class="hero-detail"></div>
-    </section>
-
-    <section class="day-stats">
-      <div class="day-stat">
-        <span class="next-feed-icon">💩</span>
-        <div class="day-stat-text">
-          <span class="next-feed-label">Today</span>
-          <b id="poo-today-count">—</b>
-          <small>since midnight</small>
-        </div>
-      </div>
-      <div class="day-stat">
-        <span class="next-feed-icon">⏱️</span>
-        <div class="day-stat-text">
-          <span class="next-feed-label">Avg gap</span>
-          <b id="poo-avg-gap">—</b>
-          <small>last 7 days</small>
-        </div>
-      </div>
-    </section>
-
-    <section class="poo-week">
-      <div class="poo-week-head">
-        <span class="next-feed-label">Last 7 days</span>
-        <b id="poo-week-total"></b>
-      </div>
-      <div id="poo-week-cols" class="poo-week-cols"></div>
-      <div id="poo-week-note" class="poo-week-note" hidden></div>
-    </section>
-
-    <button id="btn-log-poo" class="log-feed-btn">
-      <span class="log-emoji">💩</span>
-      <span>Log poo</span>
-    </button>
-
-    <section class="history">
-      <div class="history-header">
-        <h2>Past</h2>
-        <div class="segmented" id="poo-history-range">
-          <button class="segment active" data-range="1d">1D</button>
-          <button class="segment" data-range="7d">7D</button>
-        </div>
-      </div>
-      <div class="history-table-wrap">
-        <div class="poo-table-head">
-          <span>Time</span>
-          <span>Size</span>
-          <span>Gap</span>
-          <span></span>
-        </div>
-        <ul id="poo-history-list"></ul>
-      </div>
-      <p id="poo-history-empty" class="muted" hidden>No poos logged in this range.</p>
-    </section>
-  </main>
+  </div>
 </div>
 
 <div id="poo-time-modal" class="modal" hidden>
   <div class="modal-card">
+    <span class="grab"></span>
     <h2 id="poo-time-modal-title">Log poo</h2>
     <div class="modal-section">
       <div class="section-label">When</div>
@@ -432,12 +422,30 @@
   </div>
 </div>
 
+<!-- LOG A FEED: one sheet for logging a past feed, completing a started feed, and editing -->
 <div id="log-modal" class="modal" hidden>
-  <div class="modal-card">
-    <h2 id="log-modal-title">Log a feed</h2>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="log-modal-title">
+    <span class="grab"></span>
+    <div class="top">
+      <h2 id="log-modal-title">Log a feed</h2>
+      <button id="log-cancel" class="close" aria-label="Close"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="big"><span id="sheet-ml">90</span><small>ml</small></div>
+    <div class="ruler-wrap">
+      <span class="needle"></span>
+      <div id="ml-ruler" class="ruler" role="slider" tabindex="0" aria-label="Amount in millilitres" aria-valuemin="10" aria-valuemax="300" aria-valuenow="90">
+        <div id="ml-ticks" class="ticks"></div>
+      </div>
+    </div>
+    <p id="sheet-hint" class="hint"></p>
 
-    <div class="modal-section">
-      <div class="section-label">When</div>
+    <div id="sheet-when" class="segw" role="group" aria-label="When was it">
+      <button type="button" data-ago="15">15m ago</button>
+      <button type="button" data-ago="30">30m ago</button>
+      <button type="button" data-ago="60">1h ago</button>
+      <button type="button" data-ago="-1">Other time</button>
+    </div>
+    <div id="sheet-earlier" class="when-extra" hidden>
       <div class="day-chips" id="feed-day-chips">
         <button type="button" class="chip" data-offset="0">Today</button>
         <button type="button" class="chip" data-offset="1">Yesterday</button>
@@ -447,46 +455,31 @@
         <input id="feed-time" type="time" aria-label="Time">
       </div>
     </div>
-
-    <div class="modal-section">
-      <div class="section-label">Amount</div>
-      <div class="amount-chips" id="amount-chips">
-        <button class="chip" data-ml="60">60ml</button>
-        <button class="chip" data-ml="90">90ml</button>
-        <button class="chip" data-ml="120">120ml</button>
-      </div>
-      <div class="wheel-picker" id="ml-wheel">
-        <div class="wheel-highlight"></div>
-        <div class="wheel-track" id="ml-wheel-track"></div>
-      </div>
+    <div id="sheet-fixed" class="rowline" hidden>
+      <div><span id="sheet-fixed-k" class="k">Started</span><span id="sheet-fixed-v" class="v"></span></div>
+      <button type="button" id="sheet-fixed-change" class="act">Change</button>
     </div>
 
-    <div class="modal-section">
-      <div class="section-label">Next feed in <span id="interval-auto-tag" class="auto-tag">auto</span></div>
-      <div class="amount-chips" id="interval-chips">
-        <button class="chip" data-hours="2">2h</button>
-        <button class="chip" data-hours="3">3h</button>
-        <button class="chip" data-hours="4">4h</button>
-        <button class="chip" data-hours="5">5h</button>
-        <button class="chip" data-hours="6">6h</button>
-      </div>
-      <div class="wheel-picker wheel-picker-compact" id="interval-wheel">
-        <div class="wheel-highlight"></div>
-        <div class="wheel-track" id="interval-wheel-track"></div>
-      </div>
+    <div class="nextrow">
+      <span class="nl">Next feed in</span>
+      <span class="gapctl" role="group" aria-label="Time until the next feed">
+        <button type="button" id="gap-less" aria-label="30 minutes less"><svg class="ico" aria-hidden="true"><use href="#i-minus"/></svg></button>
+        <b id="sheet-gap">3h</b>
+        <button type="button" id="gap-more" aria-label="30 minutes more"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg></button>
+      </span>
+      <span class="at">around <b id="sheet-at">–:–</b></span>
     </div>
 
-    <div class="modal-actions">
-      <button id="log-cancel" class="btn btn-secondary">Cancel</button>
-      <button id="log-confirm" class="btn btn-primary">Log feed</button>
-    </div>
+    <button id="log-confirm" class="go">Log feed</button>
+    <button id="sheet-del" class="dellink" hidden>Delete this feed</button>
   </div>
 </div>
 
 <div id="share-modal" class="modal" hidden>
   <div class="modal-card">
+    <span class="grab"></span>
     <h2>Household code</h2>
-    <p class="muted">Share this with anyone else feeding the baby — they enter it on the "Join household" screen.</p>
+    <p class="muted">Share this with anyone else feeding the baby. They enter it on the "Join household" screen.</p>
     <div id="share-code" class="share-code"></div>
     <div class="modal-actions">
       <button id="share-close" class="btn btn-primary">Done</button>
@@ -496,10 +489,11 @@
 
 <div id="install-modal" class="modal" hidden>
   <div class="modal-card">
+    <span class="grab"></span>
     <h2>Add to Home Screen</h2>
-    <p class="muted">Safari doesn't let apps install themselves — just two taps and you're set:</p>
+    <p class="muted">Safari doesn't let apps install themselves. Just two taps and you're set:</p>
     <ol class="install-steps">
-      <li>Tap the <strong>Share</strong> button 📤 in Safari's toolbar</li>
+      <li>Tap the <strong>Share</strong> button in Safari's toolbar</li>
       <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
     </ol>
     <div class="modal-actions">
@@ -510,6 +504,7 @@
 
 <div id="bottle-adjust-modal" class="modal" hidden>
   <div class="modal-card">
+    <span class="grab"></span>
     <h2>When was it made?</h2>
     <div class="wheel-picker" id="bottle-adjust-wheel">
       <div class="wheel-highlight"></div>
@@ -524,6 +519,7 @@
 
 <div id="confirm-delete-modal" class="modal" hidden>
   <div class="modal-card">
+    <span class="grab"></span>
     <h2>Delete this feed?</h2>
     <p class="muted">This can't be undone.</p>
     <div class="modal-actions">
@@ -533,15 +529,15 @@
   </div>
 </div>
 
-<button id="feedback-fab" class="feedback-fab" title="Report a problem or share an idea" hidden>💬</button>
 
 <div id="feedback-modal" class="modal" hidden>
   <div class="modal-card">
+    <span class="grab"></span>
     <h2>Got something to say?</h2>
     <div class="modal-section">
       <div class="amount-chips" id="feedback-type-chips">
-        <button class="chip selected" data-type="idea">💡 Idea</button>
-        <button class="chip" data-type="problem">🐛 Problem</button>
+        <button class="chip selected" data-type="idea">Idea</button>
+        <button class="chip" data-type="problem">Problem</button>
       </div>
       <textarea id="feedback-message" class="field-input milestone-textarea" rows="4" placeholder="What's on your mind?"></textarea>
     </div>
@@ -552,8 +548,16 @@
   </div>
 </div>
 
+<nav id="tabbar" class="tabs s-feed" aria-label="Main" hidden><div class="tabs-in">
+  <button class="tab" data-nav="home"><svg class="ico" aria-hidden="true"><use href="#i-home"/></svg>Today</button>
+  <button class="tab" data-nav="feed"><svg class="ico" aria-hidden="true"><use href="#i-bottle"/></svg>Feeds</button>
+  <button class="tab" data-nav="poo"><svg class="ico" aria-hidden="true"><use href="#i-poo"/></svg>Nappies</button>
+  <button class="tab" data-nav="milestones"><svg class="ico" aria-hidden="true"><use href="#i-cal"/></svg>Milestones</button>
+  <button class="tab" data-nav="trends"><svg class="ico" aria-hidden="true"><use href="#i-chart"/></svg>Trends</button>
+</div></nav>
+
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=59"></script>
+<script type="module" src="app.js?v=60"></script>
 </body>
 </html>

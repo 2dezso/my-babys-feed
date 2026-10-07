@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=59';
+import { analyse } from './patterns.js?v=60';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -14,9 +14,8 @@ const STORAGE_KEY = 'babyfeed_household_code';
 const DEFAULT_ML = 90;
 const ML_MIN = 10;
 const ML_MAX = 300;
-const ML_STEP_LOW = 5;
-const ML_STEP_HIGH_THRESHOLD = 120;
-const ML_STEP_HIGH = 10;
+const ML_STEP = 5;
+const RULER_TICK_PX = 14;
 const WHEEL_ITEM_HEIGHT = 40;
 const INTERVAL_MIN = 1;
 const INTERVAL_MAX = 8;
@@ -43,12 +42,18 @@ const pendingTimeEl = document.getElementById('pending-time');
 const nextFeedLabelEl = document.getElementById('next-feed-label');
 const heroLine = document.getElementById('hero-line');
 const heroLineFill = document.getElementById('hero-line-fill');
-const heroLineOver = document.getElementById('hero-line-over');
-const heroLineDue = document.getElementById('hero-line-due');
-const heroLineNow = document.getElementById('hero-line-now');
-const heroCapStart = document.getElementById('hero-cap-start');
-const heroCapNow = document.getElementById('hero-cap-now');
-const heroCapEnd = document.getElementById('hero-cap-end');
+const tabbar = document.getElementById('tabbar');
+const homeDateEl = document.getElementById('home-date');
+const homeGreetEl = document.getElementById('home-greet');
+const homeFeedWhen = document.getElementById('home-feed-when');
+const homeFeedV = document.getElementById('home-feed-v');
+const homeFeedS = document.getElementById('home-feed-s');
+const homePooWhen = document.getElementById('home-poo-when');
+const homePooV = document.getElementById('home-poo-v');
+const homePooS = document.getElementById('home-poo-s');
+const homeTrendV = document.getElementById('home-trend-v');
+const homeTrendS = document.getElementById('home-trend-s');
+const trendsSubEl = document.getElementById('trends-sub');
 const sinceLastFeedEl = document.getElementById('since-last-feed');
 const lastFeedDetailEl = document.getElementById('last-feed-detail');
 const nextFeedTimeEl = document.getElementById('next-feed-time');
@@ -81,7 +86,6 @@ const chartStatEls = [1, 2, 3].map(n => ({
 const toast = document.getElementById('toast');
 
 const btnStartFeedNow = document.getElementById('btn-start-feed-now');
-const btnStartFeedIcon = document.getElementById('btn-start-feed-icon');
 const btnStartFeedLabel = document.getElementById('btn-start-feed-label');
 const btnLogFeed = document.getElementById('btn-log-feed');
 const logModal = document.getElementById('log-modal');
@@ -89,11 +93,21 @@ const logModalTitle = document.getElementById('log-modal-title');
 const feedDateInput = document.getElementById('feed-date');
 const feedDayChips = document.getElementById('feed-day-chips');
 const feedTimeInput = document.getElementById('feed-time');
-const amountChips = document.getElementById('amount-chips');
-const mlWheelTrack = document.getElementById('ml-wheel-track');
-const intervalChips = document.getElementById('interval-chips');
-const intervalWheelTrack = document.getElementById('interval-wheel-track');
-const intervalAutoTag = document.getElementById('interval-auto-tag');
+const sheetMlEl = document.getElementById('sheet-ml');
+const mlRuler = document.getElementById('ml-ruler');
+const mlTicks = document.getElementById('ml-ticks');
+const sheetHint = document.getElementById('sheet-hint');
+const sheetWhen = document.getElementById('sheet-when');
+const sheetEarlier = document.getElementById('sheet-earlier');
+const sheetFixed = document.getElementById('sheet-fixed');
+const sheetFixedK = document.getElementById('sheet-fixed-k');
+const sheetFixedV = document.getElementById('sheet-fixed-v');
+const sheetFixedChange = document.getElementById('sheet-fixed-change');
+const sheetGapEl = document.getElementById('sheet-gap');
+const sheetAtEl = document.getElementById('sheet-at');
+const gapLess = document.getElementById('gap-less');
+const gapMore = document.getElementById('gap-more');
+const sheetDel = document.getElementById('sheet-del');
 const logCancel = document.getElementById('log-cancel');
 const logConfirm = document.getElementById('log-confirm');
 
@@ -117,7 +131,6 @@ const feedbackMessage = document.getElementById('feedback-message');
 const feedbackCancel = document.getElementById('feedback-cancel');
 const feedbackSend = document.getElementById('feedback-send');
 
-const appTitleEl = document.getElementById('app-title');
 const homeTitleEl = document.getElementById('home-title');
 const profileTileLabel = document.getElementById('profile-tile-label');
 const profileTileIcon = document.getElementById('profile-tile-icon');
@@ -154,7 +167,7 @@ const milestoneDelete = document.getElementById('milestone-delete');
 
 const sinceLastPooEl = document.getElementById('since-last-poo');
 const lastPooDetailEl = document.getElementById('last-poo-detail');
-const pooDateEl = document.getElementById('poo-date');
+const pooDateEl = document.getElementById('poo-header-date');
 const pooTodayCountEl = document.getElementById('poo-today-count');
 const pooAvgGapEl = document.getElementById('poo-avg-gap');
 const pooWeekCols = document.getElementById('poo-week-cols');
@@ -198,8 +211,6 @@ let currentMonthMilestones = new Map();
 let currentMonthUnsub = null;
 let editingDateKey = null;
 let pendingPhotoDataUrl = null;
-let wheelScrollTimer = null;
-let intervalWheelScrollTimer = null;
 let bottleAdjustWheelScrollTimer = null;
 let editingFeedId = null;
 let pendingDeleteFeedId = null;
@@ -286,10 +297,20 @@ const SCREENS = {
   poo: pooScreen,
 };
 
+const TAB_SECTION = { feed: 's-feed', home: 's-feed', poo: 's-nappy', milestones: 's-mile', trends: 's-trend' };
+
 function showScreen(name) {
+  if (!(name in SCREENS)) name = 'feed';
   Object.values(SCREENS).forEach(el => { el.hidden = true; });
-  (SCREENS[name] || SCREENS.feed).hidden = false;
+  SCREENS[name].hidden = false;
   feedbackFab.hidden = name !== 'home';
+  tabbar.hidden = !(name in TAB_SECTION);
+  tabbar.className = `tabs ${TAB_SECTION[name] || 's-feed'}`;
+  tabbar.querySelectorAll('.tab').forEach(t => {
+    if (t.dataset.nav === name) t.setAttribute('aria-current', 'page');
+    else t.removeAttribute('aria-current');
+  });
+  window.scrollTo(0, 0);
 }
 
 function applyRouteFromHash() {
@@ -330,6 +351,7 @@ function listenToFeeds(code) {
     renderTodayTotal();
     renderHistory();
     renderTrends();
+    renderHome();
   }, (err) => {
     console.error(err);
     showToast('Sync error — check connection');
@@ -346,12 +368,13 @@ function listenToProfile(code) {
     profileDob = data.dob || '';
     selectedAvatarTone = data.avatarTone || '';
     selectedGender = data.gender || '';
-    profileTileLabel.textContent = firstName || 'Profile';
+    profileTileLabel.textContent = firstName ? `${firstName}'s profile` : 'Profile';
     profileFirstName = firstName;
     const babyTitleName = firstName || 'Charlie';
-    const possessive = babyTitleName + (babyTitleName.endsWith('s') ? '’' : '’s');
-    appTitleEl.textContent = `${possessive} First Year`;
-    homeTitleEl.textContent = `${possessive} First Year`;
+    homeTitleEl.textContent = babyTitleName;
+    document.title = `${babyTitleName}'s First Year`;
+    const initial = babyTitleName.charAt(0).toUpperCase();
+    document.querySelectorAll('.me:not(.back)').forEach(el => { el.textContent = initial; });
     document.body.classList.toggle('gender-pink', selectedGender === 'female');
     updateAvatarIcons();
     highlightToneChip();
@@ -359,6 +382,7 @@ function listenToProfile(code) {
     renderProfileAge();
     renderProfilePreview();
     renderTrends();
+    renderHome();
     if (calendarInitialized) renderCalendar();
   }, (err) => {
     console.error(err);
@@ -462,6 +486,7 @@ function listenToPoos(code) {
     renderSinceLastPoo();
     renderPooStats();
     renderPooHistory();
+    renderHome();
   }, (err) => {
     console.error(err);
     showToast('Sync error — check connection');
@@ -474,11 +499,13 @@ function renderSinceLastPoo() {
     lastPooDetailEl.textContent = 'No poos yet';
     return;
   }
-  sinceLastPooEl.textContent = durationString(Date.now() - latestPoos[0].timestamp);
-  lastPooDetailEl.textContent = '';
+  const last = latestPoos[0];
+  sinceLastPooEl.textContent = durationString(Date.now() - last.timestamp);
+  lastPooDetailEl.textContent = `ago · ${last.size ? `${last.size.toLowerCase()}, ` : ''}at ${formatClock(last.timestamp)}`;
 }
 
-const POO_WEEK_MAX_DOTS = 5;
+// A day with this many poos fills its bar; anything above is clipped.
+const POO_WEEK_MAX_BAR = 5;
 
 function renderPooStats() {
   const today = startOfToday();
@@ -504,19 +531,14 @@ function renderPooStats() {
   pooWeekCols.innerHTML = '';
   for (const day of days) {
     const col = document.createElement('div');
-    col.className = `poo-week-day${day.isToday ? ' today' : ''}`;
-    const dots = document.createElement('div');
-    dots.className = 'poo-week-dots';
-    if (day.count === 0) {
-      dots.innerHTML = '<i class="empty"></i>';
-    } else {
-      dots.innerHTML = '<i></i>'.repeat(Math.min(day.count, POO_WEEK_MAX_DOTS));
-      if (day.count > POO_WEEK_MAX_DOTS) dots.insertAdjacentHTML('beforeend', `<span class="more">+${day.count - POO_WEEK_MAX_DOTS}</span>`);
-    }
+    col.className = `wcol${day.isToday ? ' today' : ''}`;
+    const bar = document.createElement('i');
+    if (day.count === 0) bar.className = 'zero';
+    else bar.style.height = `${Math.min(100, day.count / POO_WEEK_MAX_BAR * 100)}%`;
     const label = document.createElement('span');
     label.textContent = day.start.toLocaleDateString([], { weekday: 'narrow' });
     col.title = `${day.start.toLocaleDateString([], { weekday: 'long' })}: ${day.count}`;
-    col.append(dots, label);
+    col.append(bar, label);
     pooWeekCols.appendChild(col);
   }
 
@@ -554,7 +576,7 @@ function renderPooHistory() {
 
     const headerLi = document.createElement('li');
     headerLi.className = 'day-group-header';
-    headerLi.innerHTML = `<span class="day-group-label">${dayLabelForKey(key)}</span><span class="day-group-total">${dayPoos.length} 💩</span>`;
+    headerLi.innerHTML = `<span class="day-group-label">${dayLabelForKey(key)}</span><span class="day-group-total">${dayPoos.length === 1 ? '1 poo' : `${dayPoos.length} poos`}</span>`;
     pooHistoryList.appendChild(headerLi);
 
     for (const poo of dayPoos) {
@@ -563,11 +585,12 @@ function renderPooHistory() {
       const gap = older ? durationString(poo.timestamp - older.timestamp) : '—';
 
       const li = document.createElement('li');
+      if (poo.note) li.className = 'has-note';
       li.innerHTML = `
         <span class="history-time-val">${formatClock(poo.timestamp)}</span>
         ${poo.size ? `<span class="poo-size-tag">${escapeHtml(poo.size)}</span>` : '<span></span>'}
         <span class="history-gap-val">${gap}</span>
-        <button class="history-delete" title="Delete">✕</button>
+        <button class="history-delete" title="Delete" aria-label="Delete">✕</button>
         ${poo.note ? `<span class="poo-note-row">${escapeHtml(poo.note)}</span>` : ''}
       `;
       li.addEventListener('click', () => openPooTimeModal(poo));
@@ -694,8 +717,8 @@ function showRangeContaining(ts, segmentedEl, order, setRange) {
 
 function updateFeedActionButtons(isPending) {
   btnLogFeed.hidden = isPending;
-  btnStartFeedIcon.textContent = isPending ? '🍼' : '⚡';
   btnStartFeedLabel.textContent = isPending ? 'Complete feed' : 'Start feed';
+  btnStartFeedNow.parentElement.classList.toggle('one', isPending);
 }
 
 function renderSinceLastFeed() {
@@ -725,15 +748,16 @@ heroCard.addEventListener('click', () => {
   }
 });
 
+// The next feed is a guess, so a late feed is never "overdue": the pill turns amber and says how long ago it was expected.
 function renderNextFeed() {
   const last = latestFeeds[0];
-  heroCard.classList.remove('hero-late');
-  nextFeedInEl.classList.remove('hero-late-tag');
   nextFeedLabelEl.textContent = 'Next feed';
+  nextFeedInEl.classList.remove('late');
+  heroLine.classList.remove('late');
   if (!last || last.amountMl == null) {
     heroLine.hidden = true;
     nextFeedTimeEl.textContent = '—';
-    nextFeedInEl.textContent = '';
+    nextFeedInEl.hidden = true;
     return;
   }
   const now = Date.now();
@@ -743,31 +767,19 @@ function renderNextFeed() {
   const diffMs = Math.abs(nextTs - now);
 
   nextFeedTimeEl.textContent = formatClock(nextTs);
+  nextFeedInEl.hidden = false;
   if (diffMs < 60000) {
     nextFeedInEl.textContent = 'now';
   } else if (late) {
-    heroCard.classList.add('hero-late');
-    nextFeedInEl.classList.add('hero-late-tag');
+    nextFeedInEl.classList.add('late');
+    heroLine.classList.add('late');
     nextFeedLabelEl.textContent = 'Expected';
     nextFeedInEl.textContent = `${durationString(diffMs)} ago`;
   } else {
     nextFeedInEl.textContent = `in ${durationString(diffMs)}`;
   }
-
-  // Before the expected time the line runs last feed -> next feed; after it, last feed -> now.
-  const spanMs = late ? now - last.timestamp : intervalMs;
-  const nowPct = late ? 100 : Math.max(0, (now - last.timestamp) / intervalMs * 100);
-  const duePct = late ? intervalMs / spanMs * 100 : 100;
   heroLine.hidden = false;
-  heroLineFill.style.width = `${Math.min(nowPct, duePct)}%`;
-  heroLineOver.style.left = `${duePct}%`;
-  heroLineOver.style.width = late ? `${100 - duePct}%` : '0';
-  heroLineDue.style.left = `${duePct}%`;
-  heroLineNow.style.left = `${nowPct}%`;
-  heroCapStart.textContent = formatClock(last.timestamp);
-  heroCapEnd.textContent = late ? 'now' : formatClock(nextTs);
-  heroCapNow.style.left = `${nowPct}%`;
-  heroCapNow.hidden = late || nowPct < 22 || nowPct > 72;
+  heroLineFill.style.width = `${late ? 100 : Math.max(0, (now - last.timestamp) / intervalMs * 100)}%`;
 }
 
 function renderTodayTotal() {
@@ -788,9 +800,50 @@ function renderTodayTotal() {
 }
 
 function renderHeaderDate() {
-  const label = new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' });
+  const label = new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' });
   appDateEl.textContent = label;
   pooDateEl.textContent = label;
+  homeDateEl.textContent = label;
+}
+
+// "Today" screen: one summary per section, each leading with the most useful number.
+function renderHome() {
+  const name = profileFirstName || 'Charlie';
+  const today = startOfToday();
+  const todayFeeds = latestFeeds.filter(f => f.timestamp >= today && f.amountMl != null);
+  const todayPoos = latestPoos.filter(p => p.timestamp >= today);
+  const total = todayFeeds.reduce((sum, f) => sum + f.amountMl, 0);
+
+  const parts = [];
+  if (profileDob) parts.push(`${name} is ${ageString(profileDob).replace(/ old$/, '')} old.`);
+  parts.push(`<b>${todayFeeds.length} ${todayFeeds.length === 1 ? 'feed' : 'feeds'}</b> and <b>${todayPoos.length} ${todayPoos.length === 1 ? 'nappy' : 'nappies'}</b> so far today.`);
+  homeGreetEl.innerHTML = parts.join(' ');
+
+  const last = latestFeeds[0];
+  if (!last) {
+    homeFeedWhen.textContent = '';
+    homeFeedV.textContent = 'No feeds yet';
+    homeFeedS.textContent = 'Tap to log the first one';
+  } else if (last.amountMl == null) {
+    homeFeedWhen.textContent = formatClock(last.timestamp);
+    homeFeedV.innerHTML = `${durationString(Date.now() - last.timestamp)} <span>feeding now</span>`;
+    homeFeedS.textContent = 'Amount still to add';
+  } else {
+    const nextTs = last.timestamp + (last.intervalHours || 3) * 3600000;
+    homeFeedWhen.textContent = formatClock(last.timestamp);
+    homeFeedV.innerHTML = `${durationString(Date.now() - last.timestamp)} <span>since last</span>`;
+    homeFeedS.textContent = `${Date.now() > nextTs ? 'Expected' : 'Next one around'} ${formatClock(nextTs)} · ${total}ml today`;
+  }
+
+  const lastPoo = latestPoos[0];
+  homePooWhen.textContent = lastPoo ? formatClock(lastPoo.timestamp) : '';
+  homePooV.innerHTML = `${todayPoos.length} <span>today</span>`;
+  homePooS.textContent = lastPoo ? `Last one ${durationString(Date.now() - lastPoo.timestamp)} ago` : 'None logged yet';
+
+  const r = analyse(latestFeeds);
+  const summary = trendsSummary(r);
+  homeTrendV.textContent = summary.headline;
+  homeTrendS.textContent = summary.sub;
 }
 
 const BOTTLE_GOOD_FOR_MS = 2 * 60 * 60 * 1000;
@@ -1143,7 +1196,7 @@ function renderHistory() {
         <span class="history-time-val">${formatClock(feed.timestamp)}</span>
         ${amountHtml}
         <span class="history-gap-val">${gap}</span>
-        <button class="history-delete" title="Delete">✕</button>
+        <button class="history-delete" title="Delete" aria-label="Delete">✕</button>
       `;
       li.addEventListener('click', () => openLogModal(feed));
       li.querySelector('.history-delete').addEventListener('click', (e) => {
@@ -1360,13 +1413,6 @@ function renderFunFact() {
 
 // --- Trends: patterns read from the feed log (see patterns.js) ---
 
-const PATTERN_CHIPS = {
-  recognised: 'Recognised',
-  emerging: 'Emerging',
-  early: 'Early sign',
-  steady: 'Steady',
-};
-
 function durationLabel(hours) {
   const total = Math.round(hours * 60);
   const h = Math.floor(total / 60);
@@ -1375,13 +1421,10 @@ function durationLabel(hours) {
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
-// "9:45pm" — rounded to the nearest quarter hour, since the pattern is never to the minute.
+// "21:45" — rounded to the nearest quarter hour, since the pattern is never to the minute.
 function clockLabel(totalMinutes) {
   const rounded = (Math.round(totalMinutes / 15) * 15) % 1440;
-  const h24 = Math.floor(rounded / 60);
-  const m = rounded % 60;
-  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
-  return `${h12}${m ? ':' + String(m).padStart(2, '0') : ''}${h24 < 12 ? 'am' : 'pm'}`;
+  return `${String(Math.floor(rounded / 60)).padStart(2, '0')}:${String(rounded % 60).padStart(2, '0')}`;
 }
 
 function joinList(items) {
@@ -1395,7 +1438,7 @@ function patternBarsSvg(values, { max, label }) {
   const bars = values.map((v, i) => {
     const h = Math.max(2, (v / max) * (height - 4));
     const isLast = i === values.length - 1;
-    return `<rect x="${(i * (barW + gap)).toFixed(1)}" y="${(height - h).toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${isLast ? 'var(--primary-2)' : 'var(--primary)'}" opacity="${isLast ? 1 : 0.55}" />`;
+    return `<rect x="${(i * (barW + gap)).toFixed(1)}" y="${(height - h).toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${isLast ? 'var(--sec)' : 'var(--sec-soft)'}" />`;
   }).join('');
   return `<svg viewBox="0 0 ${width} ${height}" class="trends-svg" role="img" aria-label="${label}">${bars}</svg>`;
 }
@@ -1406,135 +1449,169 @@ function feedingTimesSvg(hourly) {
   const max = Math.max(...hourly, 0.5);
   const bars = hourly.map((v, i) => {
     const h = Math.max(2, (v / max) * (height - 4));
-    return `<rect x="${(i * (barW + gap)).toFixed(1)}" y="${(height - h).toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="2.5" fill="var(--primary)" opacity="${v > 0 ? 0.35 + 0.65 * (v / max) : 0.15}" />`;
+    return `<rect x="${(i * (barW + gap)).toFixed(1)}" y="${(height - h).toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="2.5" fill="var(--sec)" opacity="${v > 0 ? 0.35 + 0.65 * (v / max) : 0.15}" />`;
   }).join('');
   return `<svg viewBox="0 0 ${width} ${height}" class="trends-svg" role="img" aria-label="Feeds by hour of day">${bars}</svg>
-    <div class="trends-axis"><span>12am</span><span>6am</span><span>12pm</span><span>6pm</span><span>12am</span></div>`;
+    <div class="trends-axis"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>`;
 }
 
-function patternCard(title, status, bodyHtml) {
-  const chip = status && PATTERN_CHIPS[status]
-    ? `<span class="pattern-chip pattern-${status}">${PATTERN_CHIPS[status]}</span>`
-    : '';
-  return `<div class="card trends-card"><div class="trends-card-head"><h3 class="trends-chart-title">${title}</h3>${chip}</div>${bodyHtml}</div>`;
+// A pattern only counts as established once two weeks agree (or a flat result has held for three).
+function trendTier(p) {
+  return p.status === 'recognised' || (p.status === 'steady' && p.steadyWeeks) ? 'est' : 'maybe';
 }
 
-// A flat result only earns the "Steady" chip once three weeks agree.
-function chipFor(p) {
-  return p.status === 'steady' && !p.steadyWeeks ? null : p.status;
+function trendBadge(p) {
+  if (p.status === 'recognised') return 'Two weeks running';
+  if (p.status === 'steady') return p.steadyWeeks ? `Steady for ${p.steadyWeeks} weeks` : 'So far';
+  if (p.status === 'emerging') return 'This week';
+  return 'Last few days';
+}
+
+function trendItem(short, title, badge, tier, bodyHtml) {
+  const html = `<article class="tr${tier === 'maybe' ? ' maybe' : ''}"><div class="tr-top"><h3>${title}</h3>${badge ? `<span class="badge">${badge}</span>` : ''}</div>${bodyHtml}</article>`;
+  return { tier, short, html };
 }
 
 function overnightSentence(o, name) {
   const now = durationLabel(o.recent);
   const before = o.before != null ? durationLabel(o.before) : '';
   if (o.status === 'recognised' && o.dir === 'up') {
-    return `Overnight stretches have grown two weeks running: about ${now} this week, ${before} last week and ${durationLabel(o.first)} the week before.`;
+    return `Overnight stretches have grown two weeks running: about <b>${now}</b> this week, ${before} last week and ${durationLabel(o.first)} the week before.`;
   }
   if (o.status === 'recognised') {
-    return `Overnight stretches have eased back over two weeks: about ${now} this week, ${before} last week and ${durationLabel(o.first)} the week before.`;
+    return `Overnight stretches have eased back over two weeks: about <b>${now}</b> this week, ${before} last week and ${durationLabel(o.first)} the week before.`;
   }
   if (o.status === 'emerging') {
     return o.dir === 'up'
-      ? `Longer overnight stretches this week: about ${now} on average, up from ${before}.`
-      : `Overnight stretches are a little shorter this week: about ${now} on average, down from ${before}.`;
+      ? `Longer overnight stretches this week: about <b>${now}</b> on average, up from ${before}.`
+      : `Overnight stretches are a little shorter this week: about <b>${now}</b> on average, down from ${before}.`;
   }
   if (o.status === 'early') {
-    return `Early sign: the last few nights have averaged about ${now}, compared with ${before} before that.`;
+    return `The last few nights have averaged about <b>${now}</b>, compared with ${before} before that.`;
   }
-  return `${name}'s overnight stretches are steady at around ${now}.`;
+  return `${name}'s overnight stretches are steady at around <b>${now}</b>.`;
 }
 
-function renderOvernightCard(r, name) {
+function overnightItem(r, name) {
   const o = r.overnight;
-  if (!o || o.status === 'none' || !r.nights || r.nights.length < 7) {
-    return patternCard('Overnight stretch', null,
-      `<p class="muted trends-summary">Once a week of nights is logged, ${name}'s longest overnight stretch will show up here.</p>`);
-  }
-  const max = Math.max(8, ...r.nights.map((n) => n.hours));
-  const chart = patternBarsSvg(r.nights.map((n) => n.hours), {
-    max,
-    label: `Longest overnight stretch for each of the last ${r.nights.length} nights`,
-  });
+  if (!o || o.status === 'none' || !r.nights || r.nights.length < 7) return null;
   const lastLine = o.last.hours >= o.best.hours
-    ? `Last night: ${durationLabel(o.last.hours)} — the longest in the last two weeks.`
+    ? `Last night: ${durationLabel(o.last.hours)}, the longest in the last two weeks.`
     : `Last night: ${durationLabel(o.last.hours)}. Best in the last two weeks: ${durationLabel(o.best.hours)}.`;
   const rhythm = o.bedtimeFeed && o.stretchEnds
-    ? `<p class="muted trends-note">The feed before the longest stretch is usually around ${clockLabel(o.bedtimeFeed.hour * 60 + o.bedtimeFeed.minute)}, and the stretch usually ends around ${clockLabel(o.stretchEnds.hour * 60 + o.stretchEnds.minute)}.</p>`
+    ? ` The feed before the longest stretch is usually around ${clockLabel(o.bedtimeFeed.hour * 60 + o.bedtimeFeed.minute)}, and the stretch usually ends around ${clockLabel(o.stretchEnds.hour * 60 + o.stretchEnds.minute)}.`
     : '';
-  return patternCard('Overnight stretch', chipFor(o),
-    `${chart}<p class="trends-caption">Longest gap between feeds, 10pm–6am, last ${r.nights.length} nights</p>
-     <p class="muted trends-summary">${overnightSentence(o, name)}</p>
-     <p class="muted trends-note">${lastLine}</p>${rhythm}`);
+  return trendItem('Longer nights', 'Overnight stretch', trendBadge(o), trendTier(o),
+    `<p>${overnightSentence(o, name)}</p><p>${lastLine}${rhythm}</p>`);
 }
 
-function renderTimesCard(r) {
+function timesItem(r) {
   const t = r.times;
-  if (!t) return '';
-  const status = t.days >= 14 ? 'recognised' : t.days >= 10 ? 'emerging' : 'early';
+  if (!t) return null;
+  const tier = t.days >= 14 ? 'est' : 'maybe';
   const sentence = t.anchors.length
-    ? `Most days there's a feed around ${joinList(t.anchors.map((a) => clockLabel(a.minutes)))}.`
+    ? `Most days there's a feed around <b>${joinList(t.anchors.map((a) => clockLabel(a.minutes)))}</b>.`
     : 'Feeds are spread through the day without a set rhythm yet.';
-  return patternCard('Feeding times', status,
-    `${feedingTimesSvg(t.hourly)}
-     <p class="trends-caption">When feeds happen, last ${t.days} days</p>
-     <p class="muted trends-summary">${sentence}</p>`);
+  return trendItem('Usual feed times', 'Usual feed times', tier === 'est' ? 'Most days' : `Last ${t.days} days`, tier,
+    `<p>${sentence}</p>${feedingTimesSvg(t.hourly)}<p class="trends-caption">When feeds happen, last ${t.days} days</p>`);
 }
 
-function renderVolumeCard(r) {
+function volumeItem(r) {
   const v = r.volume;
-  if (!v || v.status === 'none' || !r.dailyTotals || r.dailyTotals.length < 7) return '';
+  if (!v || v.status === 'none' || !r.dailyTotals || r.dailyTotals.length < 7) return null;
   const now = Math.round(v.recent);
   const before = v.before != null ? Math.round(v.before) : null;
   let sentence;
   if (v.status === 'recognised') {
-    sentence = `Daily milk has ${v.dir === 'up' ? 'risen' : 'eased'} two weeks running: about ${now}ml a day this week, ${before}ml last week.`;
+    sentence = `Daily milk has ${v.dir === 'up' ? 'risen' : 'eased'} two weeks running: about <b>${now}ml a day</b> this week, ${before}ml last week.`;
   } else if (v.status === 'emerging') {
-    sentence = `${v.dir === 'up' ? 'A little more' : 'A little less'} milk this week: about ${now}ml a day, ${v.dir === 'up' ? 'up' : 'down'} from ${before}ml.`;
+    sentence = `${v.dir === 'up' ? 'A little more' : 'A little less'} milk this week: about <b>${now}ml a day</b>, ${v.dir === 'up' ? 'up' : 'down'} from ${before}ml.`;
   } else if (v.status === 'early') {
-    sentence = `Early sign: the last few days have averaged about ${now}ml a day, compared with ${before}ml before that.`;
+    sentence = `The last few days have averaged about <b>${now}ml a day</b>, compared with ${before}ml before that.`;
   } else {
-    sentence = `Daily milk is steady at around ${now}ml.`;
+    sentence = `Daily milk is steady at around <b>${now}ml</b>.`;
   }
   const chart = patternBarsSvg(r.dailyTotals.map((d) => d.v), {
     max: Math.max(...r.dailyTotals.map((d) => d.v)),
     label: `Milk per day for the last ${r.dailyTotals.length} days`,
   });
-  return patternCard('Milk per day', chipFor(v),
-    `${chart}<p class="trends-caption">Total ml per day, last ${r.dailyTotals.length} days</p>
-     <p class="muted trends-summary">${sentence}</p>`);
+  return trendItem('Milk per day', 'Milk per day', trendBadge(v), trendTier(v),
+    `<p>${sentence}</p>${chart}<p class="trends-caption">Total ml per day, last ${r.dailyTotals.length} days</p>`);
 }
 
-function renderGapsCard(r) {
+function gapsItem(r) {
   const g = r.daytimeGaps;
-  if (!g || g.status === 'none') return '';
+  if (!g || g.status === 'none') return null;
   const now = durationLabel(g.recent);
   const before = g.before != null ? durationLabel(g.before) : '';
   let sentence;
   if (g.status === 'recognised' || g.status === 'emerging') {
-    sentence = `Daytime feeds are ${g.dir === 'up' ? 'spreading out' : 'closer together'} this week: about ${now} apart, compared with ${before} last week.`;
+    sentence = `Daytime feeds are ${g.dir === 'up' ? 'spreading out' : 'closer together'} this week: about <b>${now}</b> apart, compared with ${before} last week.`;
   } else if (g.status === 'early') {
-    sentence = `Early sign: the last few days have had feeds about ${now} apart, compared with ${before} before that.`;
+    sentence = `The last few days have had feeds about <b>${now}</b> apart, compared with ${before} before that.`;
   } else {
-    sentence = `Daytime feeds are usually about ${now} apart.`;
+    sentence = `Daytime feeds are usually about <b>${now}</b> apart.`;
   }
-  return patternCard('Daytime gaps', chipFor(g),
-    `<p class="muted trends-summary">${sentence}</p>`);
+  return trendItem('Daytime gaps', 'Daytime gaps', trendBadge(g), trendTier(g), `<p>${sentence}</p>`);
+}
+
+function trendItems(r, name) {
+  if (!r.nights) return [];
+  return [overnightItem(r, name), timesItem(r), volumeItem(r), gapsItem(r)].filter(Boolean);
+}
+
+function trendsSummary(r) {
+  const items = trendItems(r, profileFirstName || 'Charlie');
+  if (!items.length) return { headline: 'Patterns', sub: 'Log a few days of feeds to see them' };
+  const est = items.filter((i) => i.tier === 'est').length;
+  const maybe = items.length - est;
+  const parts = [];
+  if (est) parts.push(`${est} settled`);
+  if (maybe) parts.push(`${maybe} that might be starting`);
+  return { headline: (items.find((i) => i.tier === 'est') || items[0]).short, sub: parts.join(', ') };
+}
+
+function trendsHero(r) {
+  const nights = r.nights || [];
+  const o = r.overnight;
+  const shown = nights.slice(-14);
+  let label = 'Longest stretch overnight';
+  let big = '—';
+  let sub = 'Once a week of nights is logged, the longest overnight stretch will show here.';
+  let barsHtml = '';
+  if (o && o.last && shown.length >= 3) {
+    label = 'Longest stretch last night';
+    big = durationLabel(o.last.hours);
+    sub = `${formatClock(o.last.start)} to ${formatClock(o.last.end)}${o.best ? ` · best this fortnight ${durationLabel(o.best.hours)}` : ''}`;
+    const max = Math.max(8, ...shown.map((n) => n.hours));
+    barsHtml = `<div class="nights" role="img" aria-label="Longest overnight stretch for each of the last ${shown.length} nights">${
+      shown.map((n, i) => `<i${i === shown.length - 1 ? ' class="last"' : ''} style="height:${Math.max(6, n.hours / max * 100).toFixed(0)}%"></i>`).join('')
+    }</div><div class="nights-cap"><span>${new Date(shown[0].start).toLocaleDateString([], { day: 'numeric', month: 'short' })}</span><span>Last night</span></div>`;
+  }
+  return `<section class="hero"><svg class="ill" aria-hidden="true"><use href="#ill-moon"/></svg><div class="hero-l">${label}</div><div class="hero-n">${big}</div><div class="hero-s">${sub}</div>${barsHtml}</section>`;
 }
 
 function renderTrends() {
   if (!trendsPatternsEl) return;
-  const name = profileFirstName || 'your baby';
+  const name = profileFirstName || 'Charlie';
   const r = analyse(latestFeeds);
-  if (!r.nights) {
-    trendsPatternsEl.innerHTML = patternCard('Patterns', null,
-      `<p class="muted trends-summary">Log a few days of feeds and patterns will start to show up here.</p>`);
-    return;
+  const dayCount = new Set(latestFeeds.map((f) => dayKeyForTimestamp(f.timestamp))).size;
+  trendsSubEl.textContent = dayCount ? `From ${dayCount} ${dayCount === 1 ? 'day' : 'days'} of feeds` : 'From the feed log';
+
+  const items = trendItems(r, name);
+  const est = items.filter((i) => i.tier === 'est');
+  const maybe = items.filter((i) => i.tier === 'maybe');
+  let html = trendsHero(r);
+  if (!items.length) {
+    html += `<div class="th"><h2>Patterns</h2><p>Log a few days of feeds and patterns will start to show up here.</p></div>`;
   }
-  trendsPatternsEl.innerHTML =
-    renderOvernightCard(r, name.charAt(0).toUpperCase() + name.slice(1)) +
-    renderTimesCard(r) +
-    renderVolumeCard(r) +
-    renderGapsCard(r);
+  if (est.length) {
+    html += `<div class="th"><h2>Established</h2><p>Seen two weeks running or more.</p></div>${est.map((i) => i.html).join('')}`;
+  }
+  if (maybe.length) {
+    html += `<div class="th"><h2>Might be starting</h2><p>Only the last few days. Too early to be sure.</p></div>${maybe.map((i) => i.html).join('')}`;
+  }
+  trendsPatternsEl.innerHTML = html;
 }
 
 // --- Milestones ---
@@ -1760,157 +1837,167 @@ milestoneDelete.addEventListener('click', async () => {
   }
 });
 
-// --- Amount wheel picker ---
+// --- Log a feed sheet ---
+// One sheet does three jobs: log a past feed ('log'), add the amount to a feed that was started ('complete'),
+// and change a saved feed ('edit'). Only 'log' asks when it was; the other two keep the feed's own time
+// unless "Change" is tapped. The next-feed time is never typed: it is the start time plus the gap.
 
-const wheelValues = [];
-for (let v = ML_MIN; v <= ML_MAX; v += (v < ML_STEP_HIGH_THRESHOLD ? ML_STEP_LOW : ML_STEP_HIGH)) wheelValues.push(v);
-
-wheelValues.forEach((v) => {
-  const item = document.createElement('div');
-  item.className = 'wheel-item';
-  item.textContent = `${v}ml`;
-  item.dataset.value = v;
-  mlWheelTrack.appendChild(item);
-});
-
-function wheelIndexForValue(v) {
-  return wheelValues.indexOf(v);
-}
-
-function scrollWheelTo(value, smooth = false) {
-  const index = wheelIndexForValue(value);
-  mlWheelTrack.scrollTo({ top: index * WHEEL_ITEM_HEIGHT, behavior: smooth ? 'smooth' : 'auto' });
-}
-
-function updateWheelActiveItem() {
-  const index = Math.round(mlWheelTrack.scrollTop / WHEEL_ITEM_HEIGHT);
-  const clamped = Math.max(0, Math.min(wheelValues.length - 1, index));
-  const value = wheelValues[clamped];
-  mlWheelTrack.querySelectorAll('.wheel-item').forEach((el, i) => {
-    el.classList.toggle('active', i === clamped);
-  });
-  return value;
-}
-
-function onAmountChanged(value) {
-  selectedMl = value;
-  amountChips.querySelectorAll('.chip').forEach(c => {
-    c.classList.toggle('selected', Number(c.dataset.ml) === value);
-  });
-  if (!intervalOverridden) {
-    selectedIntervalHours = computeAutoIntervalHours(value);
-    highlightIntervalChip();
-  }
-}
-
-mlWheelTrack.addEventListener('scroll', () => {
-  const value = updateWheelActiveItem();
-  clearTimeout(wheelScrollTimer);
-  wheelScrollTimer = setTimeout(() => onAmountChanged(value), 120);
-});
-
-amountChips.querySelectorAll('.chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    const value = Number(chip.dataset.ml);
-    scrollWheelTo(value);
-    onAmountChanged(value);
-  });
-});
-
-function highlightIntervalChip() {
-  intervalChips.querySelectorAll('.chip').forEach(c => {
-    c.classList.toggle('selected', Number(c.dataset.hours) === selectedIntervalHours);
-  });
-  intervalAutoTag.hidden = intervalOverridden;
-  scrollIntervalWheelTo(selectedIntervalHours);
-}
-
-intervalChips.querySelectorAll('.chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    selectedIntervalHours = Number(chip.dataset.hours);
-    intervalOverridden = true;
-    highlightIntervalChip();
-  });
-});
-
-// --- Interval wheel picker ---
-
-const intervalWheelValues = [];
-for (let v = INTERVAL_MIN; v <= INTERVAL_MAX; v += INTERVAL_STEP) intervalWheelValues.push(v);
+let sheetMode = 'log';
+let sheetAgo = null;          // minutes ago for a new feed; -1 means a time typed in; null means not chosen yet
+let sheetTimeChanged = false; // complete/edit only: the saved time was replaced by typed values
+let sheetBaseTs = null;       // complete/edit only: the feed's own time
 
 function formatIntervalLabel(hours) {
   const whole = Math.floor(hours);
   return hours % 1 === 0 ? `${whole}h` : `${whole}h 30m`;
 }
 
-intervalWheelValues.forEach((v) => {
-  const item = document.createElement('div');
-  item.className = 'wheel-item';
-  item.textContent = formatIntervalLabel(v);
-  item.dataset.value = v;
-  intervalWheelTrack.appendChild(item);
+(function buildRuler() {
+  let html = '';
+  for (let v = ML_MIN; v <= ML_MAX; v += ML_STEP) {
+    const major = v % 20 === 0;
+    html += `<div class="tk${major ? ' m' : ''}"><i></i>${major ? `<span>${v}</span>` : ''}</div>`;
+  }
+  mlTicks.innerHTML = html;
+})();
+
+function rulerValue() {
+  const steps = Math.round(mlRuler.scrollLeft / RULER_TICK_PX);
+  const max = (ML_MAX - ML_MIN) / ML_STEP;
+  return ML_MIN + Math.max(0, Math.min(max, steps)) * ML_STEP;
+}
+
+function setRulerValue(v) {
+  mlRuler.scrollLeft = ((v - ML_MIN) / ML_STEP) * RULER_TICK_PX;
+}
+
+function lastCompletedAmount(excludeId) {
+  const f = latestFeeds.find(x => x.amountMl != null && x.id !== excludeId);
+  return f ? f.amountMl : null;
+}
+
+function onAmountChanged(value) {
+  selectedMl = value;
+  sheetMlEl.textContent = String(value);
+  mlRuler.setAttribute('aria-valuenow', String(value));
+  const lastAmt = lastCompletedAmount(editingFeedId);
+  if (sheetMode === 'edit' || lastAmt == null) sheetHint.textContent = '';
+  else sheetHint.textContent = value === lastAmt ? 'Same as the last feed' : `Last feed was ${lastAmt}ml`;
+  sheetHint.hidden = !sheetHint.textContent;
+  if (!intervalOverridden) selectedIntervalHours = computeAutoIntervalHours(value);
+  drawSheet();
+}
+
+mlRuler.addEventListener('scroll', () => {
+  const v = rulerValue();
+  if (v !== selectedMl) onAmountChanged(v);
 });
 
-function intervalWheelIndexForValue(v) {
-  return Math.round((v - INTERVAL_MIN) / INTERVAL_STEP);
+mlRuler.addEventListener('keydown', (e) => {
+  const dir = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -1 : 0;
+  if (!dir) return;
+  e.preventDefault();
+  setRulerValue(Math.max(ML_MIN, Math.min(ML_MAX, selectedMl + dir * ML_STEP)));
+});
+
+function pickedTimeTs() {
+  if (!feedDateInput.value || !feedTimeInput.value) return null;
+  return combineDateTimeToTimestamp(feedDateInput.value, feedTimeInput.value);
 }
 
-function scrollIntervalWheelTo(value, smooth = false) {
-  const index = intervalWheelIndexForValue(value);
-  intervalWheelTrack.scrollTo({ top: index * WHEEL_ITEM_HEIGHT, behavior: smooth ? 'smooth' : 'auto' });
+// The start time the sheet would save right now, or null when none has been chosen yet.
+function sheetStartTs() {
+  if (sheetMode === 'log') {
+    if (sheetAgo > 0) return Date.now() - sheetAgo * 60000;
+    if (sheetAgo === -1) return pickedTimeTs();
+    return null;
+  }
+  return sheetTimeChanged ? pickedTimeTs() : sheetBaseTs;
 }
 
-function updateIntervalWheelActiveItem() {
-  const index = Math.round(intervalWheelTrack.scrollTop / WHEEL_ITEM_HEIGHT);
-  const clamped = Math.max(0, Math.min(intervalWheelValues.length - 1, index));
-  const value = intervalWheelValues[clamped];
-  intervalWheelTrack.querySelectorAll('.wheel-item').forEach((el, i) => {
-    el.classList.toggle('active', i === clamped);
-  });
-  return value;
+function drawSheet() {
+  const gap = selectedIntervalHours;
+  sheetGapEl.textContent = formatIntervalLabel(gap);
+  gapLess.disabled = gap <= INTERVAL_MIN;
+  gapMore.disabled = gap >= INTERVAL_MAX;
+
+  const ts = sheetStartTs();
+  sheetAtEl.textContent = ts == null ? '–:–' : formatClock(ts + gap * 3600000);
+
+  if (sheetMode === 'log') {
+    sheetWhen.querySelectorAll('button').forEach(b => b.classList.toggle('on', Number(b.dataset.ago) === sheetAgo));
+    sheetEarlier.hidden = sheetAgo !== -1;
+    logConfirm.textContent = ts == null ? 'Choose when it was' : 'Log feed';
+  } else {
+    sheetFixed.hidden = sheetTimeChanged;
+    sheetEarlier.hidden = !sheetTimeChanged;
+    if (!sheetTimeChanged && sheetBaseTs != null) {
+      sheetFixedK.textContent = sheetMode === 'complete' ? 'Started' : 'When';
+      sheetFixedV.textContent = sheetMode === 'complete'
+        ? `${formatClock(sheetBaseTs)}, ${durationString(Date.now() - sheetBaseTs)} ago`
+        : `${dayLabelForKey(dayKeyForTimestamp(sheetBaseTs))}, ${formatClock(sheetBaseTs)}`;
+    }
+    logConfirm.textContent = sheetMode === 'complete' ? 'Save amount' : 'Save';
+  }
+  logConfirm.disabled = ts == null;
 }
 
-function onIntervalChanged(value) {
-  selectedIntervalHours = value;
+sheetWhen.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-ago]');
+  if (!btn) return;
+  sheetAgo = Number(btn.dataset.ago);
+  if (sheetAgo === -1) {
+    feedDateInput.value = todayDateString();
+    feedTimeInput.value = '';
+    syncDayChips(feedDateInput, feedDayChips);
+  }
+  drawSheet();
+});
+
+sheetFixedChange.addEventListener('click', () => {
+  const d = new Date(sheetBaseTs);
+  feedDateInput.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  feedTimeInput.value = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  syncDayChips(feedDateInput, feedDayChips);
+  sheetTimeChanged = true;
+  drawSheet();
+});
+
+function nudgeGap(delta) {
+  selectedIntervalHours = Math.max(INTERVAL_MIN, Math.min(INTERVAL_MAX, selectedIntervalHours + delta));
   intervalOverridden = true;
-  intervalChips.querySelectorAll('.chip').forEach(c => {
-    c.classList.toggle('selected', Number(c.dataset.hours) === value);
-  });
-  intervalAutoTag.hidden = true;
+  drawSheet();
 }
-
-intervalWheelTrack.addEventListener('scroll', () => {
-  const value = updateIntervalWheelActiveItem();
-  clearTimeout(intervalWheelScrollTimer);
-  intervalWheelScrollTimer = setTimeout(() => onIntervalChanged(value), 120);
-});
-
-// --- Log modal ---
+gapLess.addEventListener('click', () => nudgeGap(-INTERVAL_STEP));
+gapMore.addEventListener('click', () => nudgeGap(INTERVAL_STEP));
 
 function openLogModal(feed) {
   editingFeedId = feed ? feed.id : null;
   const isPending = !!feed && feed.amountMl == null;
-  const startMl = feed?.amountMl ?? DEFAULT_ML;
+  sheetMode = !feed ? 'log' : (isPending ? 'complete' : 'edit');
+  sheetAgo = null;
+  sheetTimeChanged = false;
+  sheetBaseTs = feed ? feed.timestamp : null;
 
+  const startMl = feed?.amountMl ?? lastCompletedAmount(feed?.id) ?? DEFAULT_ML;
   intervalOverridden = !!feed && !isPending;
   selectedMl = startMl;
   selectedIntervalHours = feed?.intervalHours || computeAutoIntervalHours(startMl);
 
-  const baseTime = feed ? new Date(feed.timestamp) : new Date();
-  feedDateInput.value = `${baseTime.getFullYear()}-${String(baseTime.getMonth() + 1).padStart(2, '0')}-${String(baseTime.getDate()).padStart(2, '0')}`;
+  feedDateInput.value = todayDateString();
   feedDateInput.max = todayDateString();
+  feedTimeInput.value = '';
   syncDayChips(feedDateInput, feedDayChips);
-  feedTimeInput.value = `${String(baseTime.getHours()).padStart(2, '0')}:${String(baseTime.getMinutes()).padStart(2, '0')}`;
 
-  logModalTitle.textContent = isPending ? 'Add amount' : (feed ? 'Edit feed' : 'Log a feed');
-  logConfirm.textContent = isPending ? 'Save amount' : (feed ? 'Save' : 'Log feed');
+  logModalTitle.textContent = sheetMode === 'log' ? 'Log a feed' : (isPending ? 'Complete feed' : 'Edit feed');
+  sheetWhen.hidden = sheetMode !== 'log';
+  sheetDel.hidden = sheetMode !== 'edit';
+  sheetFixed.hidden = sheetMode === 'log';
+  sheetEarlier.hidden = true;
 
   logModal.hidden = false;
-  scrollWheelTo(startMl);
+  setRulerValue(startMl);
   onAmountChanged(startMl);
-  updateWheelActiveItem();
-  highlightIntervalChip();
-  updateIntervalWheelActiveItem();
 }
 
 function dateStringForOffset(daysAgo) {
@@ -1939,6 +2026,13 @@ function wireDayPicker(input, chipsEl) {
 wireDayPicker(feedDateInput, feedDayChips);
 wireDayPicker(pooDateInput, pooDayChips);
 
+// The typed date and time feed the "around" time, so redraw on every change.
+['input', 'change'].forEach(evt => {
+  feedDateInput.addEventListener(evt, drawSheet);
+  feedTimeInput.addEventListener(evt, drawSheet);
+});
+feedDayChips.addEventListener('click', drawSheet);
+
 function combineDateTimeToTimestamp(dateStr, timeStr) {
   const now = new Date();
   const [y, mo, d] = (dateStr || todayDateString()).split('-').map(Number);
@@ -1950,10 +2044,6 @@ function combineDateTimeToTimestamp(dateStr, timeStr) {
   return new Date(y, mo - 1, d, h, mi, 0, 0).getTime();
 }
 
-function readModalTimestamp() {
-  return combineDateTimeToTimestamp(feedDateInput.value, feedTimeInput.value);
-}
-
 btnStartFeedNow.addEventListener('click', () => {
   if (latestFeeds.length && latestFeeds[0].amountMl == null) {
     openLogModal(latestFeeds[0]);
@@ -1962,11 +2052,24 @@ btnStartFeedNow.addEventListener('click', () => {
   }
 });
 
+function closeLogModal() {
+  logModal.hidden = true;
+  editingFeedId = null;
+}
+
 btnLogFeed.addEventListener('click', () => openLogModal());
-logCancel.addEventListener('click', () => { logModal.hidden = true; editingFeedId = null; });
+logCancel.addEventListener('click', closeLogModal);
+logModal.addEventListener('click', (e) => { if (e.target === logModal) closeLogModal(); });
+
+sheetDel.addEventListener('click', () => {
+  const id = editingFeedId;
+  closeLogModal();
+  if (id) openConfirmDeleteModal(id);
+});
 
 logConfirm.addEventListener('click', () => {
-  const timestamp = readModalTimestamp();
+  const timestamp = sheetStartTs();
+  if (timestamp == null) return;
   showRangeContaining(timestamp, historyRange, ["1d", "7d", "14d"], (r) => { currentRange = r; chartSelectedStart = null; });
   logModal.hidden = true;
   if (editingFeedId) {
@@ -2053,9 +2156,13 @@ joinForm.addEventListener('submit', (e) => {
 });
 
 renderHeaderDate();
-setInterval(() => { renderHeaderDate(); renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderPooStats(); renderProfileAge(); renderBottleStatus(); }, 15000);
+setInterval(() => { renderHeaderDate(); renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderPooStats(); renderProfileAge(); renderBottleStatus(); renderHome(); }, 15000);
 
 renderTrends();
+renderHome();
+renderTodayTotal();
+renderPooStats();
+renderSinceLastPoo();
 renderFunFact();
 
 const existingCode = getHouseholdCode();
@@ -2067,6 +2174,6 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=59').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=60').catch(() => {});
   });
 }

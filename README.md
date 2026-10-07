@@ -63,6 +63,16 @@ Going live is unchanged: the usual commit and `git push` to `master`. Publish to
 
 Limits: the test repo is public (as is this one); only top-level `.html`, `.js`, `.css` and `.json` files are copied, so assets added in a subfolder would need the script's copy line extended; and a fresh test household has no history, so Trends and the charts will be empty until you log some feeds.
 
+## Summary look (v60)
+The app was restyled in an iOS-health "Summary" look. Where the sections below describe the old look (pink/green gradients, emoji buttons, the scroll wheels, the floating 💬 button), this section wins.
+- **Navigation**: a bottom tab bar (Today, Feeds, Nappies, Milestones, Trends) replaces the 🏠/💩 header buttons. The Today tab is the old home screen: one summary card per section, then a Household list (share code, add to home screen, profile, send feedback). The baby's initial in the top right opens Profile; the tab bar is hidden there.
+- **Colour**: each section has its own colour (feeds green, nappies brown, milestones purple, trends red) set by `.s-feed` / `.s-nappy` / `.s-mile` / `.s-trend`, which define `--sec*` tokens everything inside uses. Girl in Profile turns the Feeds colour rose (`body.gender-pink`). Dark mode follows the phone.
+- **Feeds hero**: big time since the last feed, a Next feed box ("in 41m" pill, or amber "Expected 12m ago", never "overdue") and a progress bar to the next feed.
+- **Log a feed sheet** (one bottom sheet, three modes): amount is a ruler you drag (5ml steps, 10–300ml, starts at the last feed's amount; the hint says "Same as the last feed"). *Log past* asks "when" with 15m ago / 30m ago / 1h ago / Other time, and has no "Now": it won't save until a time is chosen. *Complete feed* (a started feed) and *Edit feed* show the feed's own time with a Change link. "Next feed in" has − / + 30 minute buttons; the clock time after "around" is worked out from the start time plus that gap, and the gap follows the amount until it is changed by hand (90ml→3h, +1h per 30ml, 2–6h). Edit also has "Delete this feed" (the ✕ on each row still works too).
+- **Nappies**: the last-7-days dots became bars; the list shows the same Time / Size / Gap table.
+- **Trends**: a hero with the longest overnight stretch last night and the last 14 nights as bars, then "Established" (two weeks running, or flat for three) and "Might be starting" (this week / last few days) cards. Only patterns `patterns.js` actually works out are shown: overnight stretch, usual feed times, milk per day, daytime gaps. Times are 24-hour.
+- Elements are still looked up by the same ids; only the markup around them changed. The old amount/interval chips and wheels are gone (the bottle "Earlier" timer still uses a wheel).
+
 ## New household flow
 Tapping "Start a new household" lands on the Profile screen in a welcome mode: a short intro line, "Save and continue" instead of "Save profile", and a "Skip for now" link. Either one goes to Baby Feed and shows the household code to share. Leaving Profile any other way just drops the welcome mode. Joining an existing household skips this, since the profile is already set up.
 
