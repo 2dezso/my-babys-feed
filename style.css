@@ -110,8 +110,8 @@ h1, h2, h3 { margin: 0; }
 .hero-next span { font-size: .8125rem; font-weight: 600; color: rgba(255, 255, 255, .86); }
 .hero-next .pill { font-size: .8125rem; font-weight: 700; background: #fff; color: var(--sec); border-radius: 99px; padding: 6px 10px; }
 .hero-next .pill.late { background: var(--amber); color: var(--amber-ink); }
-.bar { position: relative; height: 6px; border-radius: 99px; background: rgba(255, 255, 255, .25); margin-top: 12px; }
-.bar i { position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: #fff; }
+.bar { --p: 0; position: relative; height: 6px; border-radius: 99px; background: rgba(255, 255, 255, .25); margin-top: 12px; overflow: hidden; }
+.bar i { position: absolute; inset: 0; border-radius: 99px; background: #fff; transform-origin: 0 50%; transform: scaleX(var(--p)); transition: transform .6s ease; }
 .bar.late i { background: var(--amber); }
 .hero-pending { cursor: pointer; }
 .hero-pending-view { padding: 6px 0 4px; }
@@ -403,22 +403,6 @@ textarea.field-input { padding: 12px 14px; }
 .fillbottle .milk { fill: var(--sec-soft); transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(var(--fill)); transition: transform 1.4s cubic-bezier(.22, 1, .36, 1); }
 @media (prefers-reduced-motion: reduce) { .fillbottle .milk, .hc-tl .fill, .hc-tl .now { transition: none; } }
 
-/* Feeds hero: a coloured block for the last feed, a white strip under it for the next one */
-.herod { border-radius: 24px; overflow: hidden; box-shadow: var(--shadow); }
-.herod.hero-pending { cursor: pointer; }
-.hd-up { background: var(--sec); color: #fff; padding: 18px 20px 20px; }
-.hd-l, .hd-s { font-size: .9375rem; font-weight: 600; color: #fff; }
-.hd-n { font-size: 3.25rem; font-weight: 800; letter-spacing: -.035em; line-height: 1; margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
-.hd-low { background: var(--card); padding: 14px 20px 16px; }
-.hd-row { display: flex; align-items: center; gap: 12px; }
-.hd-row .t { flex: 1; }
-.hd-row small { display: block; font-size: .8125rem; font-weight: 600; color: var(--muted); }
-.hd-row b { font-size: 1.375rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-.hd-pill { font-size: .8125rem; font-weight: 700; border-radius: 99px; padding: 6px 10px; white-space: nowrap; background: var(--sec-tint); color: var(--sec-ink); }
-.hd-pill.late { background: var(--amber); color: var(--amber-ink); }
-.hd-bar { --p: 0; position: relative; height: 6px; border-radius: 99px; background: var(--fill); margin-top: 12px; overflow: hidden; }
-.hd-bar i { position: absolute; inset: 0; border-radius: 99px; background: var(--sec); transform-origin: 0 50%; transform: scaleX(var(--p)); transition: transform .6s ease; }
-.hd-bar.late i { background: #c98a1a; }
 .bottle .timer-ic { width: 40px; height: 40px; border-radius: 50%; background: var(--sec-tint); color: var(--sec-ink); display: grid; place-items: center; flex: none; }
 .bottle.bottle-expired .timer-ic { background: rgba(255, 255, 255, .25); color: #fff; }
-@media (prefers-reduced-motion: reduce) { .hd-bar i { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }

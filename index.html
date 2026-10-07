@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f2f2f7">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=64">
+<link rel="manifest" href="manifest.json?v=65">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=64">
+<link rel="stylesheet" href="style.css?v=65">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -97,25 +97,24 @@
       <button class="me" data-nav="profile" aria-label="Profile">C</button>
     </div>
 
-    <section id="hero-card" class="herod">
-      <div class="hd-up">
-        <div id="hero-pending-view" hidden>
-          <div class="hd-l">Feeding now</div>
-          <div id="pending-time" class="hd-n">—</div>
-          <div class="hd-s">Tap to add the amount</div>
-        </div>
-        <div id="hero-main-view">
-          <div class="hd-l">Last feed</div>
-          <div id="since-last-feed" class="hd-n">—</div>
-          <div id="last-feed-detail" class="hd-s"></div>
-        </div>
+    <section id="hero-card" class="hero">
+      <svg class="ill" aria-hidden="true"><use href="#ill-bottle"/></svg>
+      <div id="hero-pending-view" class="hero-pending-view" hidden>
+        <div class="hero-l">Feeding now</div>
+        <div id="pending-time" class="hero-n">—</div>
+        <div class="hero-s">Tap to add the amount</div>
       </div>
-      <div id="hero-low" class="hd-low">
-        <div class="hd-row">
-          <div class="t"><small id="next-feed-label">Next feed</small><b id="next-feed-time">—</b></div>
-          <span id="next-feed-in" class="hd-pill" hidden></span>
+      <div id="hero-main-view">
+        <div class="hero-l">Last feed</div>
+        <div id="since-last-feed" class="hero-n">—</div>
+        <div id="last-feed-detail" class="hero-s"></div>
+        <div id="hero-low">
+          <div class="hero-next">
+            <div class="t"><span id="next-feed-label">Next feed</span><b id="next-feed-time">—</b></div>
+            <span id="next-feed-in" class="pill" hidden></span>
+          </div>
+          <div id="hero-line" class="bar" hidden><i></i></div>
         </div>
-        <div id="hero-line" class="hd-bar" hidden><i></i></div>
       </div>
     </section>
 
@@ -568,6 +567,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=64"></script>
+<script type="module" src="app.js?v=65"></script>
 </body>
 </html>
