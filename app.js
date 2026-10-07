@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=67';
+import { analyse } from './patterns.js?v=68';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -59,9 +59,6 @@ const sinceLastFeedEl = document.getElementById('since-last-feed');
 const lastFeedDetailEl = document.getElementById('last-feed-detail');
 const nextFeedTimeEl = document.getElementById('next-feed-time');
 const nextFeedInEl = document.getElementById('next-feed-in');
-const todayTotalEl = document.getElementById('today-total-value');
-const todayFeedCountEl = document.getElementById('today-feed-count');
-const avgGapEl = document.getElementById('avg-gap-value');
 const appDateEl = document.getElementById('app-date');
 const bottlePill = document.getElementById('bottle-pill');
 const bottlePillMain = document.getElementById('bottle-pill-main');
@@ -797,27 +794,15 @@ function usualDailyMl() {
   return days.length ? days.reduce((s, v) => s + v, 0) / days.length : 0;
 }
 
+// Today's total is shown at the top of the Past feeds list; here it only sets how full the hero bottle is.
 function renderTodayTotal() {
   const today = startOfToday();
-  const todayFeeds = latestFeeds.filter(f => f.timestamp >= today);
-  const total = todayFeeds.reduce((sum, f) => sum + (f.amountMl || 0), 0);
-  todayTotalEl.innerHTML = `${total}<small>ml</small>`;
-  todayFeedCountEl.textContent = todayFeeds.length === 1 ? '1 feed' : `${todayFeeds.length} feeds`;
-
+  const total = latestFeeds.filter(f => f.timestamp >= today).reduce((sum, f) => sum + (f.amountMl || 0), 0);
   // The bottle starts the day empty and fills a little with every finished feed.
   const usual = usualDailyMl() || 8 * (lastCompletedAmount() || DEFAULT_ML);
   const fill = Math.max(0, Math.min(1, total / usual));
   todayBottle.style.setProperty('--fill', fill.toFixed(3));
-  todayBottle.setAttribute('aria-label', `Today's milk so far: about ${Math.round(fill * 100)}% of a usual day`);
-
-  const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
-  const recent = latestFeeds.filter(f => f.timestamp >= dayAgo);
-  if (recent.length < 2) {
-    avgGapEl.textContent = '—';
-  } else {
-    const spanMs = recent[0].timestamp - recent[recent.length - 1].timestamp;
-    avgGapEl.textContent = durationString(spanMs / (recent.length - 1));
-  }
+  todayBottle.setAttribute('aria-label', `Today's milk so far: ${total}ml, about ${Math.round(fill * 100)}% of a usual day`);
 }
 
 function renderHeaderDate() {
@@ -884,31 +869,28 @@ function listenToBottle(code) {
   });
 }
 
+// Idle, the row shows a formula scoop. Once a timer is running the scoop turns into a small bottle whose
+// level drains as the time runs out (--left goes from 1 to 0).
 function renderBottleStatus() {
   const now = Date.now();
   const inUse = !bottleMadeAt && bottleFeedStartedAt && now - bottleFeedStartedAt < BOTTLE_IN_USE_MS + BOTTLE_IN_USE_NOTICE_MS;
-  bottlePillClear.hidden = !bottleMadeAt && !inUse;
-  bottlePillAdjust.hidden = !!inUse;
+  const timing = !!bottleMadeAt || !!inUse;
+  bottlePillClear.hidden = !timing;
+  bottlePillAdjust.hidden = timing;
+  bottlePill.classList.toggle('timing', timing);
   bottlePill.classList.remove('bottle-expired');
-  if (inUse) {
-    const remaining = BOTTLE_IN_USE_MS - (now - bottleFeedStartedAt);
-    bottleTitleEl.textContent = 'Bottle in use';
-    if (remaining <= 0) {
-      bottleStatusEl.textContent = 'Over 1h since the feed started. Discard what is left';
-      bottlePill.classList.add('bottle-expired');
-    } else {
-      bottleStatusEl.textContent = `Good for ${durationString(remaining)}`;
-    }
+  if (!timing) {
+    bottleTitleEl.textContent = 'Made a bottle?';
+    bottleStatusEl.textContent = 'Tap to start a 2 hour timer';
+    bottlePill.style.setProperty('--left', '1');
     return;
   }
-  bottleTitleEl.textContent = 'Bottle made';
-  if (!bottleMadeAt) {
-    bottleStatusEl.textContent = 'Tap to start the timer';
-    return;
-  }
-  const remaining = BOTTLE_GOOD_FOR_MS - (now - bottleMadeAt);
+  const totalMs = inUse ? BOTTLE_IN_USE_MS : BOTTLE_GOOD_FOR_MS;
+  const remaining = totalMs - (now - (inUse ? bottleFeedStartedAt : bottleMadeAt));
+  bottlePill.style.setProperty('--left', Math.max(0, Math.min(1, remaining / totalMs)).toFixed(3));
+  bottleTitleEl.textContent = inUse ? 'Bottle in use' : 'Bottle made';
   if (remaining <= 0) {
-    bottleStatusEl.textContent = 'Expired. Discard';
+    bottleStatusEl.textContent = inUse ? 'Over 1h since the feed started. Discard what is left' : 'Over 2 hours old. Discard it';
     bottlePill.classList.add('bottle-expired');
   } else {
     bottleStatusEl.textContent = `Good for ${durationString(remaining)}`;
@@ -1214,13 +1196,17 @@ function renderHistory() {
     groups.get(key).push(feed);
   }
 
+  // Today's total lives in this list, so today always gets its row, even before the first feed of the day.
+  if (currentRange !== 'all' && !groups.has(startOfToday())) groups.set(startOfToday(), []);
+
   for (const key of Array.from(groups.keys()).sort((a, b) => b - a)) {
     const dayFeeds = groups.get(key);
     const dayTotal = dayFeeds.reduce((sum, f) => sum + (f.amountMl || 0), 0);
 
     const headerLi = document.createElement('li');
-    headerLi.className = 'day-group-header';
-    headerLi.innerHTML = `<span class="day-group-label">${dayLabelForKey(key)}</span><span class="day-group-total">${dayTotal}ml</span>`;
+    const isToday = key === startOfToday();
+    headerLi.className = `day-group-header${isToday ? ' today' : ''}`;
+    headerLi.innerHTML = `<span class="day-group-label">${dayLabelForKey(key)}${isToday ? ` · ${dayFeeds.length} ${dayFeeds.length === 1 ? 'feed' : 'feeds'}` : ''}</span><span class="day-group-total">${dayTotal}ml</span>`;
     historyList.appendChild(headerLi);
 
     for (const feed of dayFeeds) {
@@ -2205,7 +2191,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=67').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=68').catch(() => {});
   });
 }
 

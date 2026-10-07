@@ -411,14 +411,6 @@ textarea.field-input { padding: 12px 14px; }
 @keyframes bubble { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: .9; } 100% { transform: translateY(-34px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .sigbottle .milk { transition: none; } .sigbottle .wave, .sigbottle .bub { animation: none; } }
 
-/* Today's total and the gap between feeds, as plain numbers in one box */
-.numbers { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: end; background: var(--card); border-radius: 18px; box-shadow: var(--shadow); padding: 14px 16px; margin-top: 12px; }
-.numbers small, .numbers span { display: block; font-size: .8125rem; font-weight: 600; color: var(--muted); }
-.numbers b { display: block; font-size: 1.75rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; font-variant-numeric: tabular-nums; }
-.numbers #today-total-value { color: var(--sec-ink); }
-.numbers b small { display: inline; font-size: 1rem; margin-left: 3px; letter-spacing: 0; }
-.numbers .r { text-align: right; border-left: 1px solid var(--line); padding-left: 14px; }
-.numbers .r b { font-size: 1.125rem; letter-spacing: 0; }
 
 /* Trends, made easier to read: the hero gives one answer and two facts; each card leads with one number */
 .hero-facts { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
@@ -442,3 +434,22 @@ textarea.field-input { padding: 12px 14px; }
 .th p { font-size: .9375rem; }
 #hero-card { min-height: 152px; }
 #hero-card .hero-next { margin-top: 28px; }
+
+/* Today's total lives at the top of the Past feeds list */
+.history-list li.day-group-header.today { padding: 12px 16px; align-items: baseline; background: var(--sec-tint); color: var(--sec-ink); font-size: .9375rem; }
+.history-list li.day-group-header.today:active { background: var(--sec-tint); }
+.history-list li.day-group-header.today .day-group-total { color: var(--sec-ink); font-size: 1.375rem; letter-spacing: -.015em; font-variant-numeric: tabular-nums; }
+
+/* Bottle timer row: a formula scoop when idle; tapping it turns the scoop into a small bottle that drains as time runs out */
+.bottle { --left: 1; }
+.bottle .timer-ic { position: relative; }
+.bottle .timer-ic svg { position: absolute; inset: 0; margin: auto; width: 24px; height: 24px; transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), opacity .25s ease; }
+.bottle .scoop { transform: rotate(-12deg); }
+.bottle .minibottle { opacity: 0; transform: scale(.3) rotate(-40deg); }
+.bottle .minibottle .out { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bottle .minibottle .level { fill: currentColor; opacity: .45; transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(var(--left)); transition: transform 1s ease; }
+.bottle.timing .scoop { opacity: 0; transform: scale(.3) rotate(60deg); }
+.bottle.timing .minibottle { opacity: 1; transform: none; }
+.bottle.timing .timer-ic { background: var(--sec); color: #fff; }
+.bottle.bottle-expired.timing .timer-ic { background: rgba(255, 255, 255, .25); }
+@media (prefers-reduced-motion: reduce) { .bottle .timer-ic svg, .bottle .minibottle .level { transition: none; } }
