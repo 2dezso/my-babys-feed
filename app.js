@@ -2177,3 +2177,8 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js?v=60').catch(() => {});
   });
 }
+
+// iOS Safari ignores user-scalable=no, so block pinch-zoom gestures and double-tap zoom directly.
+['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
+  document.addEventListener(evt, (e) => e.preventDefault());
+});
