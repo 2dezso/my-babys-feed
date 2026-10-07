@@ -44,6 +44,25 @@ Just open `index.html` in a browser — it's a static site, no build step, no se
 
 Installed copies (Add to Home Screen) pick up a deploy the next time they're opened with a connection: the service worker fetches the page itself network-first and only falls back to its cached copy offline. The versioned CSS/JS/manifest are cache-first, which is safe because a new page references new `?v=N` URLs. On iOS, an app left open in the background may need swiping away and reopening to reload.
 
+## Test version (try changes on your phone first)
+A separate copy of the app at **https://2dezso.github.io/my-babys-feed-staging/**, hosted from its own repo (`2dezso/my-babys-feed-staging`). Nothing there touches the real site.
+
+To put whatever is in this folder onto it, committed or not:
+
+```
+bash scripts/deploy-staging.sh
+```
+
+It takes about a minute to show up. The script copies only the app's web files (never `CNAME`, so it can't claim the real domain), then patches the copy so it can't be mistaken for the real one: an orange "TEST VERSION" bar across the top, the app name "Charlie's Year (TEST)", an orange icon, and `noindex` plus `robots.txt` so search engines skip it. It refuses to publish if any of those patches fail to apply.
+
+**Data is separate because the household code is.** The test site shares Charlie's Firebase project, but a household is only ever the code you type, so a new code is a new empty household. On the phone, open the test URL, tap "Start a new household" and use that. Don't type the real household code into the test site: it would read and write Charlie's real feeds with code that hasn't been released yet.
+
+Because the two sites are on different addresses, the phone treats them as different apps: separate stored household code, separate offline copy, and (with the orange icon) two icons on the home screen you can tell apart.
+
+Going live is unchanged: the usual commit and `git push` to `master`. Publish to the test site first, try it, then push.
+
+Limits: the test repo is public (as is this one); only top-level `.html`, `.js`, `.css` and `.json` files are copied, so assets added in a subfolder would need the script's copy line extended; and a fresh test household has no history, so Trends and the charts will be empty until you log some feeds.
+
 ## New household flow
 Tapping "Start a new household" lands on the Profile screen in a welcome mode: a short intro line, "Save and continue" instead of "Save profile", and a "Skip for now" link. Either one goes to Baby Feed and shows the household code to share. Leaving Profile any other way just drops the welcome mode. Joining an existing household skips this, since the profile is already set up.
 
