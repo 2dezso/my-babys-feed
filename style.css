@@ -395,3 +395,32 @@ textarea.field-input { padding: 12px 14px; }
   .screen.view, .modal-card { animation: none; }
   .btn:active, .sum:active, .feedback-fab:active { transform: none; }
 }
+
+/* Feeds hero: a light card, green only as an accent, with a line from the last feed to the next */
+.heroc { background: var(--card); border-radius: 24px; padding: 20px; box-shadow: var(--shadow); }
+.heroc.hero-pending { cursor: pointer; }
+.hc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.hc-l, .hc-s { font-size: .9375rem; font-weight: 600; color: var(--muted); }
+.hc-n { font-size: 3.25rem; font-weight: 800; letter-spacing: -.035em; line-height: 1; margin: 6px 0 4px; color: var(--sec-ink); font-variant-numeric: tabular-nums; }
+.hc-pill { font-size: .8125rem; font-weight: 700; border-radius: 99px; padding: 6px 10px; white-space: nowrap; background: var(--sec-tint); color: var(--sec-ink); }
+.hc-pill.late { background: var(--amber); color: var(--amber-ink); }
+.hc-tl { --p: 0; --late: #c98a1a; position: relative; height: 46px; margin-top: 22px; }
+.hc-tl .ln { position: absolute; left: 7px; right: 7px; top: 6px; height: 4px; border-radius: 99px; background: var(--sec-soft); }
+.hc-tl .fill { position: absolute; left: 7px; top: 6px; height: 4px; border-radius: 99px; background: var(--sec); width: calc((100% - 14px) * var(--p)); transition: width .6s ease; }
+.hc-tl .dot { position: absolute; top: 1px; width: 14px; height: 14px; border-radius: 50%; }
+.hc-tl .dot.st { left: 0; background: var(--sec); }
+.hc-tl .dot.en { right: 0; background: var(--card); border: 3px solid var(--sec); }
+.hc-tl .now { position: absolute; top: -2px; left: calc(7px + (100% - 14px) * var(--p)); width: 4px; height: 20px; border-radius: 3px; background: var(--ink); transform: translateX(-50%); transition: left .6s ease; }
+.hc-tl .cap { position: absolute; bottom: 0; font-size: .8125rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.hc-tl .cap-st { left: 0; }
+.hc-tl .cap-en { right: 0; text-align: right; }
+.hc-tl .cap small { display: block; font-size: .6875rem; font-weight: 600; color: var(--muted); }
+.hc-tl.late .fill { background: var(--late); }
+.hc-tl.late .dot.en { border-color: var(--late); }
+
+/* Today's bottle: empty at midnight, the milk rises with each finished feed */
+.stat-bottle { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.fillbottle { --fill: 0; width: 38px; height: 63px; flex: none; }
+.fillbottle .line { fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fillbottle .milk { fill: var(--sec-soft); transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(var(--fill)); transition: transform 1.4s cubic-bezier(.22, 1, .36, 1); }
+@media (prefers-reduced-motion: reduce) { .fillbottle .milk, .hc-tl .fill, .hc-tl .now { transition: none; } }

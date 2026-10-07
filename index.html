@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f2f2f7">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=61">
+<link rel="manifest" href="manifest.json?v=62">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=61">
+<link rel="stylesheet" href="style.css?v=62">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -96,22 +96,28 @@
       <button class="me" data-nav="profile" aria-label="Profile">C</button>
     </div>
 
-    <section id="hero-card" class="hero">
-      <svg class="ill" aria-hidden="true"><use href="#ill-bottle"/></svg>
-      <div id="hero-pending-view" class="hero-pending-view" hidden>
-        <div class="hero-l">Feeding now</div>
-        <div id="pending-time" class="hero-n">—</div>
-        <div class="hero-s">Tap to add the amount</div>
+    <section id="hero-card" class="heroc">
+      <div id="hero-pending-view" hidden>
+        <div class="hc-l">Feeding now</div>
+        <div id="pending-time" class="hc-n">—</div>
+        <div class="hc-s">Tap to add the amount</div>
       </div>
       <div id="hero-main-view">
-        <div class="hero-l">Last feed</div>
-        <div id="since-last-feed" class="hero-n">—</div>
-        <div id="last-feed-detail" class="hero-s"></div>
-        <div class="hero-next">
-          <div class="t"><span id="next-feed-label">Next feed</span><b id="next-feed-time">—</b></div>
-          <span id="next-feed-in" class="pill" hidden></span>
+        <div class="hc-top">
+          <div>
+            <div class="hc-l">Last feed</div>
+            <div id="since-last-feed" class="hc-n">—</div>
+            <div id="last-feed-detail" class="hc-s"></div>
+          </div>
+          <span id="next-feed-in" class="hc-pill" hidden></span>
         </div>
-        <div id="hero-line" class="bar" hidden><i id="hero-line-fill"></i></div>
+        <div id="hero-line" class="hc-tl" hidden>
+          <span class="ln"></span><span class="fill"></span>
+          <span class="dot st"></span><span class="dot en"></span>
+          <span id="hero-line-now" class="now"></span>
+          <span id="hero-cap-start" class="cap cap-st"></span>
+          <span class="cap cap-en"><small id="next-feed-label">Next feed</small><span id="next-feed-time">—</span></span>
+        </div>
       </div>
     </section>
 
@@ -121,7 +127,13 @@
     </div>
 
     <div class="pair">
-      <div class="stat"><small>Today</small><b id="today-total-value">—</b><span id="today-feed-count"></span></div>
+      <div class="stat stat-bottle"><div><small>Today</small><b id="today-total-value">—</b><span id="today-feed-count"></span></div>
+        <svg id="today-bottle" class="fillbottle" viewBox="0 0 40 66" role="img" aria-label="Today's milk so far">
+          <defs><clipPath id="bottle-body"><path d="M10 22h20a5 5 0 0 1 5 5v30a6 6 0 0 1-6 6H11a6 6 0 0 1-6-6V27a5 5 0 0 1 5-5z"/></clipPath></defs>
+          <g clip-path="url(#bottle-body)"><rect class="milk" x="5" y="22" width="30" height="41"/></g>
+          <path class="line" d="M10 22h20a5 5 0 0 1 5 5v30a6 6 0 0 1-6 6H11a6 6 0 0 1-6-6V27a5 5 0 0 1 5-5zM11 15h18v7H11zM16 15c0-4 1-7 1.5-9a2.6 2.6 0 0 1 5 0c.5 2 1.5 5 1.5 9M28 34h4M28 43h4M28 52h4"/>
+        </svg>
+      </div>
       <div class="stat"><small>Average gap</small><b id="avg-gap-value">—</b><span>last 24 hours</span></div>
     </div>
 
@@ -558,6 +570,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=61"></script>
+<script type="module" src="app.js?v=62"></script>
 </body>
 </html>

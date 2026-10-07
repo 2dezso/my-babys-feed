@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=61';
+import { analyse } from './patterns.js?v=62';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -41,7 +41,9 @@ const heroMainView = document.getElementById('hero-main-view');
 const pendingTimeEl = document.getElementById('pending-time');
 const nextFeedLabelEl = document.getElementById('next-feed-label');
 const heroLine = document.getElementById('hero-line');
-const heroLineFill = document.getElementById('hero-line-fill');
+const heroLineNow = document.getElementById('hero-line-now');
+const heroCapStart = document.getElementById('hero-cap-start');
+const todayBottle = document.getElementById('today-bottle');
 const tabbar = document.getElementById('tabbar');
 const homeDateEl = document.getElementById('home-date');
 const homeGreetEl = document.getElementById('home-greet');
@@ -748,7 +750,7 @@ heroCard.addEventListener('click', () => {
   }
 });
 
-// The next feed is a guess, so a late feed is never "overdue": the pill turns amber and says how long ago it was expected.
+// The next feed is a guess, so a late feed is never "overdue": the pill and line turn amber and say how long ago it was expected.
 function renderNextFeed() {
   const last = latestFeeds[0];
   nextFeedLabelEl.textContent = 'Next feed';
@@ -769,17 +771,30 @@ function renderNextFeed() {
   nextFeedTimeEl.textContent = formatClock(nextTs);
   nextFeedInEl.hidden = false;
   if (diffMs < 60000) {
-    nextFeedInEl.textContent = 'now';
+    nextFeedInEl.textContent = 'Next feed now';
   } else if (late) {
     nextFeedInEl.classList.add('late');
     heroLine.classList.add('late');
     nextFeedLabelEl.textContent = 'Expected';
-    nextFeedInEl.textContent = `${durationString(diffMs)} ago`;
+    nextFeedInEl.textContent = `Expected ${durationString(diffMs)} ago`;
   } else {
-    nextFeedInEl.textContent = `in ${durationString(diffMs)}`;
+    nextFeedInEl.textContent = `Next in ${durationString(diffMs)}`;
   }
+  // The line runs from the last feed to the next one; the marker is now. Once late, the whole line is filled.
+  const share = late ? 1 : Math.max(0, (now - last.timestamp) / intervalMs);
   heroLine.hidden = false;
-  heroLineFill.style.width = `${late ? 100 : Math.max(0, (now - last.timestamp) / intervalMs * 100)}%`;
+  heroLine.style.setProperty('--p', share.toFixed(4));
+  heroLineNow.hidden = late;
+  heroCapStart.textContent = formatClock(last.timestamp);
+}
+
+// What a normal day adds up to, from the last week of finished days. Only used to scale the bottle picture.
+function usualDailyMl() {
+  const today = startOfToday();
+  const days = Array.from(dailyFeedTotals().entries())
+    .filter(([day]) => day < today && day >= today - 7 * 86400000)
+    .map(([, t]) => t.total);
+  return days.length ? days.reduce((s, v) => s + v, 0) / days.length : 0;
 }
 
 function renderTodayTotal() {
@@ -788,6 +803,12 @@ function renderTodayTotal() {
   const total = todayFeeds.reduce((sum, f) => sum + (f.amountMl || 0), 0);
   todayTotalEl.textContent = `${total}ml`;
   todayFeedCountEl.textContent = todayFeeds.length === 1 ? '1 feed' : `${todayFeeds.length} feeds`;
+
+  // The bottle starts the day empty and fills a little with every finished feed.
+  const usual = usualDailyMl() || 8 * (lastCompletedAmount() || DEFAULT_ML);
+  const fill = Math.max(0, Math.min(1, total / usual));
+  todayBottle.style.setProperty('--fill', fill.toFixed(3));
+  todayBottle.setAttribute('aria-label', `Today's milk so far: about ${Math.round(fill * 100)}% of a usual day`);
 
   const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
   const recent = latestFeeds.filter(f => f.timestamp >= dayAgo);
@@ -2174,7 +2195,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=61').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=62').catch(() => {});
   });
 }
 
