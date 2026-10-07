@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=66';
+import { analyse } from './patterns.js?v=67';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -1507,101 +1507,84 @@ function trendBadge(p) {
   return 'Last few days';
 }
 
-function trendItem(short, title, badge, tier, bodyHtml) {
-  const html = `<article class="tr${tier === 'maybe' ? ' maybe' : ''}"><div class="tr-top"><h3>${title}</h3>${badge ? `<span class="badge">${badge}</span>` : ''}</div>${bodyHtml}</article>`;
+// Each card leads with one number, then one plain sentence. Anything extra goes in a small note.
+function trendItem({ short, title, badge, tier, value, unit, text, note, extra }) {
+  const html = `<article class="tr${tier === 'maybe' ? ' maybe' : ''}">
+    <div class="tr-top"><h3>${title}</h3>${badge ? `<span class="badge">${badge}</span>` : ''}</div>
+    ${value ? `<div class="tr-val">${value}${unit ? ` <span>${unit}</span>` : ''}</div>` : ''}
+    ${text ? `<p>${text}</p>` : ''}${extra || ''}${note ? `<p class="tr-note">${note}</p>` : ''}
+  </article>`;
   return { tier, short, html };
 }
 
-function overnightSentence(o, name) {
-  const now = durationLabel(o.recent);
-  const before = o.before != null ? durationLabel(o.before) : '';
-  if (o.status === 'recognised' && o.dir === 'up') {
-    return `Overnight stretches have grown two weeks running: about <b>${now}</b> this week, ${before} last week and ${durationLabel(o.first)} the week before.`;
-  }
-  if (o.status === 'recognised') {
-    return `Overnight stretches have eased back over two weeks: about <b>${now}</b> this week, ${before} last week and ${durationLabel(o.first)} the week before.`;
-  }
-  if (o.status === 'emerging') {
-    return o.dir === 'up'
-      ? `Longer overnight stretches this week: about <b>${now}</b> on average, up from ${before}.`
-      : `Overnight stretches are a little shorter this week: about <b>${now}</b> on average, down from ${before}.`;
-  }
-  if (o.status === 'early') {
-    return `The last few nights have averaged about <b>${now}</b>, compared with ${before} before that.`;
-  }
-  return `${name}'s overnight stretches are steady at around <b>${now}</b>.`;
+function changeWord(p, up, down) {
+  return p.dir === 'up' ? up : down;
 }
 
-function overnightItem(r, name) {
+function overnightItem(r) {
   const o = r.overnight;
   if (!o || o.status === 'none' || !r.nights || r.nights.length < 7) return null;
-  const lastLine = o.last.hours >= o.best.hours
-    ? `Last night: ${durationLabel(o.last.hours)}, the longest in the last two weeks.`
-    : `Last night: ${durationLabel(o.last.hours)}. Best in the last two weeks: ${durationLabel(o.best.hours)}.`;
-  const rhythm = o.bedtimeFeed && o.stretchEnds
-    ? ` The feed before the longest stretch is usually around ${clockLabel(o.bedtimeFeed.hour * 60 + o.bedtimeFeed.minute)}, and the stretch usually ends around ${clockLabel(o.stretchEnds.hour * 60 + o.stretchEnds.minute)}.`
+  const before = o.before != null ? durationLabel(o.before) : '';
+  let text;
+  if (o.status === 'recognised') text = `${changeWord(o, 'Longer', 'Shorter')} two weeks in a row. It was ${before} last week and ${durationLabel(o.first)} the week before.`;
+  else if (o.status === 'emerging') text = `${changeWord(o, 'Up', 'Down')} from ${before} last week.`;
+  else if (o.status === 'early') text = `The last few nights. Before that it was ${before}.`;
+  else text = 'Holding steady from week to week.';
+  const note = o.bedtimeFeed && o.stretchEnds
+    ? `The long stretch usually runs from about ${clockLabel(o.bedtimeFeed.hour * 60 + o.bedtimeFeed.minute)} to ${clockLabel(o.stretchEnds.hour * 60 + o.stretchEnds.minute)}.`
     : '';
-  return trendItem('Longer nights', 'Overnight stretch', trendBadge(o), trendTier(o),
-    `<p>${overnightSentence(o, name)}</p><p>${lastLine}${rhythm}</p>`);
+  return trendItem({ short: 'Overnight stretch', title: 'Overnight stretch', badge: trendBadge(o), tier: trendTier(o),
+    value: durationLabel(o.recent), unit: 'longest stretch, on average', text, note });
 }
 
 function timesItem(r) {
   const t = r.times;
   if (!t) return null;
   const tier = t.days >= 14 ? 'est' : 'maybe';
-  const sentence = t.anchors.length
-    ? `Most days there's a feed around <b>${joinList(t.anchors.map((a) => clockLabel(a.minutes)))}</b>.`
-    : 'Feeds are spread through the day without a set rhythm yet.';
-  return trendItem('Usual feed times', 'Usual feed times', tier === 'est' ? 'Most days' : `Last ${t.days} days`, tier,
-    `<p>${sentence}</p>${feedingTimesSvg(t.hourly)}<p class="trends-caption">When feeds happen, last ${t.days} days</p>`);
+  const chips = t.anchors.length
+    ? `<div class="tchips">${t.anchors.map((a) => `<span>${clockLabel(a.minutes)}</span>`).join('')}</div>`
+    : '';
+  return trendItem({ short: 'Usual feed times', title: 'Usual feed times', badge: tier === 'est' ? 'Most days' : `Last ${t.days} days`, tier,
+    text: t.anchors.length ? 'Most days there is a feed around these times.' : 'Feeds are spread through the day without a set rhythm yet.',
+    extra: `${chips}${feedingTimesSvg(t.hourly)}`, note: `When feeds happened over the last ${t.days} days.` });
 }
 
 function volumeItem(r) {
   const v = r.volume;
   if (!v || v.status === 'none' || !r.dailyTotals || r.dailyTotals.length < 7) return null;
-  const now = Math.round(v.recent);
   const before = v.before != null ? Math.round(v.before) : null;
-  let sentence;
-  if (v.status === 'recognised') {
-    sentence = `Daily milk has ${v.dir === 'up' ? 'risen' : 'eased'} two weeks running: about <b>${now}ml a day</b> this week, ${before}ml last week.`;
-  } else if (v.status === 'emerging') {
-    sentence = `${v.dir === 'up' ? 'A little more' : 'A little less'} milk this week: about <b>${now}ml a day</b>, ${v.dir === 'up' ? 'up' : 'down'} from ${before}ml.`;
-  } else if (v.status === 'early') {
-    sentence = `The last few days have averaged about <b>${now}ml a day</b>, compared with ${before}ml before that.`;
-  } else {
-    sentence = `Daily milk is steady at around <b>${now}ml</b>.`;
-  }
+  let text;
+  if (v.status === 'recognised') text = `${changeWord(v, 'Up', 'Down')} two weeks in a row. It was ${before}ml last week.`;
+  else if (v.status === 'emerging') text = `${changeWord(v, 'Up', 'Down')} from ${before}ml last week.`;
+  else if (v.status === 'early') text = `The last few days. Before that it was ${before}ml.`;
+  else text = 'Holding steady from week to week.';
   const chart = patternBarsSvg(r.dailyTotals.map((d) => d.v), {
     max: Math.max(...r.dailyTotals.map((d) => d.v)),
     label: `Milk per day for the last ${r.dailyTotals.length} days`,
   });
-  return trendItem('Milk per day', 'Milk per day', trendBadge(v), trendTier(v),
-    `<p>${sentence}</p>${chart}<p class="trends-caption">Total ml per day, last ${r.dailyTotals.length} days</p>`);
+  return trendItem({ short: 'Milk per day', title: 'Milk per day', badge: trendBadge(v), tier: trendTier(v),
+    value: `${Math.round(v.recent)}ml`, unit: 'a day', text, extra: chart, note: `Each bar is one day, last ${r.dailyTotals.length} days.` });
 }
 
 function gapsItem(r) {
   const g = r.daytimeGaps;
   if (!g || g.status === 'none') return null;
-  const now = durationLabel(g.recent);
   const before = g.before != null ? durationLabel(g.before) : '';
-  let sentence;
-  if (g.status === 'recognised' || g.status === 'emerging') {
-    sentence = `Daytime feeds are ${g.dir === 'up' ? 'spreading out' : 'closer together'} this week: about <b>${now}</b> apart, compared with ${before} last week.`;
-  } else if (g.status === 'early') {
-    sentence = `The last few days have had feeds about <b>${now}</b> apart, compared with ${before} before that.`;
-  } else {
-    sentence = `Daytime feeds are usually about <b>${now}</b> apart.`;
-  }
-  return trendItem('Daytime gaps', 'Daytime gaps', trendBadge(g), trendTier(g), `<p>${sentence}</p>`);
+  let text;
+  if (g.status === 'recognised' || g.status === 'emerging') text = `${changeWord(g, 'Further apart', 'Closer together')} than last week, when it was ${before}.`;
+  else if (g.status === 'early') text = `The last few days. Before that it was ${before}.`;
+  else text = 'Holding steady from week to week.';
+  return trendItem({ short: 'Daytime gaps', title: 'Daytime gaps', badge: trendBadge(g), tier: trendTier(g),
+    value: durationLabel(g.recent), unit: 'between daytime feeds', text });
 }
 
-function trendItems(r, name) {
+function trendItems(r) {
   if (!r.nights) return [];
-  return [overnightItem(r, name), timesItem(r), volumeItem(r), gapsItem(r)].filter(Boolean);
+  return [overnightItem(r), timesItem(r), volumeItem(r), gapsItem(r)].filter(Boolean);
 }
 
 function trendsSummary(r) {
-  const items = trendItems(r, profileFirstName || 'Charlie');
+  const items = trendItems(r);
   if (!items.length) return { headline: 'Patterns', sub: 'Log a few days of feeds to see them' };
   const est = items.filter((i) => i.tier === 'est').length;
   const maybe = items.length - est;
@@ -1611,34 +1594,42 @@ function trendsSummary(r) {
   return { headline: (items.find((i) => i.tier === 'est') || items[0]).short, sub: parts.join(', ') };
 }
 
+// The hero answers one question: how long was the longest stretch last night? The two facts under it give the
+// times and the fortnight's best, and in the bars the longest night is the solid one with its length written on it.
 function trendsHero(r) {
-  const nights = r.nights || [];
   const o = r.overnight;
-  const shown = nights.slice(-14);
-  let label = 'Longest stretch overnight';
-  let big = '—';
-  let sub = 'Once a week of nights is logged, the longest overnight stretch will show here.';
-  let barsHtml = '';
-  if (o && o.last && shown.length >= 3) {
-    label = 'Longest stretch last night';
-    big = durationLabel(o.last.hours);
-    sub = `${formatClock(o.last.start)} to ${formatClock(o.last.end)}${o.best ? ` · best this fortnight ${durationLabel(o.best.hours)}` : ''}`;
-    const max = Math.max(8, ...shown.map((n) => n.hours));
-    barsHtml = `<div class="nights" role="img" aria-label="Longest overnight stretch for each of the last ${shown.length} nights">${
-      shown.map((n, i) => `<i${i === shown.length - 1 ? ' class="last"' : ''} style="height:${Math.max(6, n.hours / max * 100).toFixed(0)}%"></i>`).join('')
-    }</div><div class="nights-cap"><span>${new Date(shown[0].start).toLocaleDateString([], { day: 'numeric', month: 'short' })}</span><span>Last night</span></div>`;
+  const shown = (r.nights || []).slice(-14);
+  if (!o || !o.last || shown.length < 3) {
+    return `<section class="hero"><svg class="ill" aria-hidden="true"><use href="#ill-moon"/></svg><div class="hero-l">Longest stretch overnight</div><div class="hero-n">—</div><div class="hero-s">Shows here once a few nights are logged.</div></section>`;
   }
-  return `<section class="hero"><svg class="ill" aria-hidden="true"><use href="#ill-moon"/></svg><div class="hero-l">${label}</div><div class="hero-n">${big}</div><div class="hero-s">${sub}</div>${barsHtml}</section>`;
+  const max = Math.max(...shown.map((n) => n.hours));
+  const bestIndex = shown.findIndex((n) => n.hours === max);
+  const lastIsBest = bestIndex === shown.length - 1;
+  const bars = shown.map((n, i) => {
+    const cls = [i === bestIndex ? 'best' : '', i === shown.length - 1 ? 'last' : ''].filter(Boolean).join(' ');
+    const label = i === bestIndex ? `<b>${durationLabel(n.hours)}</b>` : '';
+    return `<span class="night ${cls}">${label}<i style="height:${Math.max(8, n.hours / max * 100).toFixed(0)}%"></i></span>`;
+  }).join('');
+  return `<section class="hero">
+    <svg class="ill" aria-hidden="true"><use href="#ill-moon"/></svg>
+    <div class="hero-l">Longest stretch last night</div>
+    <div class="hero-n">${durationLabel(o.last.hours)}</div>
+    <div class="hero-facts">
+      <div><small>Between feeds at</small><b>${formatClock(o.last.start)} and ${formatClock(o.last.end)}</b></div>
+      <div><small>Longest in two weeks</small><b>${lastIsBest ? 'Last night' : durationLabel(max)}</b></div>
+    </div>
+    <div class="nights" role="img" aria-label="Longest overnight stretch for each of the last ${shown.length} nights. The longest was ${durationLabel(max)}.">${bars}</div>
+    <div class="nights-cap"><span>${new Date(shown[0].start).toLocaleDateString([], { day: 'numeric', month: 'short' })}</span><span>Last night</span></div>
+  </section>`;
 }
 
 function renderTrends() {
   if (!trendsPatternsEl) return;
-  const name = profileFirstName || 'Charlie';
   const r = analyse(latestFeeds);
   const dayCount = new Set(latestFeeds.map((f) => dayKeyForTimestamp(f.timestamp))).size;
   trendsSubEl.textContent = dayCount ? `From ${dayCount} ${dayCount === 1 ? 'day' : 'days'} of feeds` : 'From the feed log';
 
-  const items = trendItems(r, name);
+  const items = trendItems(r);
   const est = items.filter((i) => i.tier === 'est');
   const maybe = items.filter((i) => i.tier === 'maybe');
   let html = trendsHero(r);
@@ -2214,7 +2205,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=66').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=67').catch(() => {});
   });
 }
 
