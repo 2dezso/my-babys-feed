@@ -396,13 +396,21 @@ textarea.field-input { padding: 12px 14px; }
   .btn:active, .sum:active, .feedback-fab:active { transform: none; }
 }
 
-/* Today's bottle: empty at midnight, the milk rises with each finished feed */
-.stat-bottle { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.fillbottle { --fill: 0; width: 38px; height: 63px; flex: none; }
-.fillbottle .line { fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.fillbottle .milk { fill: var(--sec-soft); transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(var(--fill)); transition: transform 1.4s cubic-bezier(.22, 1, .36, 1); }
-@media (prefers-reduced-motion: reduce) { .fillbottle .milk, .hc-tl .fill, .hc-tl .now { transition: none; } }
-
 .bottle .timer-ic { width: 40px; height: 40px; border-radius: 50%; background: var(--sec-tint); color: var(--sec-ink); display: grid; place-items: center; flex: none; }
 .bottle.bottle-expired .timer-ic { background: rgba(255, 255, 255, .25); color: #fff; }
 @media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+
+/* The signature bottle: one bottle on the Feeds screen, in the hero. Empty at midnight, the milk rises with each finished feed. */
+.sigbottle { --fill: 0; position: absolute; right: 14px; top: 12px; width: 74px; height: 111px; }
+.sigbottle .glass { fill: rgba(255, 255, 255, .28); }
+.sigbottle .milk { fill: #fff; transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(var(--fill)); transition: transform 1.4s cubic-bezier(.22, 1, .36, 1); }
+.sigbottle .tick { fill: none; stroke: var(--sec); stroke-width: 2; stroke-linecap: round; opacity: .55; }
+@media (prefers-reduced-motion: reduce) { .sigbottle .milk { transition: none; } }
+
+/* Today's total and the gap between feeds, as plain numbers in one box */
+.numbers { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: end; background: var(--card); border-radius: 18px; box-shadow: var(--shadow); padding: 14px 16px; margin-top: 12px; }
+.numbers small, .numbers span { display: block; font-size: .8125rem; font-weight: 600; color: var(--muted); }
+.numbers b { display: block; font-size: 1.75rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.numbers b small { display: inline; font-size: 1rem; margin-left: 3px; letter-spacing: 0; }
+.numbers .r { text-align: right; border-left: 1px solid var(--line); padding-left: 14px; }
+.numbers .r b { font-size: 1.125rem; letter-spacing: 0; }

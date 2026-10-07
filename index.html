@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f2f2f7">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=65">
+<link rel="manifest" href="manifest.json?v=66">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=65">
+<link rel="stylesheet" href="style.css?v=66">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -98,7 +98,14 @@
     </div>
 
     <section id="hero-card" class="hero">
-      <svg class="ill" aria-hidden="true"><use href="#ill-bottle"/></svg>
+      <svg id="today-bottle" class="sigbottle" viewBox="0 0 80 120" role="img" aria-label="Today's milk so far">
+        <defs><clipPath id="bottle-body"><rect x="14" y="34" width="52" height="80" rx="14"/></clipPath></defs>
+        <rect class="glass" x="14" y="34" width="52" height="80" rx="14"/>
+        <g clip-path="url(#bottle-body)"><rect class="milk" x="14" y="34" width="52" height="80"/></g>
+        <path class="tick" d="M53 52h7M55 64h5M53 76h7M55 88h5"/>
+        <rect class="glass" x="24" y="23" width="32" height="11" rx="4"/>
+        <path class="glass" d="M32 23c0-8 1.5-14 3.5-17.5a5.2 5.2 0 0 1 9 0C46.5 9 48 15 48 23z"/>
+      </svg>
       <div id="hero-pending-view" class="hero-pending-view" hidden>
         <div class="hero-l">Feeding now</div>
         <div id="pending-time" class="hero-n">—</div>
@@ -123,15 +130,9 @@
       <button id="btn-log-feed" class="btn btn-s"><svg class="ico" aria-hidden="true"><use href="#i-pencil"/></svg>Log past</button>
     </div>
 
-    <div class="pair">
-      <div class="stat stat-bottle"><div><small>Today</small><b id="today-total-value">—</b><span id="today-feed-count"></span></div>
-        <svg id="today-bottle" class="fillbottle" viewBox="0 0 40 66" role="img" aria-label="Today's milk so far">
-          <defs><clipPath id="bottle-body"><path d="M10 22h20a5 5 0 0 1 5 5v30a6 6 0 0 1-6 6H11a6 6 0 0 1-6-6V27a5 5 0 0 1 5-5z"/></clipPath></defs>
-          <g clip-path="url(#bottle-body)"><rect class="milk" x="5" y="22" width="30" height="41"/></g>
-          <path class="line" d="M10 22h20a5 5 0 0 1 5 5v30a6 6 0 0 1-6 6H11a6 6 0 0 1-6-6V27a5 5 0 0 1 5-5zM11 15h18v7H11zM16 15c0-4 1-7 1.5-9a2.6 2.6 0 0 1 5 0c.5 2 1.5 5 1.5 9M28 34h4M28 43h4M28 52h4"/>
-        </svg>
-      </div>
-      <div class="stat"><small>Average gap</small><b id="avg-gap-value">—</b><span>last 24 hours</span></div>
+    <div class="numbers">
+      <div><small>Today</small><b id="today-total-value">—</b><span id="today-feed-count"></span></div>
+      <div class="r"><small>Between feeds</small><b id="avg-gap-value">—</b><span>average, last 24 hours</span></div>
     </div>
 
     <div id="bottle-pill" class="bottle">
@@ -567,6 +568,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=65"></script>
+<script type="module" src="app.js?v=66"></script>
 </body>
 </html>

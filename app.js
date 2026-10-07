@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=65';
+import { analyse } from './patterns.js?v=66';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -801,7 +801,7 @@ function renderTodayTotal() {
   const today = startOfToday();
   const todayFeeds = latestFeeds.filter(f => f.timestamp >= today);
   const total = todayFeeds.reduce((sum, f) => sum + (f.amountMl || 0), 0);
-  todayTotalEl.textContent = `${total}ml`;
+  todayTotalEl.innerHTML = `${total}<small>ml</small>`;
   todayFeedCountEl.textContent = todayFeeds.length === 1 ? '1 feed' : `${todayFeeds.length} feeds`;
 
   // The bottle starts the day empty and fills a little with every finished feed.
@@ -2214,7 +2214,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=65').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=66').catch(() => {});
   });
 }
 
