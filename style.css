@@ -499,12 +499,19 @@ textarea.field-input { padding: 12px 14px; }
 .home-head { text-align: center; }
 .home-head small { display: block; font-size: .875rem; font-weight: 700; color: var(--h-muted); }
 .home-head h1 { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
-.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 12px; justify-items: center; padding-top: 14px; }
 .tile { display: flex; flex-direction: column; align-items: center; gap: 10px; font-weight: 800; font-size: 1rem; color: var(--h-ink); }
 .tile:active .disc { transform: scale(.96); }
-.disc { width: 112px; height: 112px; border-radius: 50%; display: grid; place-items: center; color: #fff; transition: transform .15s ease; }
-.disc .ico { width: 40px; height: 40px; stroke-width: 1.8; }
+.disc { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; color: #fff; transition: transform .15s ease; }
+.disc .ico { width: 32px; height: 32px; stroke-width: 1.8; }
 .c-feed { background: var(--h-green); } .c-nap { background: var(--h-brown); } .c-mile { background: var(--h-lav); } .c-trend { background: var(--h-peach); }
 .home-foot { margin-top: auto; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 22px; font-size: .9375rem; font-weight: 700; color: var(--h-muted); }
 .home-foot button { min-height: 44px; }
 @media (prefers-reduced-motion: reduce) { .disc { transition: none; } }
+
+/* Feeds first: Feeds is the main job, so its disc is the big one; the other three sit below it in a row. */
+.tiles { display: flex; flex-direction: column; gap: 28px; padding-top: 14px; }
+.tiles-top { display: grid; place-items: center; }
+.tiles-top .disc { width: 156px; height: 156px; }
+.tiles-top .disc .ico { width: 56px; height: 56px; }
+.tiles-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; justify-items: center; }
+.tiles-row .tile { font-size: .875rem; }

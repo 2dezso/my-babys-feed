@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f2f2f7">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=78">
+<link rel="manifest" href="manifest.json?v=79">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=78">
+<link rel="stylesheet" href="style.css?v=79">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -180,10 +180,14 @@
       <h1 id="home-title">Charlie’s First Year</h1>
     </div>
     <nav class="tiles" aria-label="Sections">
-      <button class="tile" data-nav="feed"><span class="disc c-feed"><svg class="ico" aria-hidden="true"><use href="#i-bottle"/></svg></span>Feeds</button>
-      <button class="tile" data-nav="poo"><span class="disc c-nap"><svg class="ico" aria-hidden="true"><use href="#i-poo"/></svg></span>Nappies</button>
-      <button class="tile" data-nav="milestones"><span class="disc c-mile"><svg class="ico" aria-hidden="true"><use href="#i-cal"/></svg></span>Milestones</button>
-      <button class="tile" data-nav="trends"><span class="disc c-trend"><svg class="ico" aria-hidden="true"><use href="#i-chart"/></svg></span>Trends</button>
+      <div class="tiles-top">
+        <button class="tile" data-nav="feed"><span class="disc c-feed"><svg class="ico" aria-hidden="true"><use href="#i-bottle"/></svg></span>Feeds</button>
+      </div>
+      <div class="tiles-row">
+        <button class="tile" data-nav="poo"><span class="disc c-nap"><svg class="ico" aria-hidden="true"><use href="#i-poo"/></svg></span>Nappies</button>
+        <button class="tile" data-nav="milestones"><span class="disc c-mile"><svg class="ico" aria-hidden="true"><use href="#i-cal"/></svg></span>Milestones</button>
+        <button class="tile" data-nav="trends"><span class="disc c-trend"><svg class="ico" aria-hidden="true"><use href="#i-chart"/></svg></span>Trends</button>
+      </div>
     </nav>
     <div class="home-foot">
       <button id="btn-share">Share code</button>
@@ -551,6 +555,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=78"></script>
+<script type="module" src="app.js?v=79"></script>
 </body>
 </html>
