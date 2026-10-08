@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=74';
+import { analyse } from './patterns.js?v=75';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -2186,11 +2186,16 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=74').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=75').catch(() => {});
   });
 }
 
-// iOS Safari ignores user-scalable=no, so block pinch-zoom gestures and double-tap zoom directly.
-['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
-  document.addEventListener(evt, (e) => e.preventDefault());
+// Pinching in is blocked so the page can't be zoomed by accident, but pinching out is left alone so the browser's
+// own gesture (such as the tab overview on iPad) still works. iOS Safari ignores user-scalable=no, so this is done
+// here: any gesture that would enlarge the page (scale above 1) is cancelled; one that shrinks it is not.
+['gesturechange', 'gestureend'].forEach(evt => {
+  document.addEventListener(evt, (e) => { if (e.scale > 1) e.preventDefault(); });
 });
+document.addEventListener('touchmove', (e) => {
+  if (e.touches.length > 1 && e.scale && e.scale > 1) e.preventDefault();
+}, { passive: false });
