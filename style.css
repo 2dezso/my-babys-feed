@@ -485,3 +485,6 @@ textarea.field-input { padding: 12px 14px; }
 @media (prefers-reduced-motion: reduce) { .startbtn .sb-ic::after { animation: none; } }
 .add-amount-btn { white-space: nowrap; }
 @media (prefers-color-scheme: dark) { .startbtn { box-shadow: none; } }
+
+/* Start feed has no icon badge: just the words on the green button */
+.startbtn { justify-content: flex-start; padding: 0 20px; }
