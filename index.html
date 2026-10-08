@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f2f2f7">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=73">
+<link rel="manifest" href="manifest.json?v=74">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=73">
+<link rel="stylesheet" href="style.css?v=74">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -108,12 +108,12 @@
         <rect class="glass" x="24" y="23" width="32" height="11" rx="4"/>
         <path class="glass" d="M32 23c0-8 1.5-14 3.5-17.5a5.2 5.2 0 0 1 9 0C46.5 9 48 15 48 23z"/>
       </svg>
-      <div id="hero-pending-view" class="hero-pending-view" hidden>
-        <div class="hero-l">Feeding now</div>
+      <div id="hero-pending-view" class="hlayer feeding">
+        <div class="hero-l">Feeding now<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
         <div id="pending-time" class="hero-n">—</div>
         <div class="hero-s">Tap to add the amount</div>
       </div>
-      <div id="hero-main-view">
+      <div id="hero-main-view" class="hlayer resting">
         <div class="hero-l">Last feed</div>
         <div id="since-last-feed" class="hero-n">—</div>
         <div id="last-feed-detail" class="hero-s"></div>
@@ -128,7 +128,7 @@
     </section>
 
     <div class="acts">
-      <button id="btn-start-feed-now" class="btn startbtn"><span class="sb-t"><b id="btn-start-feed-label">Start feed</b><small id="btn-start-feed-sub">Add the amount after</small></span></button>
+      <button id="btn-start-feed-now" class="btn startbtn"><span class="sb-t sb-idle"><b>Start feed</b><small>Add the amount after</small></span><span class="sb-t sb-busy"><b id="btn-start-feed-label">Complete feed</b><small id="btn-start-feed-sub"></small></span><span class="sb-dot" aria-hidden="true"></span></button>
       <button id="btn-log-feed" class="btn btn-s"><svg class="ico" aria-hidden="true"><use href="#i-pencil"/></svg>Log past</button>
     </div>
 
@@ -573,6 +573,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=73"></script>
+<script type="module" src="app.js?v=74"></script>
 </body>
 </html>

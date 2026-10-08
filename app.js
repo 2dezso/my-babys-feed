@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=73';
+import { analyse } from './patterns.js?v=74';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -36,12 +36,9 @@ const setupError = document.getElementById('setup-error');
 const btnCreateHousehold = document.getElementById('btn-create-household');
 
 const heroCard = document.getElementById('hero-card');
-const heroPendingView = document.getElementById('hero-pending-view');
-const heroMainView = document.getElementById('hero-main-view');
 const pendingTimeEl = document.getElementById('pending-time');
 const nextFeedLabelEl = document.getElementById('next-feed-label');
 const heroLine = document.getElementById('hero-line');
-const heroLow = document.getElementById('hero-low');
 const todayBottle = document.getElementById('today-bottle');
 const tabbar = document.getElementById('tabbar');
 const homeDateEl = document.getElementById('home-date');
@@ -85,7 +82,6 @@ const chartStatEls = [1, 2, 3].map(n => ({
 const toast = document.getElementById('toast');
 
 const btnStartFeedNow = document.getElementById('btn-start-feed-now');
-const btnStartFeedLabel = document.getElementById('btn-start-feed-label');
 const btnStartFeedSub = document.getElementById('btn-start-feed-sub');
 const btnLogFeed = document.getElementById('btn-log-feed');
 const logModal = document.getElementById('log-modal');
@@ -717,20 +713,16 @@ function showRangeContaining(ts, segmentedEl, order, setRange) {
 }
 
 function updateFeedActionButtons(isPending) {
-  btnLogFeed.hidden = isPending;
-  btnStartFeedLabel.textContent = isPending ? 'Complete feed' : 'Start feed';
+  // Both buttons stay where they are: Log past is only dimmed and switched off while a feed is running.
+  btnLogFeed.disabled = isPending;
   btnStartFeedNow.classList.toggle('pending', isPending);
-  btnStartFeedSub.textContent = isPending ? `Feeding for ${durationString(Date.now() - latestFeeds[0].timestamp)}` : 'Add the amount after';
-  btnStartFeedNow.parentElement.classList.toggle('one', isPending);
+  btnStartFeedSub.textContent = isPending && latestFeeds[0] ? `Feeding for ${durationString(Date.now() - latestFeeds[0].timestamp)}` : '';
 }
 
 function renderSinceLastFeed() {
   const last = latestFeeds[0];
   const isPending = !!last && last.amountMl == null;
   heroCard.classList.toggle('hero-pending', isPending);
-  heroPendingView.hidden = !isPending;
-  heroMainView.hidden = isPending;
-  heroLow.hidden = isPending;
   updateFeedActionButtons(isPending);
   if (!last) {
     sinceLastFeedEl.textContent = '—';
@@ -2194,7 +2186,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=73').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=74').catch(() => {});
   });
 }
 
