@@ -73,6 +73,8 @@ The app was restyled in an iOS-health "Summary" look. Where the sections below d
 - **Trends**: a hero with the longest overnight stretch last night and the last 14 nights as bars, then "Established" (two weeks running, or flat for three) and "Might be starting" (this week / last few days) cards. Only patterns `patterns.js` actually works out are shown: overnight stretch, usual feed times, milk per day, daytime gaps. Times are 24-hour.
 - Elements are still looked up by the same ids; only the markup around them changed. The old amount/interval chips and wheels are gone (the bottle "Earlier" timer still uses a wheel).
 
+- **Bottle**: Profile has a Bottle wheel of known brands (MAM, Dr. Brown's, Philips Avent, Tommee Tippee, NUK, Comotomo, Medela, Lansinoh, Chicco, Another brand). The choice is saved on the profile as `bottleBrand` and decides which drawing appears in the Feeds hero. Every brand points at the one MAM-style drawing for now; to give a brand its own, add a drawing to `BOTTLE_DESIGNS` in app.js and set that brand's `design`. The hero bottle is the short, soft MAM-style bottle with a cream collar and base.
+
 ## New household flow
 Tapping "Start a new household" lands on the Profile screen in a welcome mode: a short intro line, "Save and continue" instead of "Save profile", and a "Skip for now" link. Either one goes to Baby Feed and shows the household code to share. Leaving Profile any other way just drops the welcome mode. Joining an existing household skips this, since the profile is already set up.
 

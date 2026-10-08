@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f2f2f7">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=75">
+<link rel="manifest" href="manifest.json?v=76">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=75">
+<link rel="stylesheet" href="style.css?v=76">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -98,16 +98,7 @@
     </div>
 
     <section id="hero-card" class="hero">
-      <svg id="today-bottle" class="sigbottle" viewBox="0 0 80 120" role="img" aria-label="Today's milk so far">
-        <defs><clipPath id="bottle-body"><rect x="14" y="34" width="52" height="80" rx="14"/></clipPath></defs>
-        <rect class="glass" x="14" y="34" width="52" height="80" rx="14"/>
-        <g clip-path="url(#bottle-body)"><g class="milk">
-          <path class="wave" d="M-12 36c7-5 14-5 21 0s14 5 21 0 14-5 21 0 14 5 21 0 14-5 21 0 14 5 21 0V124H-12z"/>
-          <circle class="bub" cx="30" cy="104" r="2.5"/><circle class="bub b2" cx="44" cy="108" r="2"/><circle class="bub b3" cx="52" cy="100" r="1.8"/>
-        </g></g>
-        <rect class="glass" x="24" y="23" width="32" height="11" rx="4"/>
-        <path class="glass" d="M32 23c0-8 1.5-14 3.5-17.5a5.2 5.2 0 0 1 9 0C46.5 9 48 15 48 23z"/>
-      </svg>
+      <svg id="today-bottle" class="sigbottle" role="img" aria-label="Today's milk so far"></svg>
       <div id="hero-pending-view" class="hlayer feeding">
         <div class="hero-l">Feeding now<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
         <div id="pending-time" class="hero-n">—</div>
@@ -334,6 +325,15 @@
           <span>Girl</span>
           <span class="gender-swatch gender-swatch-pink"></span>
         </button>
+      </div>
+    </section>
+
+    <section class="profile-card">
+      <h3 class="profile-card-title">Bottle</h3>
+      <p class="profile-card-hint">The bottle you feed with. Every brand shows the same bottle for now.</p>
+      <div class="wheel-picker" id="bottle-brand-wheel">
+        <div class="wheel-highlight"></div>
+        <div class="wheel-track" id="bottle-brand-track" role="listbox" tabindex="0" aria-label="Bottle brand"></div>
       </div>
     </section>
 
@@ -573,6 +573,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=75"></script>
+<script type="module" src="app.js?v=76"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=75';
+import { analyse } from './patterns.js?v=76';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -40,6 +40,7 @@ const pendingTimeEl = document.getElementById('pending-time');
 const nextFeedLabelEl = document.getElementById('next-feed-label');
 const heroLine = document.getElementById('hero-line');
 const todayBottle = document.getElementById('today-bottle');
+const bottleBrandTrack = document.getElementById('bottle-brand-track');
 const tabbar = document.getElementById('tabbar');
 const homeDateEl = document.getElementById('home-date');
 const homeGreetEl = document.getElementById('home-greet');
@@ -307,6 +308,7 @@ function showScreen(name) {
     if (t.dataset.nav === name) t.setAttribute('aria-current', 'page');
     else t.removeAttribute('aria-current');
   });
+  if (name === 'profile') scrollBottleBrandWheelTo(selectedBottleBrand);
   window.scrollTo(0, 0);
 }
 
@@ -365,6 +367,9 @@ function listenToProfile(code) {
     profileDob = data.dob || '';
     selectedAvatarTone = data.avatarTone || '';
     selectedGender = data.gender || '';
+    selectedBottleBrand = data.bottleBrand || 'mam';
+    applyBottleBrand();
+    if (!profileScreen.hidden) scrollBottleBrandWheelTo(selectedBottleBrand);
     profileTileLabel.textContent = firstName ? `${firstName}'s profile` : 'Profile';
     profileFirstName = firstName;
     const babyTitleName = firstName || 'Charlie';
@@ -1366,6 +1371,99 @@ feedbackSend.addEventListener('click', async () => {
   }
 });
 
+// --- Bottle: the brand picked in Profile decides which bottle is drawn on the Feeds screen ---
+// Every brand uses the MAM-style drawing for now; add a design to BOTTLE_DESIGNS and point a brand at it to give it its own.
+const BOTTLE_BRANDS = [
+  { id: 'mam', name: 'MAM', design: 'mam' },
+  { id: 'drbrowns', name: "Dr. Brown's", design: 'mam' },
+  { id: 'avent', name: 'Philips Avent', design: 'mam' },
+  { id: 'tommee', name: 'Tommee Tippee', design: 'mam' },
+  { id: 'nuk', name: 'NUK', design: 'mam' },
+  { id: 'comotomo', name: 'Comotomo', design: 'mam' },
+  { id: 'medela', name: 'Medela', design: 'mam' },
+  { id: 'lansinoh', name: 'Lansinoh', design: 'mam' },
+  { id: 'chicco', name: 'Chicco', design: 'mam' },
+  { id: 'other', name: 'Another brand', design: 'mam' },
+];
+
+const MAM_BODY = 'M20 50H80C81 62 82 70 80 80C78 94 90 106 94 124Q95 150 76 150H24Q5 150 6 124C10 106 22 94 20 80C18 70 19 62 20 50Z';
+const BOTTLE_DESIGNS = {
+  // A short, soft bottle: dome hood over the teat, rounded collar, body that narrows under the collar and flares to a
+  // rounded base with a lighter band and a vent. The milk runs from y=140 (empty) to y=66 (full): a 74 unit range.
+  mam: {
+    viewBox: '-4 -2 108 158',
+    range: '74px',
+    inner: `<defs><clipPath id="bottle-body"><path d="${MAM_BODY}"/></clipPath></defs>
+      <path class="glass" d="${MAM_BODY}"/>
+      <g clip-path="url(#bottle-body)"><g class="milk">
+        <path class="wave" d="M-60 64c8-5 16-5 25 0s16 5 25 0 16-5 25 0 16 5 25 0 16-5 25 0 16 5 25 0 16-5 25 0 16 5 25 0 16-5 25 0 16 5 25 0V160H-60z"/>
+        <circle class="bub" cx="32" cy="136" r="2.4"/><circle class="bub b2" cx="52" cy="140" r="2"/><circle class="bub b3" cx="70" cy="133" r="1.8"/></g>
+        <path class="foot" d="M0 131H100V156H0Z"/></g>
+      <path class="tick" d="M64 138h8M64 124h5M64 110h8M64 96h5M64 82h8"/>
+      <path class="rim" d="${MAM_BODY}"/>
+      <circle class="vent" cx="50" cy="141" r="5"/><circle class="vent2" cx="50" cy="141" r="1.6"/>
+      <path class="hood" d="M26 40C24 22 34 4 50 1C66 4 76 22 74 40Z"/>
+      <path class="nipple" d="M40 40C39 24 44 12 51 10C58 10 61 24 60 40Z"/>
+      <rect class="collar" x="22" y="34" width="56" height="18" rx="8"/>
+      <path class="ridge" d="M28 41h44M28 47h44"/>`,
+  },
+};
+
+let selectedBottleBrand = 'mam';
+let bottleBrandScrollTimer = null;
+
+function setBottleDesign(designKey) {
+  const design = BOTTLE_DESIGNS[designKey] || BOTTLE_DESIGNS.mam;
+  todayBottle.setAttribute('viewBox', design.viewBox);
+  todayBottle.style.setProperty('--range', design.range);
+  todayBottle.innerHTML = design.inner;
+}
+
+function applyBottleBrand() {
+  const brand = BOTTLE_BRANDS.find(b => b.id === selectedBottleBrand) || BOTTLE_BRANDS[0];
+  setBottleDesign(brand.design);
+}
+
+BOTTLE_BRANDS.forEach((brand) => {
+  const item = document.createElement('div');
+  item.className = 'wheel-item';
+  item.setAttribute('role', 'option');
+  item.textContent = brand.name;
+  item.dataset.id = brand.id;
+  bottleBrandTrack.appendChild(item);
+});
+
+function scrollBottleBrandWheelTo(id, smooth = false) {
+  const index = Math.max(0, BOTTLE_BRANDS.findIndex(b => b.id === id));
+  bottleBrandTrack.scrollTo({ top: index * WHEEL_ITEM_HEIGHT, behavior: smooth ? 'smooth' : 'auto' });
+  highlightBottleBrandItem(index);
+}
+
+function highlightBottleBrandItem(index) {
+  bottleBrandTrack.querySelectorAll('.wheel-item').forEach((el, i) => {
+    el.classList.toggle('active', i === index);
+    el.setAttribute('aria-selected', String(i === index));
+  });
+}
+
+bottleBrandTrack.addEventListener('scroll', () => {
+  const index = Math.max(0, Math.min(BOTTLE_BRANDS.length - 1, Math.round(bottleBrandTrack.scrollTop / WHEEL_ITEM_HEIGHT)));
+  highlightBottleBrandItem(index);
+  clearTimeout(bottleBrandScrollTimer);
+  bottleBrandScrollTimer = setTimeout(() => {
+    selectedBottleBrand = BOTTLE_BRANDS[index].id;
+    applyBottleBrand();
+  }, 120);
+});
+
+bottleBrandTrack.addEventListener('keydown', (e) => {
+  const d = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
+  if (!d) return;
+  e.preventDefault();
+  const index = Math.max(0, Math.min(BOTTLE_BRANDS.length - 1, Math.round(bottleBrandTrack.scrollTop / WHEEL_ITEM_HEIGHT) + d));
+  bottleBrandTrack.scrollTo({ top: index * WHEEL_ITEM_HEIGHT, behavior: 'smooth' });
+});
+
 // --- Profile ---
 
 profileDobInput.addEventListener('input', () => {
@@ -1383,7 +1481,7 @@ profileSaveBtn.addEventListener('click', async () => {
   const lastName = profileLastNameInput.value.trim();
   const dob = profileDobInput.value;
   try {
-    await setDoc(profileDocRef(code), { firstName, lastName, dob, avatarTone: selectedAvatarTone, gender: selectedGender }, { merge: true });
+    await setDoc(profileDocRef(code), { firstName, lastName, dob, avatarTone: selectedAvatarTone, gender: selectedGender, bottleBrand: selectedBottleBrand }, { merge: true });
     showToast('Profile saved');
     if (profileOnboarding) finishProfileOnboarding();
   } catch (e) {
@@ -2171,6 +2269,7 @@ renderHeaderDate();
 setInterval(() => { renderHeaderDate(); renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderPooStats(); renderProfileAge(); renderBottleStatus(); renderHome(); }, 15000);
 
 renderTrends();
+applyBottleBrand();
 renderHome();
 renderTodayTotal();
 renderPooStats();
@@ -2186,7 +2285,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=75').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=76').catch(() => {});
   });
 }
 

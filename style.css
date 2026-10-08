@@ -397,18 +397,27 @@ textarea.field-input { padding: 12px 14px; }
 .bottle.bottle-expired .timer-ic { background: rgba(255, 255, 255, .25); color: #fff; }
 @media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
 
-/* The signature bottle: one bottle on the Feeds screen, in the hero. Empty at midnight, the milk rises with each
-   finished feed. It is the page's bit of life: tilted, the milk sloshes, bubbles rise. */
-#hero-card { background: radial-gradient(130px 130px at 84% 24%, rgba(255, 255, 255, .22), transparent 70%), linear-gradient(160deg, var(--sec), color-mix(in srgb, var(--sec) 78%, #000)); }
-.sigbottle { --fill: 0; position: absolute; right: 8px; top: 2px; width: 92px; height: 138px; transform: rotate(9deg); }
+/* The signature bottle: one bottle on the Feeds screen, in the hero. A short, soft baby bottle (drawn after a MAM): empty
+   at midnight, the milk rises with each finished feed. Tilted, the milk sloshes and bubbles rise. The drawing itself is
+   chosen in the app from the bottle picked in Profile. */
+.sigbottle { --fill: 0; --range: 74px; position: absolute; right: 10px; top: 4px; width: 80px; height: 117px; transform: rotate(9deg); overflow: visible; }
 .sigbottle .glass { fill: rgba(255, 255, 255, .28); }
-.sigbottle .milk { transform: translateY(calc((1 - var(--fill)) * 82px)); transition: transform 1.4s cubic-bezier(.22, 1, .36, 1); }
-.sigbottle .wave { fill: #fff; animation: slosh 3.2s ease-in-out infinite alternate; }
-.sigbottle .bub { fill: var(--sec-soft); animation: bubble 2.6s ease-in infinite; }
+.sigbottle .rim { fill: none; stroke: rgba(255, 255, 255, .6); stroke-width: 1.6; }
+.sigbottle .milk { transform: translateY(calc((1 - var(--fill)) * var(--range))); transition: transform 1.4s cubic-bezier(.22, 1, .36, 1); }
+.sigbottle .wave { fill: #fffaf0; animation: slosh 3.2s ease-in-out infinite alternate; }
+.sigbottle .bub { fill: #fffaf0; animation: bubble 2.6s ease-in infinite; }
 .sigbottle .bub.b2 { animation-delay: 1.1s; }
 .sigbottle .bub.b3 { animation-delay: 1.9s; }
+.sigbottle .tick { fill: none; stroke: #b88f55; stroke-width: 2; stroke-linecap: round; opacity: .75; }
+.sigbottle .ridge { fill: none; stroke: #cdbf9c; stroke-width: 1.6; stroke-linecap: round; }
+.sigbottle .collar { fill: #f1e9d6; }
+.sigbottle .hood { fill: rgba(235, 246, 252, .4); }
+.sigbottle .nipple { fill: rgba(215, 235, 247, .6); }
+.sigbottle .foot { fill: #ece3cd; }
+.sigbottle .vent { fill: #f6f0e1; }
+.sigbottle .vent2 { fill: #b8ad92; }
 @keyframes slosh { from { transform: translateX(-14px); } to { transform: translateX(0); } }
-@keyframes bubble { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: .9; } 100% { transform: translateY(-34px); opacity: 0; } }
+@keyframes bubble { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: .9; } 100% { transform: translateY(-24px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .sigbottle .milk { transition: none; } .sigbottle .wave, .sigbottle .bub { animation: none; } }
 
 
@@ -493,3 +502,8 @@ textarea.field-input { padding: 12px 14px; }
 @media (prefers-color-scheme: dark) { .startbtn { box-shadow: none; } }
 @media (prefers-reduced-motion: reduce) { .hlayer, .startbtn, .startbtn .sb-t, #btn-log-feed { transition: none; } .hero-l .dots i, .startbtn.pending .sb-dot { animation: none; opacity: 1; } }
 #btn-log-feed { white-space: nowrap; padding: 0 12px; }
+
+/* Profile: the bottle wheel is a little shorter than the bottle-timer wheel and sits on a tinted card */
+.profile-card .wheel-picker { height: 130px; }
+.profile-card .wheel-track { padding: 45px 0; outline-offset: -3px; }
+.wheel-track { scrollbar-width: none; } .wheel-track::-webkit-scrollbar { display: none; }
