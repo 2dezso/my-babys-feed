@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=76';
+import { analyse } from './patterns.js?v=77';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -1752,21 +1752,18 @@ function isMonthInBounds(year, month) {
   return idx >= bounds.startYear * 12 + bounds.startMonth && idx <= bounds.endYear * 12 + bounds.endMonth;
 }
 
+// Every time Milestones is opened it starts on the month we are in. A baby older than a year (or a date before the
+// birth month) is kept inside the first-year range, so the calendar never opens on a month it can't show.
 function ensureCalendarInitialized() {
-  if (calendarInitialized) {
-    renderCalendar();
-    return;
-  }
   calendarInitialized = true;
-  if (profileDob) {
-    const [y, m] = profileDob.split('-').map(Number);
-    currentCalYear = y;
-    currentCalMonth = m - 1;
-  } else {
-    const now = new Date();
-    currentCalYear = now.getFullYear();
-    currentCalMonth = now.getMonth();
+  const now = new Date();
+  let idx = now.getFullYear() * 12 + now.getMonth();
+  const bounds = computeFirstYearBounds();
+  if (bounds) {
+    idx = Math.max(bounds.startYear * 12 + bounds.startMonth, Math.min(bounds.endYear * 12 + bounds.endMonth, idx));
   }
+  currentCalYear = Math.floor(idx / 12);
+  currentCalMonth = idx % 12;
   loadMonth(currentCalYear, currentCalMonth);
 }
 
@@ -2285,7 +2282,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=76').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=77').catch(() => {});
   });
 }
 
