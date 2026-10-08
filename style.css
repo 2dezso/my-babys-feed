@@ -453,3 +453,34 @@ textarea.field-input { padding: 12px 14px; }
 .bottle.timing .timer-ic { background: var(--sec); color: #fff; }
 .bottle.bottle-expired.timing .timer-ic { background: rgba(255, 255, 255, .25); }
 @media (prefers-reduced-motion: reduce) { .bottle .timer-ic svg, .bottle .minibottle .level { transition: none; } }
+
+/* Amount ruler, big version: the number sits inside the scroll area, so the whole block drags, and steps are wide apart */
+.ruler-wrap { height: 176px; }
+.ruler-wrap .big { position: absolute; left: 0; right: 0; top: 14px; padding-top: 0; pointer-events: none; z-index: 2; }
+.ruler .ticks { padding: 104px calc(50% - 12px) 0; }
+.ruler .tk { width: 24px; }
+.ruler .tk i { height: 20px; }
+.ruler .tk.m i { height: 32px; }
+.needle { top: 100px; height: 40px; }
+
+/* Start feed: the one coloured button on the screen. A play badge with a slow ring says "this starts something";
+   while a feed is running it turns dark, shows a tick and counts the minutes. */
+.acts { align-items: stretch; }
+.acts .btn { min-height: 64px; border-radius: 20px; }
+.startbtn { background: var(--sec); color: #fff; justify-content: flex-start; gap: 12px; padding: 0 18px 0 10px; text-align: left; box-shadow: 0 8px 20px color-mix(in srgb, var(--sec) 32%, transparent); }
+.startbtn .sb-ic { position: relative; width: 44px; height: 44px; border-radius: 50%; background: #fff; color: var(--sec); display: grid; place-items: center; flex: none; }
+.startbtn .sb-ic::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid #fff; opacity: 0; animation: ring 2.8s cubic-bezier(.22, 1, .36, 1) infinite; }
+.startbtn .sb-ic svg { width: 22px; height: 22px; }
+.startbtn .sb-ic .play { fill: currentColor; margin-left: 3px; }
+.startbtn .sb-ic .tick { fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; display: none; }
+.startbtn .sb-t { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.startbtn .sb-t b { font-size: 1.125rem; font-weight: 800; letter-spacing: -.01em; }
+.startbtn .sb-t small { font-size: .8125rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.startbtn.pending { background: var(--ink); color: var(--bg); box-shadow: none; }
+.startbtn.pending .sb-ic { background: var(--bg); color: var(--ink); }
+.startbtn.pending .sb-ic::after { border-color: var(--bg); }
+.startbtn.pending .play { display: none; }
+.startbtn.pending .tick { display: block; }
+@keyframes ring { 0% { transform: scale(1); opacity: .7; } 70%, 100% { transform: scale(1.55); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .startbtn .sb-ic::after { animation: none; } }
+.add-amount-btn { white-space: nowrap; }

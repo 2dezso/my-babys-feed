@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=69';
+import { analyse } from './patterns.js?v=70';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -15,7 +15,7 @@ const DEFAULT_ML = 90;
 const ML_MIN = 10;
 const ML_MAX = 300;
 const ML_STEP = 5;
-const RULER_TICK_PX = 14;
+const RULER_TICK_PX = 24;
 const WHEEL_ITEM_HEIGHT = 40;
 const INTERVAL_MIN = 1;
 const INTERVAL_MAX = 8;
@@ -86,6 +86,7 @@ const toast = document.getElementById('toast');
 
 const btnStartFeedNow = document.getElementById('btn-start-feed-now');
 const btnStartFeedLabel = document.getElementById('btn-start-feed-label');
+const btnStartFeedSub = document.getElementById('btn-start-feed-sub');
 const btnLogFeed = document.getElementById('btn-log-feed');
 const logModal = document.getElementById('log-modal');
 const logModalTitle = document.getElementById('log-modal-title');
@@ -718,6 +719,8 @@ function showRangeContaining(ts, segmentedEl, order, setRange) {
 function updateFeedActionButtons(isPending) {
   btnLogFeed.hidden = isPending;
   btnStartFeedLabel.textContent = isPending ? 'Complete feed' : 'Start feed';
+  btnStartFeedNow.classList.toggle('pending', isPending);
+  btnStartFeedSub.textContent = isPending ? `Feeding for ${durationString(Date.now() - latestFeeds[0].timestamp)}` : 'Add the amount after';
   btnStartFeedNow.parentElement.classList.toggle('one', isPending);
 }
 
@@ -2191,7 +2194,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=69').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=70').catch(() => {});
   });
 }
 
