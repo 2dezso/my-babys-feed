@@ -71,28 +71,9 @@ h1, h2, h3 { margin: 0; }
 .me.back .ico { width: 24px; height: 24px; }
 
 /* Home */
-.greet { margin: 0 4px 18px; font-size: 1.0625rem; font-weight: 500; color: var(--muted); line-height: 1.45; }
-.greet b { color: var(--ink); font-weight: 700; }
-.sum {
   display: block; width: 100%; text-align: left; background: var(--card); border-radius: 18px;
   padding: 14px 16px 16px; box-shadow: var(--shadow); margin-bottom: 12px; position: relative; overflow: hidden;
 }
-.sum:active { transform: scale(.985); }
-.sum-h { display: flex; align-items: center; gap: 8px; color: var(--sec-ink); font-weight: 700; font-size: .9375rem; }
-.sum-h .when { margin-left: auto; color: var(--muted); font-weight: 600; font-size: .8125rem; display: inline-flex; align-items: center; gap: 2px; }
-.sum-h .when .ico { width: 16px; height: 16px; }
-.sum-v { margin-top: 10px; font-size: 1.75rem; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; padding-right: 80px; }
-.sum-v.sm { font-size: 1.375rem; }
-.sum-v span { font-size: 1rem; font-weight: 600; color: var(--muted); letter-spacing: 0; margin-left: 2px; }
-.sum-s { font-size: .875rem; font-weight: 600; color: var(--muted); margin-top: 2px; padding-right: 80px; }
-.sum .ill { position: absolute; right: 10px; bottom: -14px; width: 80px; height: 80px; }
-.sec-label { font-size: 1.25rem; font-weight: 800; letter-spacing: -.01em; margin: 24px 4px 10px; }
-.group { background: var(--card); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
-.cell { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 16px; width: 100%; text-align: left; font-weight: 600; font-size: 1.0625rem; }
-.cell + .cell { border-top: 1px solid var(--line); }
-.cell .ico { color: var(--muted); }
-.cell .sp { flex: 1; }
-.cell .chev { color: #b4b4bc; width: 18px; height: 18px; }
 
 /* Section hero card */
 .hero {
@@ -507,3 +488,23 @@ textarea.field-input { padding: 12px 14px; }
 .profile-card .wheel-picker { height: 130px; }
 .profile-card .wheel-track { padding: 45px 0; outline-offset: -3px; }
 .wheel-track { scrollbar-width: none; } .wheel-track::-webkit-scrollbar { display: none; }
+
+/* Home (Today): a soft pink wash, a friendly title and four round colour discs, each with one line icon. Share, Profile
+   and feedback are a quiet line of text at the bottom. */
+#home-screen { --h-green: #4c9a4e; --h-brown: #b9834f; --h-lav: #9c86cf; --h-peach: #f0985f; --h-ink: #4a322c; --h-muted: #a9847a;
+  background: linear-gradient(180deg, #fdf1ec, #f8ded3); color: var(--h-ink); font-family: Nunito, Figtree, -apple-system, system-ui, sans-serif; }
+@media (prefers-color-scheme: dark) { #home-screen { --h-green: #67aa5e; --h-brown: #b98352; --h-lav: #9c86cf; --h-peach: #d9a878; --h-ink: #f3e2dc; --h-muted: #c9a599;
+  background: linear-gradient(180deg, #241715, #2c1917); } }
+.homea { display: flex; flex-direction: column; gap: 22px; min-height: 100vh; padding-top: 28px; }
+.home-head { text-align: center; }
+.home-head small { display: block; font-size: .875rem; font-weight: 700; color: var(--h-muted); }
+.home-head h1 { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 12px; justify-items: center; padding-top: 14px; }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 10px; font-weight: 800; font-size: 1rem; color: var(--h-ink); }
+.tile:active .disc { transform: scale(.96); }
+.disc { width: 112px; height: 112px; border-radius: 50%; display: grid; place-items: center; color: #fff; transition: transform .15s ease; }
+.disc .ico { width: 40px; height: 40px; stroke-width: 1.8; }
+.c-feed { background: var(--h-green); } .c-nap { background: var(--h-brown); } .c-mile { background: var(--h-lav); } .c-trend { background: var(--h-peach); }
+.home-foot { margin-top: auto; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 22px; font-size: .9375rem; font-weight: 700; color: var(--h-muted); }
+.home-foot button { min-height: 44px; }
+@media (prefers-reduced-motion: reduce) { .disc { transition: none; } }

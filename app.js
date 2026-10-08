@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=77';
+import { analyse } from './patterns.js?v=78';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -43,15 +43,6 @@ const todayBottle = document.getElementById('today-bottle');
 const bottleBrandTrack = document.getElementById('bottle-brand-track');
 const tabbar = document.getElementById('tabbar');
 const homeDateEl = document.getElementById('home-date');
-const homeGreetEl = document.getElementById('home-greet');
-const homeFeedWhen = document.getElementById('home-feed-when');
-const homeFeedV = document.getElementById('home-feed-v');
-const homeFeedS = document.getElementById('home-feed-s');
-const homePooWhen = document.getElementById('home-poo-when');
-const homePooV = document.getElementById('home-poo-v');
-const homePooS = document.getElementById('home-poo-s');
-const homeTrendV = document.getElementById('home-trend-v');
-const homeTrendS = document.getElementById('home-trend-s');
 const trendsSubEl = document.getElementById('trends-sub');
 const sinceLastFeedEl = document.getElementById('since-last-feed');
 const lastFeedDetailEl = document.getElementById('last-feed-detail');
@@ -130,7 +121,6 @@ const feedbackSend = document.getElementById('feedback-send');
 
 const homeTitleEl = document.getElementById('home-title');
 const profileTileLabel = document.getElementById('profile-tile-label');
-const profileTileIcon = document.getElementById('profile-tile-icon');
 const profileIconBig = document.getElementById('profile-icon-big');
 const avatarToneChips = document.getElementById('avatar-tone-chips');
 const profileNameInput = document.getElementById('profile-name');
@@ -350,7 +340,6 @@ function listenToFeeds(code) {
     renderTodayTotal();
     renderHistory();
     renderTrends();
-    renderHome();
   }, (err) => {
     console.error(err);
     showToast('Sync error — check connection');
@@ -370,10 +359,10 @@ function listenToProfile(code) {
     selectedBottleBrand = data.bottleBrand || 'mam';
     applyBottleBrand();
     if (!profileScreen.hidden) scrollBottleBrandWheelTo(selectedBottleBrand);
-    profileTileLabel.textContent = firstName ? `${firstName}'s profile` : 'Profile';
+    profileTileLabel.textContent = firstName ? `${firstName}’s profile` : 'Profile';
     profileFirstName = firstName;
     const babyTitleName = firstName || 'Charlie';
-    homeTitleEl.textContent = babyTitleName;
+    homeTitleEl.textContent = `${babyTitleName}’${babyTitleName.endsWith('s') ? '' : 's'} First Year`;
     document.title = `${babyTitleName}'s First Year`;
     const initial = babyTitleName.charAt(0).toUpperCase();
     document.querySelectorAll('.me:not(.back)').forEach(el => { el.textContent = initial; });
@@ -384,7 +373,6 @@ function listenToProfile(code) {
     renderProfileAge();
     renderProfilePreview();
     renderTrends();
-    renderHome();
     if (calendarInitialized) renderCalendar();
   }, (err) => {
     console.error(err);
@@ -393,7 +381,6 @@ function listenToProfile(code) {
 
 function updateAvatarIcons() {
   const icon = `👶${selectedAvatarTone}`;
-  profileTileIcon.textContent = icon;
   profileIconBig.textContent = icon;
 }
 
@@ -488,7 +475,6 @@ function listenToPoos(code) {
     renderSinceLastPoo();
     renderPooStats();
     renderPooHistory();
-    renderHome();
   }, (err) => {
     console.error(err);
     showToast('Sync error — check connection');
@@ -812,45 +798,6 @@ function renderHeaderDate() {
   homeDateEl.textContent = label;
 }
 
-// "Today" screen: one summary per section, each leading with the most useful number.
-function renderHome() {
-  const name = profileFirstName || 'Charlie';
-  const today = startOfToday();
-  const todayFeeds = latestFeeds.filter(f => f.timestamp >= today && f.amountMl != null);
-  const todayPoos = latestPoos.filter(p => p.timestamp >= today);
-  const total = todayFeeds.reduce((sum, f) => sum + f.amountMl, 0);
-
-  const parts = [];
-  if (profileDob) parts.push(`${name} is ${ageString(profileDob).replace(/ old$/, '')} old.`);
-  parts.push(`<b>${todayFeeds.length} ${todayFeeds.length === 1 ? 'feed' : 'feeds'}</b> and <b>${todayPoos.length} ${todayPoos.length === 1 ? 'nappy' : 'nappies'}</b> so far today.`);
-  homeGreetEl.innerHTML = parts.join(' ');
-
-  const last = latestFeeds[0];
-  if (!last) {
-    homeFeedWhen.textContent = '';
-    homeFeedV.textContent = 'No feeds yet';
-    homeFeedS.textContent = 'Tap to log the first one';
-  } else if (last.amountMl == null) {
-    homeFeedWhen.textContent = formatClock(last.timestamp);
-    homeFeedV.innerHTML = `${durationString(Date.now() - last.timestamp)} <span>feeding now</span>`;
-    homeFeedS.textContent = 'Amount still to add';
-  } else {
-    const nextTs = last.timestamp + (last.intervalHours || 3) * 3600000;
-    homeFeedWhen.textContent = formatClock(last.timestamp);
-    homeFeedV.innerHTML = `${durationString(Date.now() - last.timestamp)} <span>since last</span>`;
-    homeFeedS.textContent = `${Date.now() > nextTs ? 'Expected' : 'Next one around'} ${formatClock(nextTs)} · ${total}ml today`;
-  }
-
-  const lastPoo = latestPoos[0];
-  homePooWhen.textContent = lastPoo ? formatClock(lastPoo.timestamp) : '';
-  homePooV.innerHTML = `${todayPoos.length} <span>today</span>`;
-  homePooS.textContent = lastPoo ? `Last one ${durationString(Date.now() - lastPoo.timestamp)} ago` : 'None logged yet';
-
-  const r = analyse(latestFeeds);
-  const summary = trendsSummary(r);
-  homeTrendV.textContent = summary.headline;
-  homeTrendS.textContent = summary.sub;
-}
 
 // A made bottle keeps for 2 hours. Once the baby starts drinking from it, it is good for 1 hour from that moment.
 const BOTTLE_GOOD_FOR_MS = 2 * 60 * 60 * 1000;
@@ -1662,16 +1609,6 @@ function trendItems(r) {
   return [overnightItem(r), timesItem(r), volumeItem(r), gapsItem(r)].filter(Boolean);
 }
 
-function trendsSummary(r) {
-  const items = trendItems(r);
-  if (!items.length) return { headline: 'Patterns', sub: 'Log a few days of feeds to see them' };
-  const est = items.filter((i) => i.tier === 'est').length;
-  const maybe = items.length - est;
-  const parts = [];
-  if (est) parts.push(`${est} settled`);
-  if (maybe) parts.push(`${maybe} that might be starting`);
-  return { headline: (items.find((i) => i.tier === 'est') || items[0]).short, sub: parts.join(', ') };
-}
 
 // The hero answers one question: how long was the longest stretch last night? The two facts under it give the
 // times and the fortnight's best, and in the bars the longest night is the solid one with its length written on it.
@@ -2263,11 +2200,10 @@ joinForm.addEventListener('submit', (e) => {
 });
 
 renderHeaderDate();
-setInterval(() => { renderHeaderDate(); renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderPooStats(); renderProfileAge(); renderBottleStatus(); renderHome(); }, 15000);
+setInterval(() => { renderHeaderDate(); renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderPooStats(); renderProfileAge(); renderBottleStatus(); }, 15000);
 
 renderTrends();
 applyBottleBrand();
-renderHome();
 renderTodayTotal();
 renderPooStats();
 renderSinceLastPoo();
@@ -2282,7 +2218,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=77').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=78').catch(() => {});
   });
 }
 

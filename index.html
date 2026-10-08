@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f2f2f7">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=77">
+<link rel="manifest" href="manifest.json?v=78">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=77">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=78">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -174,44 +174,22 @@
 
 <!-- TODAY (home) -->
 <div id="home-screen" class="screen view s-feed" hidden>
-  <div class="app">
-    <div class="lt">
-      <div><small id="home-date"></small><h1 id="home-title">Charlie</h1></div>
-      <button class="me" data-nav="profile" aria-label="Profile">C</button>
+  <div class="app homea">
+    <div class="home-head">
+      <small id="home-date"></small>
+      <h1 id="home-title">Charlie’s First Year</h1>
     </div>
-    <p id="home-greet" class="greet"></p>
-
-    <button class="sum s-feed" data-nav="feed">
-      <div class="sum-h"><svg class="ico" aria-hidden="true"><use href="#i-bottle"/></svg>Feeds<span class="when"><span id="home-feed-when"></span><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
-      <div class="sum-v" id="home-feed-v">—</div>
-      <div class="sum-s" id="home-feed-s"></div>
-      <svg class="ill" style="color:var(--feed)" aria-hidden="true"><use href="#ill-bottle"/></svg>
-    </button>
-    <button class="sum s-nappy" data-nav="poo">
-      <div class="sum-h"><svg class="ico" aria-hidden="true"><use href="#i-poo"/></svg>Nappies<span class="when"><span id="home-poo-when"></span><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
-      <div class="sum-v" id="home-poo-v">—</div>
-      <div class="sum-s" id="home-poo-s"></div>
-      <svg class="ill" style="color:var(--nappy)" aria-hidden="true"><use href="#ill-nappy"/></svg>
-    </button>
-    <button class="sum s-mile" data-nav="milestones">
-      <div class="sum-h"><svg class="ico" aria-hidden="true"><use href="#i-cal"/></svg>Milestones<span class="when"><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
-      <div class="sum-v sm">Photos and notes</div>
-      <div class="sum-s">Keep the first year, day by day</div>
-      <svg class="ill" style="color:var(--mile)" aria-hidden="true"><use href="#ill-balloon"/></svg>
-    </button>
-    <button class="sum s-trend" data-nav="trends">
-      <div class="sum-h"><svg class="ico" aria-hidden="true"><use href="#i-chart"/></svg>Trends<span class="when"><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
-      <div class="sum-v sm" id="home-trend-v">Patterns</div>
-      <div class="sum-s" id="home-trend-s"></div>
-      <svg class="ill" style="color:var(--trend)" aria-hidden="true"><use href="#ill-moon"/></svg>
-    </button>
-
-    <div class="sec-label">Household</div>
-    <div class="group">
-      <button id="btn-share" class="cell"><svg class="ico" aria-hidden="true"><use href="#i-share"/></svg><span class="sp">Share household code</span><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
-      <button id="btn-install-app" class="cell" hidden><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg><span class="sp">Add to Home Screen</span><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
-      <button id="feedback-fab" class="cell" hidden><svg class="ico" aria-hidden="true"><use href="#i-chat"/></svg><span class="sp">Report a problem or share an idea</span><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
-      <button class="cell" data-nav="profile"><span id="profile-tile-icon" aria-hidden="true">👶</span><span id="profile-tile-label" class="sp">Profile</span><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+    <nav class="tiles" aria-label="Sections">
+      <button class="tile" data-nav="feed"><span class="disc c-feed"><svg class="ico" aria-hidden="true"><use href="#i-bottle"/></svg></span>Feeds</button>
+      <button class="tile" data-nav="poo"><span class="disc c-nap"><svg class="ico" aria-hidden="true"><use href="#i-poo"/></svg></span>Nappies</button>
+      <button class="tile" data-nav="milestones"><span class="disc c-mile"><svg class="ico" aria-hidden="true"><use href="#i-cal"/></svg></span>Milestones</button>
+      <button class="tile" data-nav="trends"><span class="disc c-trend"><svg class="ico" aria-hidden="true"><use href="#i-chart"/></svg></span>Trends</button>
+    </nav>
+    <div class="home-foot">
+      <button id="btn-share">Share code</button>
+      <button id="btn-install-app" hidden>Add to Home Screen</button>
+      <button data-nav="profile"><span id="profile-tile-label">Profile</span></button>
+      <button id="feedback-fab" hidden>Send feedback</button>
     </div>
   </div>
 </div>
@@ -573,6 +551,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=77"></script>
+<script type="module" src="app.js?v=78"></script>
 </body>
 </html>
