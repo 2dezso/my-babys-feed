@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=87">
+<link rel="manifest" href="manifest.json?v=88">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=87">
+<link rel="stylesheet" href="style.css?v=88">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -31,6 +31,7 @@
   <symbol id="i-user" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20a7.5 7.5 0 0 1 15 0"/></symbol>
   <symbol id="i-phone" viewBox="0 0 24 24"><path d="M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2"/></symbol>
   <symbol id="i-timer" viewBox="0 0 24 24"><path d="M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4l2.5 2M9.5 2.5h5M12 2.5V5M18.5 6.5L20 5"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"/></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-5 4v-4H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></symbol>
 
   <symbol id="ill-bottle" viewBox="0 0 120 120">
@@ -119,7 +120,7 @@
     </section>
 
     <div class="acts">
-      <button id="btn-start-feed-now" class="btn startbtn"><span class="sb-t sb-idle"><b>Start feed</b><small>Add the amount after</small></span><span class="sb-t sb-busy"><b id="btn-start-feed-label">Complete feed</b><small id="btn-start-feed-sub"></small></span><span class="sb-dot" aria-hidden="true"></span></button>
+      <button id="btn-start-feed-now" class="btn startbtn"><svg class="ico sb-ico" aria-hidden="true"><use href="#i-heart"/></svg><span class="sb-t sb-idle"><b>Start feed</b><small>Add the amount after</small></span><span class="sb-t sb-busy"><b id="btn-start-feed-label">Complete feed</b><small id="btn-start-feed-sub"></small></span><span class="sb-dot" aria-hidden="true"></span></button>
       <button id="btn-log-feed" class="btn btn-s"><svg class="ico" aria-hidden="true"><use href="#i-pencil"/></svg>Log past</button>
     </div>
 
@@ -546,6 +547,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=87"></script>
+<script type="module" src="app.js?v=88"></script>
 </body>
 </html>

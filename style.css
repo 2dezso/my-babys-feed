@@ -570,3 +570,17 @@ input[type="time"].fsel::-webkit-date-and-time-value, input[type="date"].fsel::-
 .when-fields { display: flex; gap: 8px; }
 .when-fields .fsel { flex: 1; min-width: 0; min-height: 52px; font-size: 1.25rem; padding: 0 10px; }
 .nextrow .nl { white-space: nowrap; }
+
+/* Start feed carries a small heart, the way Log past carries a pencil */
+.startbtn { gap: 12px; }
+.startbtn .sb-ico { width: 26px; height: 26px; }
+.startbtn .sb-busy { left: 58px; }
+.acts { grid-template-columns: 1fr 120px; }
+.startbtn { padding: 0 16px; gap: 10px; }
+.startbtn .sb-busy { left: 52px; }
+.startbtn .sb-t small { white-space: nowrap; }
+/* While a feed is running the heart itself beats gently; the separate dot is no longer needed. */
+.startbtn .sb-dot { display: none; }
+.startbtn.pending .sb-ico { animation: heartbeat 1.8s ease-in-out infinite; }
+@keyframes heartbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.14); } }
+@media (prefers-reduced-motion: reduce) { .startbtn.pending .sb-ico { animation: none; } }
