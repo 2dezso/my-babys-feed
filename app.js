@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=95';
+import { analyse } from './patterns.js?v=96';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -174,7 +174,7 @@ let selectedIntervalHours = 3;
 let intervalOverridden = false;
 let latestFeeds = [];
 let latestPoos = [];
-let currentRange = '1d';
+let currentRange = '7d';
 let chartGroup = 'week';
 let chartSelectedStart = null;
 let currentPooRange = '1d';
@@ -2306,7 +2306,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=95').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=96').catch(() => {});
   });
 }
 
