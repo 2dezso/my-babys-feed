@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=85">
+<link rel="manifest" href="manifest.json?v=86">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=85">
+<link rel="stylesheet" href="style.css?v=86">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -435,16 +435,17 @@
     <p id="sheet-hint" class="hint"></p>
 
     <div class="frow">
-      <label class="flabel" id="feed-when-label" for="feed-time">When</label>
-      <div class="when-line">
-        <div class="day-chips" id="feed-day-chips">
-          <button type="button" class="chip" data-offset="0">Today</button>
-          <button type="button" class="chip" data-offset="1">Yesterday</button>
-          <button type="button" class="chip" data-offset="other">Other</button>
+      <div class="when-head">
+        <label class="flabel" id="feed-when-label" for="feed-time">When</label>
+        <div class="seg" id="feed-day-chips" role="group" aria-label="Which day">
+          <button type="button" class="segment" data-offset="0">Today</button>
+          <button type="button" class="segment" data-offset="other">Other day</button>
         </div>
+      </div>
+      <div class="when-fields">
+        <input id="feed-date" type="date" class="fsel" aria-label="Date" hidden>
         <input id="feed-time" type="time" class="fsel" aria-label="Time">
       </div>
-      <input id="feed-date" type="date" class="fsel" aria-label="Date" hidden>
     </div>
 
     <div class="nextrow">
@@ -545,6 +546,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=85"></script>
+<script type="module" src="app.js?v=86"></script>
 </body>
 </html>

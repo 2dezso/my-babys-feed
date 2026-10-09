@@ -563,3 +563,10 @@ input[type="time"].fsel::-webkit-date-and-time-value, input[type="date"].fsel::-
 .when-line .chip { padding: 0 12px; }
 .modal-card .hint { margin: -6px 0 0; text-align: center; min-height: 1.2em; }
 @media (prefers-reduced-motion: reduce) { .amt-item { transition: none; } }
+
+/* Log a feed, When: the label and a small Today / Other day switch on one line, the time under it. Picking
+   "Other day" puts the date beside the time. */
+.when-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.when-fields { display: flex; gap: 8px; }
+.when-fields .fsel { flex: 1; min-width: 0; min-height: 52px; font-size: 1.25rem; padding: 0 10px; }
+.nextrow .nl { white-space: nowrap; }

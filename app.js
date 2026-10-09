@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=85';
+import { analyse } from './patterns.js?v=86';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -1945,19 +1945,20 @@ function dateStringForOffset(daysAgo) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// Today and Yesterday are one tap. "Other day" shows the phone's date picker.
+// Most feeds are logged for today, so the day is a two-way switch. "Other day" shows the phone's date picker
+// beside the time.
 function setFeedDay(dateStr, forceOther = false) {
   feedDateInput.value = dateStr;
-  const which = forceOther ? 'other' : dateStr === dateStringForOffset(0) ? '0' : dateStr === dateStringForOffset(1) ? '1' : 'other';
-  feedDayChips.querySelectorAll('.chip').forEach(c => c.classList.toggle('selected', c.dataset.offset === which));
+  const which = forceOther || dateStr !== dateStringForOffset(0) ? 'other' : '0';
+  feedDayChips.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.offset === which));
   feedDateInput.hidden = which !== 'other';
 }
 
 feedDayChips.addEventListener('click', (e) => {
-  const chip = e.target.closest('.chip');
-  if (!chip) return;
-  if (chip.dataset.offset === 'other') setFeedDay(feedDateInput.value || dateStringForOffset(0), true);
-  else setFeedDay(dateStringForOffset(Number(chip.dataset.offset)));
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  if (btn.dataset.offset === 'other') setFeedDay(feedDateInput.value || dateStringForOffset(0), true);
+  else setFeedDay(dateStringForOffset(0));
   drawSheet();
 });
 
@@ -2189,7 +2190,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=85').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=86').catch(() => {});
   });
 }
 
