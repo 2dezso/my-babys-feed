@@ -628,3 +628,8 @@ html.on-home #home-screen { min-height: 0; display: flex; flex-direction: column
 html.on-home #home-screen[hidden] { display: none; }
 html.on-home .homea { flex: 1 1 auto; width: 100%; height: auto; min-height: 0; }
 html.on-home .home-foot { flex: none; }
+
+/* Home circles use solid white shapes rather than line icons. */
+.disc .ico.solid { fill: currentColor; stroke: none; }
+.tiles-top .disc .ico.solid { width: 46%; height: 46%; }
+.tiles-row .disc .ico.solid { width: 50%; height: 50%; }
