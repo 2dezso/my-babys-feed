@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=99';
+import { analyse } from './patterns.js?v=100';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -177,7 +177,7 @@ let latestPoos = [];
 let currentRange = '7d';
 let chartGroup = 'week';
 let chartSelectedStart = null;
-let currentPooRange = '1d';
+let currentPooRange = '7d';
 let selectedAvatarTone = '';
 let selectedGender = '';
 let profileOnboarding = false;
@@ -2306,7 +2306,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=99').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=100').catch(() => {});
   });
 }
 

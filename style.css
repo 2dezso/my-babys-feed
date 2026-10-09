@@ -634,3 +634,17 @@ html.on-home .home-foot { flex: none; }
 .tiles-top .disc .ico.solid { width: 46%; height: 46%; }
 .tiles-row .disc .ico.solid { width: 50%; height: 50%; }
 .tab .ico.solid { fill: currentColor; stroke: none; width: 26px; height: 26px; }
+
+/* Poos page follows the Feeds page: hero with a picture in the corner, a facts strip, then one big coloured button. */
+.happypoo { position: absolute; right: 12px; top: 8px; width: 92px; height: 92px; transform: rotate(8deg); animation: poobob 3.6s ease-in-out infinite alternate; }
+.happypoo .hp-body { fill: #fff3df; }
+.happypoo .hp-crease { fill: none; stroke: #d9a86c; stroke-width: .55; stroke-linecap: round; }
+.happypoo .hp-face { fill: #5e3408; }
+.happypoo .hp-glint { fill: #fff; }
+.happypoo .hp-cheek { fill: #ff9fb1; opacity: .7; }
+.happypoo .hp-tongue { fill: #ff9fb1; }
+@keyframes poobob { from { transform: rotate(8deg); } to { transform: rotate(4deg) translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { .happypoo { animation: none; } }
+.poo-facts { gap: 14px; }
+.poo-facts .t + .t { border-left: 1px solid rgba(255, 255, 255, .28); padding-left: 14px; }
+.startbtn .sb-ico.solid { fill: currentColor; stroke: none; }
