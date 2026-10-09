@@ -524,3 +524,24 @@ textarea.field-input { padding: 12px 14px; }
 html.on-home, html.on-home body { height: 100dvh; min-height: 0; overflow: hidden; overscroll-behavior: none; }
 html.on-home #home-screen { position: fixed; inset: 0; height: auto; }
 html.on-home .homea { padding-top: calc(env(safe-area-inset-top, 0px) + max(20px, 3.5vh)); }
+
+/* Log a feed: three plain fields that open the phone's own pickers */
+.frow { display: flex; flex-direction: column; gap: 8px; }
+.flabel { font-size: .8125rem; font-weight: 700; color: var(--muted); }
+.fsel {
+  width: 100%; min-height: 56px; border-radius: 16px; border: 2px solid var(--line); background-color: var(--card); color: var(--ink);
+  font: inherit; font-size: 1.25rem; font-weight: 800; text-align: center; text-align-last: center; padding: 0 16px;
+  font-variant-numeric: tabular-nums; -webkit-appearance: none; appearance: none;
+}
+.fsel:focus { border-color: var(--feed); outline: none; }
+.fsel-big { min-height: 76px; font-size: 2.25rem; letter-spacing: -.02em; }
+select.fsel {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a655d' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 16px center; background-size: 20px;
+}
+input[type="time"].fsel::-webkit-date-and-time-value, input[type="date"].fsel::-webkit-date-and-time-value { text-align: center; }
+.frow .day-chips { margin-bottom: 0; }
+.frow .hint { margin: 0; text-align: left; }
+.gap-grid { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; }
+.gap-grid .at { font-size: .9375rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.gap-grid .at b { color: var(--ink); font-weight: 800; font-variant-numeric: tabular-nums; }

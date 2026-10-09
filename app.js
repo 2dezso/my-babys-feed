@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=83';
+import { analyse } from './patterns.js?v=84';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -15,7 +15,6 @@ const DEFAULT_ML = 90;
 const ML_MIN = 10;
 const ML_MAX = 300;
 const ML_STEP = 5;
-const RULER_TICK_PX = 24;
 const WHEEL_ITEM_HEIGHT = 40;
 const INTERVAL_MIN = 1;
 const INTERVAL_MAX = 8;
@@ -81,20 +80,11 @@ const logModalTitle = document.getElementById('log-modal-title');
 const feedDateInput = document.getElementById('feed-date');
 const feedDayChips = document.getElementById('feed-day-chips');
 const feedTimeInput = document.getElementById('feed-time');
-const sheetMlEl = document.getElementById('sheet-ml');
-const mlRuler = document.getElementById('ml-ruler');
-const mlTicks = document.getElementById('ml-ticks');
 const sheetHint = document.getElementById('sheet-hint');
-const sheetWhen = document.getElementById('sheet-when');
-const sheetEarlier = document.getElementById('sheet-earlier');
-const sheetFixed = document.getElementById('sheet-fixed');
-const sheetFixedK = document.getElementById('sheet-fixed-k');
-const sheetFixedV = document.getElementById('sheet-fixed-v');
-const sheetFixedChange = document.getElementById('sheet-fixed-change');
-const sheetGapEl = document.getElementById('sheet-gap');
+const feedAmountSel = document.getElementById('feed-amount');
+const feedGapSel = document.getElementById('feed-gap');
+const feedWhenLabel = document.getElementById('feed-when-label');
 const sheetAtEl = document.getElementById('sheet-at');
-const gapLess = document.getElementById('gap-less');
-const gapMore = document.getElementById('gap-more');
 const sheetDel = document.getElementById('sheet-del');
 const logCancel = document.getElementById('log-cancel');
 const logConfirm = document.getElementById('log-confirm');
@@ -1883,66 +1873,45 @@ milestoneDelete.addEventListener('click', async () => {
 });
 
 // --- Log a feed sheet ---
-// One sheet does three jobs: log a past feed ('log'), add the amount to a feed that was started ('complete'),
-// and change a saved feed ('edit'). Only 'log' asks when it was; the other two keep the feed's own time
-// unless "Change" is tapped. The next-feed time is never typed: it is the start time plus the gap.
+// One sheet does three jobs: log a past feed, add the amount to a feed that was started, and change a saved feed.
+// It is three plain fields that use the phone's own pickers: how much, when, and how long until the next feed.
+// A new past feed starts with the time empty, so it is always typed in and never guessed.
 
-let sheetMode = 'log';
-let sheetAgo = null;          // minutes ago for a new feed; -1 means a time typed in; null means not chosen yet
-let sheetTimeChanged = false; // complete/edit only: the saved time was replaced by typed values
-let sheetBaseTs = null;       // complete/edit only: the feed's own time
+let sheetMode = 'log'; // 'log' | 'complete' | 'edit'
 
 function formatIntervalLabel(hours) {
   const whole = Math.floor(hours);
   return hours % 1 === 0 ? `${whole}h` : `${whole}h 30m`;
 }
 
-(function buildRuler() {
-  let html = '';
-  for (let v = ML_MIN; v <= ML_MAX; v += ML_STEP) {
-    const major = v % 20 === 0;
-    html += `<div class="tk${major ? ' m' : ''}"><i></i>${major ? `<span>${v}</span>` : ''}</div>`;
-  }
-  mlTicks.innerHTML = html;
-})();
-
-function rulerValue() {
-  const steps = Math.round(mlRuler.scrollLeft / RULER_TICK_PX);
-  const max = (ML_MAX - ML_MIN) / ML_STEP;
-  return ML_MIN + Math.max(0, Math.min(max, steps)) * ML_STEP;
-}
-
-function setRulerValue(v) {
-  mlRuler.scrollLeft = ((v - ML_MIN) / ML_STEP) * RULER_TICK_PX;
-}
+for (let v = ML_MIN; v <= ML_MAX; v += ML_STEP) feedAmountSel.add(new Option(`${v} ml`, String(v)));
+for (let h = INTERVAL_MIN; h <= INTERVAL_MAX; h += INTERVAL_STEP) feedGapSel.add(new Option(formatIntervalLabel(h), String(h)));
 
 function lastCompletedAmount(excludeId) {
   const f = latestFeeds.find(x => x.amountMl != null && x.id !== excludeId);
   return f ? f.amountMl : null;
 }
 
-function onAmountChanged(value) {
-  selectedMl = value;
-  sheetMlEl.textContent = String(value);
-  mlRuler.setAttribute('aria-valuenow', String(value));
-  const lastAmt = lastCompletedAmount(editingFeedId);
-  if (sheetMode === 'edit' || lastAmt == null) sheetHint.textContent = '';
-  else sheetHint.textContent = value === lastAmt ? 'Same as the last feed' : `Last feed was ${lastAmt}ml`;
-  sheetHint.hidden = !sheetHint.textContent;
-  if (!intervalOverridden) selectedIntervalHours = computeAutoIntervalHours(value);
-  drawSheet();
+function dateStringForOffset(daysAgo) {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-mlRuler.addEventListener('scroll', () => {
-  const v = rulerValue();
-  if (v !== selectedMl) onAmountChanged(v);
-});
+// Today and Yesterday are one tap. "Other day" shows the phone's date picker.
+function setFeedDay(dateStr, forceOther = false) {
+  feedDateInput.value = dateStr;
+  const which = forceOther ? 'other' : dateStr === dateStringForOffset(0) ? '0' : dateStr === dateStringForOffset(1) ? '1' : 'other';
+  feedDayChips.querySelectorAll('.chip').forEach(c => c.classList.toggle('selected', c.dataset.offset === which));
+  feedDateInput.hidden = which !== 'other';
+}
 
-mlRuler.addEventListener('keydown', (e) => {
-  const dir = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -1 : 0;
-  if (!dir) return;
-  e.preventDefault();
-  setRulerValue(Math.max(ML_MIN, Math.min(ML_MAX, selectedMl + dir * ML_STEP)));
+feedDayChips.addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  if (chip.dataset.offset === 'other') setFeedDay(feedDateInput.value || dateStringForOffset(0), true);
+  else setFeedDay(dateStringForOffset(Number(chip.dataset.offset)));
+  drawSheet();
 });
 
 function pickedTimeTs() {
@@ -1950,105 +1919,68 @@ function pickedTimeTs() {
   return combineDateTimeToTimestamp(feedDateInput.value, feedTimeInput.value);
 }
 
-// The start time the sheet would save right now, or null when none has been chosen yet.
-function sheetStartTs() {
-  if (sheetMode === 'log') {
-    if (sheetAgo > 0) return Date.now() - sheetAgo * 60000;
-    if (sheetAgo === -1) return pickedTimeTs();
-    return null;
-  }
-  return sheetTimeChanged ? pickedTimeTs() : sheetBaseTs;
-}
-
 function drawSheet() {
-  const gap = selectedIntervalHours;
-  sheetGapEl.textContent = formatIntervalLabel(gap);
-  gapLess.disabled = gap <= INTERVAL_MIN;
-  gapMore.disabled = gap >= INTERVAL_MAX;
-
-  const ts = sheetStartTs();
-  sheetAtEl.textContent = ts == null ? '–:–' : formatClock(ts + gap * 3600000);
-
-  if (sheetMode === 'log') {
-    sheetWhen.querySelectorAll('button').forEach(b => b.classList.toggle('on', Number(b.dataset.ago) === sheetAgo));
-    sheetEarlier.hidden = sheetAgo !== -1;
-    logConfirm.textContent = ts == null ? 'Choose when it was' : 'Log feed';
-  } else {
-    sheetFixed.hidden = sheetTimeChanged;
-    sheetEarlier.hidden = !sheetTimeChanged;
-    if (!sheetTimeChanged && sheetBaseTs != null) {
-      sheetFixedK.textContent = sheetMode === 'complete' ? 'Started' : 'When';
-      sheetFixedV.textContent = sheetMode === 'complete'
-        ? `${formatClock(sheetBaseTs)}, ${durationString(Date.now() - sheetBaseTs)} ago`
-        : `${dayLabelForKey(dayKeyForTimestamp(sheetBaseTs))}, ${formatClock(sheetBaseTs)}`;
-    }
-    logConfirm.textContent = sheetMode === 'complete' ? 'Save amount' : 'Save';
-  }
+  const ts = pickedTimeTs();
+  sheetAtEl.textContent = ts == null ? '–:–' : formatClock(ts + selectedIntervalHours * 3600000);
   logConfirm.disabled = ts == null;
+  if (sheetMode === 'log') logConfirm.textContent = ts == null ? 'Choose the time' : 'Log feed';
+  else logConfirm.textContent = sheetMode === 'complete' ? 'Save amount' : 'Save';
 }
 
-sheetWhen.addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-ago]');
-  if (!btn) return;
-  sheetAgo = Number(btn.dataset.ago);
-  if (sheetAgo === -1) {
-    feedDateInput.value = todayDateString();
-    feedTimeInput.value = '';
-    syncDayChips(feedDateInput, feedDayChips);
+function onAmountChanged(value) {
+  selectedMl = value;
+  const lastAmt = lastCompletedAmount(editingFeedId);
+  if (sheetMode === 'edit' || lastAmt == null) sheetHint.textContent = '';
+  else sheetHint.textContent = value === lastAmt ? 'Same as the last feed' : `Last feed was ${lastAmt}ml`;
+  sheetHint.hidden = !sheetHint.textContent;
+  // The gap follows the amount until it is changed by hand.
+  if (!intervalOverridden) {
+    selectedIntervalHours = computeAutoIntervalHours(value);
+    feedGapSel.value = String(selectedIntervalHours);
   }
   drawSheet();
-});
+}
 
-sheetFixedChange.addEventListener('click', () => {
-  const d = new Date(sheetBaseTs);
-  feedDateInput.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  feedTimeInput.value = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  syncDayChips(feedDateInput, feedDayChips);
-  sheetTimeChanged = true;
-  drawSheet();
-});
-
-function nudgeGap(delta) {
-  selectedIntervalHours = Math.max(INTERVAL_MIN, Math.min(INTERVAL_MAX, selectedIntervalHours + delta));
+feedAmountSel.addEventListener('change', () => onAmountChanged(Number(feedAmountSel.value)));
+feedGapSel.addEventListener('change', () => {
+  selectedIntervalHours = Number(feedGapSel.value);
   intervalOverridden = true;
   drawSheet();
-}
-gapLess.addEventListener('click', () => nudgeGap(-INTERVAL_STEP));
-gapMore.addEventListener('click', () => nudgeGap(INTERVAL_STEP));
+});
+['input', 'change'].forEach(evt => {
+  feedDateInput.addEventListener(evt, drawSheet);
+  feedTimeInput.addEventListener(evt, drawSheet);
+});
 
 function openLogModal(feed) {
   editingFeedId = feed ? feed.id : null;
   const isPending = !!feed && feed.amountMl == null;
   sheetMode = !feed ? 'log' : (isPending ? 'complete' : 'edit');
-  sheetAgo = null;
-  sheetTimeChanged = false;
-  sheetBaseTs = feed ? feed.timestamp : null;
 
   const startMl = feed?.amountMl ?? lastCompletedAmount(feed?.id) ?? DEFAULT_ML;
   intervalOverridden = !!feed && !isPending;
-  selectedMl = startMl;
   selectedIntervalHours = feed?.intervalHours || computeAutoIntervalHours(startMl);
+  // An older feed can hold a value the lists don't have (say 123ml); add it so it still shows.
+  if (![...feedAmountSel.options].some(o => o.value === String(startMl))) feedAmountSel.add(new Option(`${startMl} ml`, String(startMl)));
+  if (![...feedGapSel.options].some(o => o.value === String(selectedIntervalHours))) feedGapSel.add(new Option(formatIntervalLabel(selectedIntervalHours), String(selectedIntervalHours)));
+  feedAmountSel.value = String(startMl);
+  feedGapSel.value = String(selectedIntervalHours);
 
-  feedDateInput.value = todayDateString();
   feedDateInput.max = todayDateString();
-  feedTimeInput.value = '';
-  syncDayChips(feedDateInput, feedDayChips);
+  if (feed) {
+    const d = new Date(feed.timestamp);
+    setFeedDay(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+    feedTimeInput.value = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  } else {
+    setFeedDay(todayDateString());
+    feedTimeInput.value = '';
+  }
 
   logModalTitle.textContent = sheetMode === 'log' ? 'Log a feed' : (isPending ? 'Complete feed' : 'Edit feed');
-  sheetWhen.hidden = sheetMode !== 'log';
+  feedWhenLabel.textContent = isPending ? 'Started' : 'When';
   sheetDel.hidden = sheetMode !== 'edit';
-  sheetFixed.hidden = sheetMode === 'log';
-  sheetEarlier.hidden = true;
-
   logModal.hidden = false;
-  setRulerValue(startMl);
   onAmountChanged(startMl);
-}
-
-function dateStringForOffset(daysAgo) {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function syncDayChips(input, chipsEl) {
@@ -2068,15 +2000,7 @@ function wireDayPicker(input, chipsEl) {
   });
 }
 
-wireDayPicker(feedDateInput, feedDayChips);
 wireDayPicker(pooDateInput, pooDayChips);
-
-// The typed date and time feed the "around" time, so redraw on every change.
-['input', 'change'].forEach(evt => {
-  feedDateInput.addEventListener(evt, drawSheet);
-  feedTimeInput.addEventListener(evt, drawSheet);
-});
-feedDayChips.addEventListener('click', drawSheet);
 
 function combineDateTimeToTimestamp(dateStr, timeStr) {
   const now = new Date();
@@ -2113,7 +2037,7 @@ sheetDel.addEventListener('click', () => {
 });
 
 logConfirm.addEventListener('click', () => {
-  const timestamp = sheetStartTs();
+  const timestamp = pickedTimeTs();
   if (timestamp == null) return;
   showRangeContaining(timestamp, historyRange, ["1d", "7d", "14d"], (r) => { currentRange = r; chartSelectedStart = null; });
   logModal.hidden = true;
@@ -2219,7 +2143,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=83').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=84').catch(() => {});
   });
 }
 
