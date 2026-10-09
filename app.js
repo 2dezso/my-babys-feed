@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=86';
+import { analyse } from './patterns.js?v=87';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -189,6 +189,7 @@ let currentCalYear = 0;
 let currentCalMonth = 0;
 let currentMonthMilestones = new Map();
 let currentMonthUnsub = null;
+let loadedMonthKey = null;
 let editingDateKey = null;
 let pendingPhotoDataUrl = null;
 let bottleAdjustWheelScrollTimer = null;
@@ -1698,16 +1699,23 @@ function ensureCalendarInitialized() {
 }
 
 function loadMonth(year, month) {
+  const monthKey = dateKeyFor(year, month, 1);
+  // Already watching this month: keep what is loaded instead of blanking the calendar and asking again.
+  if (currentMonthUnsub && loadedMonthKey === monthKey) {
+    renderCalendar();
+    return;
+  }
   if (currentMonthUnsub) {
     currentMonthUnsub();
     currentMonthUnsub = null;
   }
+  loadedMonthKey = monthKey;
   currentMonthMilestones = new Map();
   renderCalendar();
 
   const code = getHouseholdCode();
   if (!code) return;
-  const startKey = dateKeyFor(year, month, 1);
+  const startKey = monthKey;
   const nextMonth = new Date(year, month + 1, 1);
   const endKey = dateKeyFor(nextMonth.getFullYear(), nextMonth.getMonth(), 1);
   const q = query(
@@ -1842,17 +1850,16 @@ milestoneSave.addEventListener('click', async () => {
   if (!code || !editingDateKey) return;
   const caption = milestoneCaption.value.trim();
   const existing = currentMonthMilestones.get(editingDateKey);
-  const photoDataUrl = pendingPhotoDataUrl || existing?.photoDataUrl || null;
-  if (!caption && !photoDataUrl) {
+  if (!caption && !pendingPhotoDataUrl && !existing?.photoDataUrl) {
     showToast('Add a photo or a note first');
     return;
   }
+  // Only what changed is written, and it is merged into the saved entry. The photo is sent only when a new one was
+  // picked, so editing the note can never remove a photo, even if this month's entries had not finished loading.
+  const changes = { caption: caption || deleteField(), updatedAt: Date.now() };
+  if (pendingPhotoDataUrl) changes.photoDataUrl = pendingPhotoDataUrl;
   try {
-    await setDoc(doc(db, 'households', code, 'milestones', editingDateKey), {
-      ...(photoDataUrl ? { photoDataUrl } : {}),
-      ...(caption ? { caption } : {}),
-      updatedAt: Date.now(),
-    });
+    await setDoc(doc(db, 'households', code, 'milestones', editingDateKey), changes, { merge: true });
     showToast('Milestone saved');
     milestoneModal.hidden = true;
   } catch (e) {
@@ -2190,7 +2197,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=86').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=87').catch(() => {});
   });
 }
 
