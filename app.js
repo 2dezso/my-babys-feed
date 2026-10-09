@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=91';
+import { analyse } from './patterns.js?v=92';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -812,12 +812,30 @@ function listenToBottle(code) {
   });
 }
 
+// What the bottle row should show right now.
+//   made:   a bottle was made and no feed has started from it. Good for 2 hours from when it was made.
+//   in use: a feed started. Good for 1 hour from the start of the feed, but never past 2 hours from when the bottle
+//           was made. So a bottle made 90 minutes before the feed has 30 minutes left, not a fresh hour.
+function bottleState(now = Date.now()) {
+  const feeding = bottleFeedStartedAt && (!bottleMadeAt || bottleMadeAt <= bottleFeedStartedAt);
+  if (feeding) {
+    const byFeed = bottleFeedStartedAt + BOTTLE_IN_USE_MS;
+    const byMade = bottleMadeAt ? bottleMadeAt + BOTTLE_GOOD_FOR_MS : Infinity;
+    const expiresAt = Math.min(byFeed, byMade);
+    // After the reminder has been shown for a while the row goes back to idle on its own.
+    if (now > expiresAt + BOTTLE_IN_USE_NOTICE_MS) return { kind: 'idle' };
+    return { kind: 'inUse', expiresAt, startedAt: bottleFeedStartedAt, cutShort: byMade < byFeed };
+  }
+  if (bottleMadeAt) return { kind: 'made', expiresAt: bottleMadeAt + BOTTLE_GOOD_FOR_MS, startedAt: bottleMadeAt };
+  return { kind: 'idle' };
+}
+
 // Idle, the row shows a formula scoop. Once a timer is running the scoop turns into a small bottle whose
 // level drains as the time runs out (--left goes from 1 to 0).
 function renderBottleStatus() {
   const now = Date.now();
-  const inUse = !bottleMadeAt && bottleFeedStartedAt && now - bottleFeedStartedAt < BOTTLE_IN_USE_MS + BOTTLE_IN_USE_NOTICE_MS;
-  const timing = !!bottleMadeAt || !!inUse;
+  const state = bottleState(now);
+  const timing = state.kind !== 'idle';
   bottlePillClear.hidden = !timing;
   bottlePill.classList.toggle('timing', timing);
   bottlePill.classList.remove('bottle-expired');
@@ -827,16 +845,17 @@ function renderBottleStatus() {
     bottlePill.style.setProperty('--left', '1');
     return;
   }
-  const totalMs = inUse ? BOTTLE_IN_USE_MS : BOTTLE_GOOD_FOR_MS;
-  const remaining = totalMs - (now - (inUse ? bottleFeedStartedAt : bottleMadeAt));
-  bottlePill.style.setProperty('--left', Math.max(0, Math.min(1, remaining / totalMs)).toFixed(3));
-  bottleTitleEl.textContent = inUse ? 'Bottle in use' : 'Bottle made';
-  if (remaining <= 0) {
-    bottleStatusEl.textContent = inUse ? 'Over 1h since the feed started. Discard what is left' : 'Over 2 hours old. Discard it';
-    bottlePill.classList.add('bottle-expired');
-  } else {
+  const remaining = state.expiresAt - now;
+  const span = Math.max(1, state.expiresAt - state.startedAt);
+  bottlePill.style.setProperty('--left', Math.max(0, Math.min(1, remaining / span)).toFixed(3));
+  bottleTitleEl.textContent = state.kind === 'inUse' ? 'Bottle in use' : 'Bottle made';
+  if (remaining > 0) {
     bottleStatusEl.textContent = `Good for ${durationString(remaining)}`;
+    return;
   }
+  bottlePill.classList.add('bottle-expired');
+  if (state.kind === 'made' || state.cutShort) bottleStatusEl.textContent = 'Over 2 hours since it was made. Discard it';
+  else bottleStatusEl.textContent = 'Over 1h since the feed started. Discard what is left';
 }
 
 async function startBottleTimer(minsAgo) {
@@ -911,9 +930,11 @@ bottleAdjustWheelTrack.addEventListener('scroll', () => {
 // Tapping the row always asks when the bottle was made, starting on "Just now", so a bottle made a while ago can be
 // set correctly. While a timer is running the same sheet opens on its current age, to correct it.
 function openBottleAdjust() {
-  const minsAgo = bottleMadeAt ? Math.round((Date.now() - bottleMadeAt) / 60000 / BOTTLE_ADJUST_STEP_MINS) * BOTTLE_ADJUST_STEP_MINS : 0;
+  // Only a bottle that is still waiting to be used can be corrected; anything else starts a new one.
+  const waiting = bottleState().kind === 'made';
+  const minsAgo = waiting ? Math.round((Date.now() - bottleMadeAt) / 60000 / BOTTLE_ADJUST_STEP_MINS) * BOTTLE_ADJUST_STEP_MINS : 0;
   selectedBottleMinsAgo = Math.max(0, Math.min(BOTTLE_ADJUST_MAX_MINS, minsAgo));
-  bottleAdjustConfirm.textContent = bottleMadeAt ? 'Update timer' : 'Start timer';
+  bottleAdjustConfirm.textContent = waiting ? 'Update timer' : 'Start timer';
   bottleAdjustModal.hidden = false;
   scrollBottleAdjustWheelTo(selectedBottleMinsAgo);
   updateBottleAdjustWheelActiveItem();
@@ -1230,9 +1251,10 @@ async function startFeed(timestamp, intervalHours) {
     showToast('Could not start feed — check connection');
     return;
   }
-  // The bottle is now being drunk from: the 2-hour "made" timer gives way to 1 hour from the start of the feed.
+  // The bottle is now being drunk from: it is good for 1 hour from now, or until 2 hours after it was made if that
+  // comes first. The made time is kept so that limit can be worked out (see bottleState).
   try {
-    await setDoc(bottleDocRef(code), { madeAt: null, feedStartedAt: timestamp }, { merge: true });
+    await setDoc(bottleDocRef(code), { feedStartedAt: timestamp }, { merge: true });
   } catch (e) {
     console.error(e);
   }
@@ -2271,7 +2293,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=91').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=92').catch(() => {});
   });
 }
 
