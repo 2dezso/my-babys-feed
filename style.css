@@ -584,3 +584,5 @@ input[type="time"].fsel::-webkit-date-and-time-value, input[type="date"].fsel::-
 .startbtn.pending .sb-ico { animation: heartbeat 1.8s ease-in-out infinite; }
 @keyframes heartbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.14); } }
 @media (prefers-reduced-motion: reduce) { .startbtn.pending .sb-ico { animation: none; } }
+
+.modal-card > .flabel { margin-bottom: -10px; }

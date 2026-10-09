@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=88';
+import { analyse } from './patterns.js?v=89';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -50,7 +50,6 @@ const nextFeedInEl = document.getElementById('next-feed-in');
 const appDateEl = document.getElementById('app-date');
 const bottlePill = document.getElementById('bottle-pill');
 const bottlePillMain = document.getElementById('bottle-pill-main');
-const bottlePillAdjust = document.getElementById('bottle-pill-adjust');
 const bottlePillClear = document.getElementById('bottle-pill-clear');
 const bottleStatusEl = document.getElementById('bottle-status');
 const bottleTitleEl = document.getElementById('bottle-title');
@@ -817,7 +816,6 @@ function renderBottleStatus() {
   const inUse = !bottleMadeAt && bottleFeedStartedAt && now - bottleFeedStartedAt < BOTTLE_IN_USE_MS + BOTTLE_IN_USE_NOTICE_MS;
   const timing = !!bottleMadeAt || !!inUse;
   bottlePillClear.hidden = !timing;
-  bottlePillAdjust.hidden = timing;
   bottlePill.classList.toggle('timing', timing);
   bottlePill.classList.remove('bottle-expired');
   if (!timing) {
@@ -850,7 +848,6 @@ async function startBottleTimer(minsAgo) {
   }
 }
 
-bottlePillMain.addEventListener('click', () => startBottleTimer(0));
 
 bottlePillClear.addEventListener('click', async () => {
   const code = getHouseholdCode();
@@ -870,7 +867,9 @@ const bottleAdjustWheelValues = [];
 for (let v = 0; v <= BOTTLE_ADJUST_MAX_MINS; v += BOTTLE_ADJUST_STEP_MINS) bottleAdjustWheelValues.push(v);
 
 function formatBottleAdjustLabel(mins) {
-  return mins === 0 ? 'Just now' : `${mins}m ago`;
+  if (mins === 0) return 'Just now';
+  if (mins < 60) return `${mins} min ago`;
+  return `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''} ago`;
 }
 
 bottleAdjustWheelValues.forEach((v) => {
@@ -906,16 +905,23 @@ bottleAdjustWheelTrack.addEventListener('scroll', () => {
   bottleAdjustWheelScrollTimer = setTimeout(() => { selectedBottleMinsAgo = value; }, 120);
 });
 
-bottlePillAdjust.addEventListener('click', () => {
-  selectedBottleMinsAgo = 0;
+// Tapping the row always asks when the bottle was made, starting on "Just now", so a bottle made a while ago can be
+// set correctly. While a timer is running the same sheet opens on its current age, to correct it.
+function openBottleAdjust() {
+  const minsAgo = bottleMadeAt ? Math.round((Date.now() - bottleMadeAt) / 60000 / BOTTLE_ADJUST_STEP_MINS) * BOTTLE_ADJUST_STEP_MINS : 0;
+  selectedBottleMinsAgo = Math.max(0, Math.min(BOTTLE_ADJUST_MAX_MINS, minsAgo));
+  bottleAdjustConfirm.textContent = bottleMadeAt ? 'Update timer' : 'Start timer';
   bottleAdjustModal.hidden = false;
-  scrollBottleAdjustWheelTo(0);
+  scrollBottleAdjustWheelTo(selectedBottleMinsAgo);
   updateBottleAdjustWheelActiveItem();
-});
+}
+bottlePillMain.addEventListener('click', openBottleAdjust);
 bottleAdjustCancel.addEventListener('click', () => { bottleAdjustModal.hidden = true; });
 bottleAdjustConfirm.addEventListener('click', () => {
+  // Read the wheel while it is still on screen, in case Start was tapped before the wheel had settled.
+  const minsAgo = updateBottleAdjustWheelActiveItem();
   bottleAdjustModal.hidden = true;
-  startBottleTimer(selectedBottleMinsAgo);
+  startBottleTimer(minsAgo);
 });
 
 function dayKeyForTimestamp(ts) {
@@ -2197,7 +2203,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=88').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=89').catch(() => {});
   });
 }
 

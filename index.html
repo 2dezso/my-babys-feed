@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=88">
+<link rel="manifest" href="manifest.json?v=89">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=88">
+<link rel="stylesheet" href="style.css?v=89">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -137,7 +137,6 @@
         </span>
         <span class="t"><b id="bottle-title">Made a bottle?</b><span id="bottle-status">Tap to start a 2 hour timer</span></span>
       </button>
-      <button id="bottle-pill-adjust" class="mini" title="Made a few minutes ago?">Earlier</button>
       <button id="bottle-pill-clear" class="mini" title="Clear bottle timer" hidden>Clear</button>
     </div>
 
@@ -429,12 +428,6 @@
       <button id="log-cancel" class="close" aria-label="Close"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
     </div>
 
-    <div class="amt-wheel">
-      <div class="amt-band" aria-hidden="true"></div>
-      <div id="amount-track" class="amt-track" role="listbox" tabindex="0" aria-label="Amount in millilitres"></div>
-    </div>
-    <p id="sheet-hint" class="hint"></p>
-
     <div class="frow">
       <div class="when-head">
         <label class="flabel" id="feed-when-label" for="feed-time">When</label>
@@ -448,6 +441,13 @@
         <input id="feed-time" type="time" class="fsel" aria-label="Time">
       </div>
     </div>
+
+    <span class="flabel" id="feed-amount-label">How much</span>
+    <div class="amt-wheel">
+      <div class="amt-band" aria-hidden="true"></div>
+      <div id="amount-track" class="amt-track" role="listbox" tabindex="0" aria-labelledby="feed-amount-label"></div>
+    </div>
+    <p id="sheet-hint" class="hint"></p>
 
     <div class="nextrow">
       <span class="nl">Next feed in</span>
@@ -494,14 +494,15 @@
 <div id="bottle-adjust-modal" class="modal" hidden>
   <div class="modal-card">
     <span class="grab"></span>
-    <h2>When was it made?</h2>
+    <h2>When was the bottle made?</h2>
+    <p class="muted">A made bottle is good for 2 hours. If it was made a while ago, scroll to how long.</p>
     <div class="wheel-picker" id="bottle-adjust-wheel">
       <div class="wheel-highlight"></div>
       <div class="wheel-track" id="bottle-adjust-wheel-track"></div>
     </div>
     <div class="modal-actions">
       <button id="bottle-adjust-cancel" class="btn btn-secondary">Cancel</button>
-      <button id="bottle-adjust-confirm" class="btn btn-primary">Set</button>
+      <button id="bottle-adjust-confirm" class="btn btn-primary">Start timer</button>
     </div>
   </div>
 </div>
@@ -547,6 +548,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=88"></script>
+<script type="module" src="app.js?v=89"></script>
 </body>
 </html>
