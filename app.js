@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=84';
+import { analyse } from './patterns.js?v=85';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -81,8 +81,10 @@ const feedDateInput = document.getElementById('feed-date');
 const feedDayChips = document.getElementById('feed-day-chips');
 const feedTimeInput = document.getElementById('feed-time');
 const sheetHint = document.getElementById('sheet-hint');
-const feedAmountSel = document.getElementById('feed-amount');
-const feedGapSel = document.getElementById('feed-gap');
+const amountTrack = document.getElementById('amount-track');
+const sheetGapEl = document.getElementById('sheet-gap');
+const gapLess = document.getElementById('gap-less');
+const gapMore = document.getElementById('gap-more');
 const feedWhenLabel = document.getElementById('feed-when-label');
 const sheetAtEl = document.getElementById('sheet-at');
 const sheetDel = document.getElementById('sheet-del');
@@ -1874,18 +1876,63 @@ milestoneDelete.addEventListener('click', async () => {
 
 // --- Log a feed sheet ---
 // One sheet does three jobs: log a past feed, add the amount to a feed that was started, and change a saved feed.
-// It is three plain fields that use the phone's own pickers: how much, when, and how long until the next feed.
+// The amount is one scroll wheel, as on the live site. Under it are the time and a small stepper for the next feed.
 // A new past feed starts with the time empty, so it is always typed in and never guessed.
 
 let sheetMode = 'log'; // 'log' | 'complete' | 'edit'
+let amountValues = [];
+const AMOUNT_ROW = 56; // height of one wheel row in px; must match .amt-item in style.css
 
 function formatIntervalLabel(hours) {
   const whole = Math.floor(hours);
   return hours % 1 === 0 ? `${whole}h` : `${whole}h 30m`;
 }
 
-for (let v = ML_MIN; v <= ML_MAX; v += ML_STEP) feedAmountSel.add(new Option(`${v} ml`, String(v)));
-for (let h = INTERVAL_MIN; h <= INTERVAL_MAX; h += INTERVAL_STEP) feedGapSel.add(new Option(formatIntervalLabel(h), String(h)));
+// The wheel holds 10 to 300ml in 5ml steps. An older feed with an odd amount (say 123ml) gets its own row.
+function buildAmountWheel(extra) {
+  const values = [];
+  for (let v = ML_MIN; v <= ML_MAX; v += ML_STEP) values.push(v);
+  if (extra != null && !values.includes(extra)) { values.push(extra); values.sort((a, b) => a - b); }
+  amountValues = values;
+  amountTrack.innerHTML = values.map(v => `<div class="amt-item" role="option" data-v="${v}">${v}<small>ml</small></div>`).join('');
+}
+
+function amountIndexAtScroll() {
+  return Math.max(0, Math.min(amountValues.length - 1, Math.round(amountTrack.scrollTop / AMOUNT_ROW)));
+}
+
+function highlightAmount(index) {
+  amountTrack.querySelectorAll('.amt-item').forEach((el, i) => {
+    el.classList.toggle('active', i === index);
+    el.classList.toggle('near', Math.abs(i - index) === 1);
+    el.setAttribute('aria-selected', String(i === index));
+  });
+}
+
+function scrollAmountTo(value, smooth = false) {
+  const index = Math.max(0, amountValues.indexOf(value));
+  amountTrack.scrollTo({ top: index * AMOUNT_ROW, behavior: smooth ? 'smooth' : 'auto' });
+  highlightAmount(index);
+}
+
+amountTrack.addEventListener('scroll', () => {
+  const index = amountIndexAtScroll();
+  highlightAmount(index);
+  if (amountValues[index] !== selectedMl) onAmountChanged(amountValues[index]);
+});
+
+amountTrack.addEventListener('click', (e) => {
+  const item = e.target.closest('.amt-item');
+  if (item) scrollAmountTo(Number(item.dataset.v), true);
+});
+
+amountTrack.addEventListener('keydown', (e) => {
+  const d = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
+  if (!d) return;
+  e.preventDefault();
+  const index = Math.max(0, Math.min(amountValues.length - 1, amountIndexAtScroll() + d));
+  scrollAmountTo(amountValues[index], true);
+});
 
 function lastCompletedAmount(excludeId) {
   const f = latestFeeds.find(x => x.amountMl != null && x.id !== excludeId);
@@ -1920,6 +1967,9 @@ function pickedTimeTs() {
 }
 
 function drawSheet() {
+  sheetGapEl.textContent = formatIntervalLabel(selectedIntervalHours);
+  gapLess.disabled = selectedIntervalHours <= INTERVAL_MIN;
+  gapMore.disabled = selectedIntervalHours >= INTERVAL_MAX;
   const ts = pickedTimeTs();
   sheetAtEl.textContent = ts == null ? '–:–' : formatClock(ts + selectedIntervalHours * 3600000);
   logConfirm.disabled = ts == null;
@@ -1932,21 +1982,19 @@ function onAmountChanged(value) {
   const lastAmt = lastCompletedAmount(editingFeedId);
   if (sheetMode === 'edit' || lastAmt == null) sheetHint.textContent = '';
   else sheetHint.textContent = value === lastAmt ? 'Same as the last feed' : `Last feed was ${lastAmt}ml`;
-  sheetHint.hidden = !sheetHint.textContent;
   // The gap follows the amount until it is changed by hand.
-  if (!intervalOverridden) {
-    selectedIntervalHours = computeAutoIntervalHours(value);
-    feedGapSel.value = String(selectedIntervalHours);
-  }
+  if (!intervalOverridden) selectedIntervalHours = computeAutoIntervalHours(value);
   drawSheet();
 }
 
-feedAmountSel.addEventListener('change', () => onAmountChanged(Number(feedAmountSel.value)));
-feedGapSel.addEventListener('change', () => {
-  selectedIntervalHours = Number(feedGapSel.value);
+function nudgeGap(delta) {
+  selectedIntervalHours = Math.max(INTERVAL_MIN, Math.min(INTERVAL_MAX, selectedIntervalHours + delta));
   intervalOverridden = true;
   drawSheet();
-});
+}
+gapLess.addEventListener('click', () => nudgeGap(-INTERVAL_STEP));
+gapMore.addEventListener('click', () => nudgeGap(INTERVAL_STEP));
+
 ['input', 'change'].forEach(evt => {
   feedDateInput.addEventListener(evt, drawSheet);
   feedTimeInput.addEventListener(evt, drawSheet);
@@ -1960,11 +2008,7 @@ function openLogModal(feed) {
   const startMl = feed?.amountMl ?? lastCompletedAmount(feed?.id) ?? DEFAULT_ML;
   intervalOverridden = !!feed && !isPending;
   selectedIntervalHours = feed?.intervalHours || computeAutoIntervalHours(startMl);
-  // An older feed can hold a value the lists don't have (say 123ml); add it so it still shows.
-  if (![...feedAmountSel.options].some(o => o.value === String(startMl))) feedAmountSel.add(new Option(`${startMl} ml`, String(startMl)));
-  if (![...feedGapSel.options].some(o => o.value === String(selectedIntervalHours))) feedGapSel.add(new Option(formatIntervalLabel(selectedIntervalHours), String(selectedIntervalHours)));
-  feedAmountSel.value = String(startMl);
-  feedGapSel.value = String(selectedIntervalHours);
+  buildAmountWheel(startMl);
 
   feedDateInput.max = todayDateString();
   if (feed) {
@@ -1980,6 +2024,8 @@ function openLogModal(feed) {
   feedWhenLabel.textContent = isPending ? 'Started' : 'When';
   sheetDel.hidden = sheetMode !== 'edit';
   logModal.hidden = false;
+  // The wheel can only be positioned once the sheet is on screen.
+  scrollAmountTo(startMl);
   onAmountChanged(startMl);
 }
 
@@ -2143,7 +2189,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=84').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=85').catch(() => {});
   });
 }
 

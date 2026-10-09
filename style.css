@@ -545,3 +545,21 @@ input[type="time"].fsel::-webkit-date-and-time-value, input[type="date"].fsel::-
 .gap-grid { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; }
 .gap-grid .at { font-size: .9375rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
 .gap-grid .at b { color: var(--ink); font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* Log a feed: the amount is one scroll wheel. The middle row is the choice; a soft band marks it and the rows
+   above and below fade away. */
+.amt-wheel { position: relative; height: 168px; margin: 0 -20px; flex: none; }
+.amt-band { position: absolute; left: 20px; right: 20px; top: 56px; height: 56px; border-radius: 18px; background: var(--feed-tint); pointer-events: none; }
+.amt-track { position: absolute; inset: 0; overflow-y: scroll; scroll-snap-type: y mandatory; padding: 56px 0; scrollbar-width: none; -webkit-overflow-scrolling: touch; outline-offset: -4px;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 34%, #000 66%, transparent); mask-image: linear-gradient(180deg, transparent, #000 34%, #000 66%, transparent); }
+.amt-track::-webkit-scrollbar { display: none; }
+.amt-item { height: 56px; display: flex; align-items: baseline; justify-content: center; gap: 4px; scroll-snap-align: center; line-height: 56px;
+  font-size: 1.5rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; transition: font-size .12s ease, color .12s ease; cursor: pointer; }
+.amt-item small { font-size: .875rem; font-weight: 700; opacity: 0; }
+.amt-item.active { font-size: 2.5rem; font-weight: 800; letter-spacing: -.03em; color: var(--feed-ink); }
+.amt-item.active small { opacity: 1; font-size: 1.125rem; color: var(--muted); letter-spacing: 0; }
+.when-line { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.when-line .fsel { min-height: 52px; font-size: 1.25rem; }
+.when-line .chip { padding: 0 12px; }
+.modal-card .hint { margin: -6px 0 0; text-align: center; min-height: 1.2em; }
+@media (prefers-reduced-motion: reduce) { .amt-item { transition: none; } }
