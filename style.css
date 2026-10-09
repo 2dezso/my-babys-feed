@@ -512,3 +512,12 @@ textarea.field-input { padding: 12px 14px; }
 .tiles-top .disc .ico { width: 56px; height: 56px; }
 .tiles-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; justify-items: center; }
 .tiles-row .tile { font-size: .875rem; }
+
+/* Home fits one screen and does not scroll. The big disc shrinks on short phones; the tab bar keeps its own space. */
+#home-screen { height: 100vh; height: 100dvh; overflow: hidden; overscroll-behavior: none; }
+.homea { height: 100%; min-height: 0; padding-top: max(20px, 3.5vh); padding-bottom: calc(72px + env(safe-area-inset-bottom)); gap: 2vh; }
+.tiles { padding-top: 0; flex: 1; justify-content: center; gap: max(14px, 3.5vh); min-height: 0; }
+.tiles-top .disc { width: min(156px, 22vh); height: min(156px, 22vh); }
+.tiles-top .disc .ico { width: 36%; height: 36%; }
+.tiles-row .disc { width: min(84px, 12vh); height: min(84px, 12vh); }
+.home-foot { margin-top: 0; }
