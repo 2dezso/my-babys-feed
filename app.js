@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=92';
+import { analyse } from './patterns.js?v=93';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -50,6 +50,7 @@ const nextFeedInEl = document.getElementById('next-feed-in');
 const appDateEl = document.getElementById('app-date');
 const bottlePill = document.getElementById('bottle-pill');
 const bottlePillMain = document.getElementById('bottle-pill-main');
+const bottlePillAdjust = document.getElementById('bottle-pill-adjust');
 const bottlePillClear = document.getElementById('bottle-pill-clear');
 const bottleStatusEl = document.getElementById('bottle-status');
 const bottleTitleEl = document.getElementById('bottle-title');
@@ -837,11 +838,12 @@ function renderBottleStatus() {
   const state = bottleState(now);
   const timing = state.kind !== 'idle';
   bottlePillClear.hidden = !timing;
+  bottlePillAdjust.hidden = timing;
   bottlePill.classList.toggle('timing', timing);
   bottlePill.classList.remove('bottle-expired');
   if (!timing) {
     bottleTitleEl.textContent = 'Made a bottle?';
-    bottleStatusEl.textContent = 'Tap to start a 2 hour timer';
+    bottleStatusEl.textContent = 'Tap to start';
     bottlePill.style.setProperty('--left', '1');
     return;
   }
@@ -927,8 +929,8 @@ bottleAdjustWheelTrack.addEventListener('scroll', () => {
   bottleAdjustWheelScrollTimer = setTimeout(() => { selectedBottleMinsAgo = value; }, 120);
 });
 
-// Tapping the row always asks when the bottle was made, starting on "Just now", so a bottle made a while ago can be
-// set correctly. While a timer is running the same sheet opens on its current age, to correct it.
+// "Earlier" asks when the bottle was made, starting on "Just now", so a bottle made a while ago can be
+// set correctly.
 function openBottleAdjust() {
   // Only a bottle that is still waiting to be used can be corrected; anything else starts a new one.
   const waiting = bottleState().kind === 'made';
@@ -939,7 +941,9 @@ function openBottleAdjust() {
   scrollBottleAdjustWheelTo(selectedBottleMinsAgo);
   updateBottleAdjustWheelActiveItem();
 }
-bottlePillMain.addEventListener('click', openBottleAdjust);
+// One tap on the row starts the timer from now. "Earlier" opens the picker for a bottle made a while ago.
+bottlePillMain.addEventListener('click', () => startBottleTimer(0));
+bottlePillAdjust.addEventListener('click', openBottleAdjust);
 bottleAdjustCancel.addEventListener('click', () => { bottleAdjustModal.hidden = true; });
 bottleAdjustConfirm.addEventListener('click', () => {
   // Read the wheel while it is still on screen, in case Start was tapped before the wheel had settled.
@@ -2293,9 +2297,38 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=92').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=93').catch(() => {});
   });
 }
+
+// A home-screen app is usually resumed rather than reopened, so it can sit on an old version for days. Each time the
+// app comes back to the front, look at the newest page on the server and reload if it has moved on.
+const RUNNING_VERSION = Number(new URL(import.meta.url).searchParams.get('v')) || 0;
+let lastUpdateCheck = 0;
+async function checkForNewVersion() {
+  if (!RUNNING_VERSION || document.hidden || Date.now() - lastUpdateCheck < 60000) return;
+  lastUpdateCheck = Date.now();
+  try {
+    const res = await fetch(`index.html?fresh=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) return;
+    const found = (await res.text()).match(/app\.js\?v=(\d+)/);
+    const latest = found ? Number(found[1]) : 0;
+    if (latest <= RUNNING_VERSION) return;
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) reg.update().catch(() => {});
+    }
+    // Never reload over something half-entered, and only try once per version so a stale copy can't loop.
+    const busy = document.querySelector('.modal:not([hidden])') || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '');
+    if (busy) { lastUpdateCheck = 0; return; }
+    if (sessionStorage.getItem('babyfeed_reloaded_for') === String(latest)) return;
+    sessionStorage.setItem('babyfeed_reloaded_for', String(latest));
+    location.reload();
+  } catch { /* offline: try again next time */ }
+}
+document.addEventListener('visibilitychange', checkForNewVersion);
+window.addEventListener('pageshow', checkForNewVersion);
+window.addEventListener('focus', checkForNewVersion);
 
 // Pinching in is blocked so the page can't be zoomed by accident, but pinching out is left alone so the browser's
 // own gesture (such as the tab overview on iPad) still works. iOS Safari ignores user-scalable=no, so this is done
