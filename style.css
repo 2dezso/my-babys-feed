@@ -617,3 +617,7 @@ html:has(.modal:not([hidden])), html:has(.modal:not([hidden])) body { overflow: 
 .time-wheel .tw-band { left: 0; right: 0; }
 .tw-col { flex: 1; width: auto; }
 .tw-sep { width: 14px; text-align: center; flex: none; }
+
+/* Hours and minutes sit close together either side of the colon; each column still takes half the sheet to scroll. */
+#time-hours .tw-item { text-align: right; padding-right: 14px; }
+#time-mins .tw-item { text-align: left; padding-left: 14px; }

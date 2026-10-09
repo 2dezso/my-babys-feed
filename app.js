@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=93';
+import { analyse } from './patterns.js?v=94';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -1264,7 +1264,7 @@ async function startFeed(timestamp, intervalHours) {
   }
 }
 
-async function finishFeed(id, timestamp, amountMl, intervalHours) {
+async function finishFeed(id, timestamp, amountMl, intervalHours, completing = false) {
   const code = getHouseholdCode();
   if (!code) return;
   try {
@@ -1273,6 +1273,15 @@ async function finishFeed(id, timestamp, amountMl, intervalHours) {
   } catch (e) {
     console.error(e);
     showToast('Could not save — check connection');
+    return;
+  }
+  // The feed is over, so the bottle that was being drunk from is done with. A fresh bottle made since is left alone.
+  if (completing && bottleFeedStartedAt && (!bottleMadeAt || bottleMadeAt <= bottleFeedStartedAt)) {
+    try {
+      await setDoc(bottleDocRef(code), { madeAt: null, feedStartedAt: null }, { merge: true });
+    } catch (e) {
+      console.error(e);
+    }
   }
 }
 
@@ -2196,7 +2205,7 @@ logConfirm.addEventListener('click', () => {
   showRangeContaining(timestamp, historyRange, ["1d", "7d", "14d"], (r) => { currentRange = r; chartSelectedStart = null; });
   logModal.hidden = true;
   if (editingFeedId) {
-    finishFeed(editingFeedId, timestamp, selectedMl, selectedIntervalHours);
+    finishFeed(editingFeedId, timestamp, selectedMl, selectedIntervalHours, sheetMode === 'complete');
     editingFeedId = null;
   } else {
     logFeed(timestamp, selectedMl, selectedIntervalHours);
@@ -2297,7 +2306,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=93').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=94').catch(() => {});
   });
 }
 
