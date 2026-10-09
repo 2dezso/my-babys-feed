@@ -71,9 +71,6 @@ h1, h2, h3 { margin: 0; }
 .me.back .ico { width: 24px; height: 24px; }
 
 /* Home */
-  display: block; width: 100%; text-align: left; background: var(--card); border-radius: 18px;
-  padding: 14px 16px 16px; box-shadow: var(--shadow); margin-bottom: 12px; position: relative; overflow: hidden;
-}
 
 /* Section hero card */
 .hero {
