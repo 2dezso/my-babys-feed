@@ -1,26 +1,26 @@
 /* Summary look: iOS-health style. Each section has its own colour; the section classes
    (s-feed, s-nappy, s-mile, s-trend) set --sec* and everything inside picks them up. */
 :root {
-  --bg: #f2f2f7; --card: #ffffff; --ink: #111114; --muted: #5e5e66; --line: #e4e4ea; --fill: #ececf1;
+  --bg: #fbf2ed; --card: #fffdfb; --ink: #2b201c; --muted: #7a655d; --line: #efe1d8; --fill: #f4e8e0; --wash-a: #fdf3ee; --wash-b: #f9e3d9;
   --danger: #c2453d;
   --feed: #1f8a4c;   --feed-ink: #1b7a43; --feed-tint: #e3f4e9;  --feed-soft: #b9e6c9;
   --nappy: #a65a12;  --nappy-ink: #9a5210; --nappy-tint: #fbefdf; --nappy-soft: #f5d3a6;
   --mile: #6e56cf;   --mile-ink: #6049c4; --mile-tint: #eeeafb;  --mile-soft: #d3c9f5;
   --trend: #c2453d;  --trend-ink: #b23c35; --trend-tint: #fbe9e7; --trend-soft: #f5c4bf;
   --amber: #fff1d6; --amber-ink: #7a4a00;
-  --shadow: 0 1px 2px rgba(17, 17, 20, .04), 0 6px 20px rgba(17, 17, 20, .05);
-  --tabbar: rgba(249, 249, 251, .86);
+  --shadow: 0 1px 2px rgba(60, 35, 25, .05), 0 6px 20px rgba(60, 35, 25, .06);
+  --tabbar: rgba(255, 250, 247, .9);
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #000000; --card: #1c1c1e; --ink: #f5f5f7; --muted: #a1a1aa; --line: #2c2c2f; --fill: #2c2c2e;
+    --bg: #171210; --card: #231a17; --ink: #f6ece7; --muted: #b8a59c; --line: #34271f; --fill: #2e231e; --wash-a: #1c1513; --wash-b: #241815;
     --danger: #ff9a90;
     --feed: #1a6e3d;   --feed-ink: #6fd69b; --feed-tint: #11281b;  --feed-soft: #1f5a37;
     --nappy: #8a4a0e;  --nappy-ink: #f2ad62; --nappy-tint: #2b1d0d; --nappy-soft: #6b4317;
     --mile: #5a43b8;   --mile-ink: #b3a4f5; --mile-tint: #1f1a35;  --mile-soft: #43378a;
     --trend: #a63a33;  --trend-ink: #ff9a90; --trend-tint: #2e1514; --trend-soft: #7a2c27;
     --amber: #3a2a0c; --amber-ink: #ffd88a;
-    --shadow: none; --tabbar: rgba(22, 22, 24, .86);
+    --shadow: none; --tabbar: rgba(28, 21, 19, .9);
   }
 }
 /* Girl: the Feeds section turns rose instead of green */
@@ -32,11 +32,11 @@ body.gender-pink {
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html { background: var(--bg); touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+html { background: var(--wash-a); touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; min-height: 100vh;
-  font-family: Figtree, -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
-  color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased;
+  font-family: Nunito, -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink); background: linear-gradient(180deg, var(--wash-a), var(--wash-b)); -webkit-font-smoothing: antialiased;
 }
 button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
 button:disabled { cursor: default; }
@@ -169,9 +169,9 @@ h1, h2, h3 { margin: 0; }
 #history-chart-svg { display: block; height: auto; }
 .hc-grid { stroke: var(--line); stroke-width: 1; }
 .hc-avg { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
-.hc-axis { fill: var(--muted); font: 700 9px Figtree, sans-serif; }
+.hc-axis { fill: var(--muted); font: 700 9px Nunito, sans-serif; }
 .hc-axis-sel { fill: var(--ink); }
-.hc-val { fill: var(--ink); font: 800 10px Figtree, sans-serif; }
+.hc-val { fill: var(--ink); font: 800 10px Nunito, sans-serif; }
 .hc-bar { fill: var(--sec-soft); }
 .hc-bar.sel { fill: var(--sec); }
 .hc-bar.partial { fill: var(--fill); stroke: var(--sec); stroke-width: 1.2; stroke-dasharray: 3 2; }
@@ -214,7 +214,7 @@ h1, h2, h3 { margin: 0; }
 .trends-axis { display: flex; justify-content: space-between; margin-top: 4px; font-size: .75rem; font-weight: 600; color: var(--muted); }
 .trends-caption { margin: 6px 0 0 !important; font-size: .8125rem !important; font-weight: 600 !important; }
 .fact { background: var(--card); border-radius: 18px; box-shadow: var(--shadow); padding: 14px 16px 16px; margin-top: 12px; }
-.fact h3 { font-size: 1.0625rem; font-weight: 800; }
+.fact h2 { font-size: 1.0625rem; font-weight: 800; }
 .fact p { margin: 6px 0 0; font-size: .9375rem; font-weight: 500; color: var(--muted); line-height: 1.45; }
 .fineprint { margin: 18px 4px 0; font-size: .8125rem; font-weight: 500; color: var(--muted); line-height: 1.45; }
 
@@ -488,20 +488,16 @@ textarea.field-input { padding: 12px 14px; }
 
 /* Home (Today): a soft pink wash, a friendly title and four round colour discs, each with one line icon. Share, Profile
    and feedback are a quiet line of text at the bottom. */
-#home-screen { --h-green: #4c9a4e; --h-brown: #b9834f; --h-lav: #9c86cf; --h-peach: #f0985f; --h-ink: #4a322c; --h-muted: #a9847a;
-  background: linear-gradient(180deg, #fdf1ec, #f8ded3); color: var(--h-ink); font-family: Nunito, Figtree, -apple-system, system-ui, sans-serif; }
-@media (prefers-color-scheme: dark) { #home-screen { --h-green: #67aa5e; --h-brown: #b98352; --h-lav: #9c86cf; --h-peach: #d9a878; --h-ink: #f3e2dc; --h-muted: #c9a599;
-  background: linear-gradient(180deg, #241715, #2c1917); } }
 .homea { display: flex; flex-direction: column; gap: 22px; min-height: 100vh; padding-top: 28px; }
 .home-head { text-align: center; }
-.home-head small { display: block; font-size: .875rem; font-weight: 700; color: var(--h-muted); }
+.home-head small { display: block; font-size: .875rem; font-weight: 700; color: var(--muted); }
 .home-head h1 { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
-.tile { display: flex; flex-direction: column; align-items: center; gap: 10px; font-weight: 800; font-size: 1rem; color: var(--h-ink); }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 10px; font-weight: 800; font-size: 1rem; color: var(--ink); }
 .tile:active .disc { transform: scale(.96); }
 .disc { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; color: #fff; transition: transform .15s ease; }
 .disc .ico { width: 32px; height: 32px; stroke-width: 1.8; }
-.c-feed { background: var(--h-green); } .c-nap { background: var(--h-brown); } .c-mile { background: var(--h-lav); } .c-trend { background: var(--h-peach); }
-.home-foot { margin-top: auto; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 22px; font-size: .9375rem; font-weight: 700; color: var(--h-muted); }
+.c-feed { background: var(--feed); } .c-nap { background: var(--nappy); } .c-mile { background: var(--mile); } .c-trend { background: var(--trend); }
+.home-foot { margin-top: auto; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 22px; font-size: .9375rem; font-weight: 700; color: var(--muted); }
 .home-foot button { min-height: 44px; }
 @media (prefers-reduced-motion: reduce) { .disc { transition: none; } }
 

@@ -74,6 +74,7 @@ The app was restyled in an iOS-health "Summary" look. Where the sections below d
 - Elements are still looked up by the same ids; only the markup around them changed. The old amount/interval chips and wheels are gone (the bottle "Earlier" timer still uses a wheel).
 
 - **Bottle**: Profile has a Bottle wheel of known brands (MAM, Dr. Brown's, Philips Avent, Tommee Tippee, NUK, Comotomo, Medela, Lansinoh, Chicco, Another brand). The choice is saved on the profile as `bottleBrand` and decides which drawing appears in the Feeds hero. Every brand points at the one MAM-style drawing for now; to give a brand its own, add a drawing to `BOTTLE_DESIGNS` in app.js and set that brand's `design`. The hero bottle is the short, soft MAM-style bottle with a cream collar and base.
+- **One look (v83)**: every page shares one warm wash (`--wash-a` to `--wash-b` on `body`), one typeface (Nunito) and one set of warm neutrals. The four discs on Home use the same section colours as the pages they open (`--feed`, `--nappy`, `--mile`, `--trend`), so a disc and its page match.
 
 ## New household flow
 Tapping "Start a new household" lands on the Profile screen in a welcome mode: a short intro line, "Save and continue" instead of "Save profile", and a "Skip for now" link. Either one goes to Baby Feed and shows the household code to share. Leaving Profile any other way just drops the welcome mode. Joining an existing household skips this, since the profile is already set up.
