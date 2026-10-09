@@ -601,3 +601,7 @@ input[type="time"].fsel::-webkit-date-and-time-value, input[type="date"].fsel::-
 .time-wheel.unset .tw-band { background: var(--fill); }
 .when-fields:empty, .when-fields:has(> [hidden]:only-child) { display: none; }
 @media (prefers-reduced-motion: reduce) { .tw-item { transition: none; } }
+
+/* The time wheels stay neutral whether or not a time has been chosen. Green is kept for the milk amount only. */
+.time-wheel .tw-band { background: var(--fill); }
+.time-wheel .tw-item.active, .time-wheel .tw-sep { color: var(--muted); }
