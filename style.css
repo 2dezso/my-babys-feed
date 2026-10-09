@@ -633,3 +633,4 @@ html.on-home .home-foot { flex: none; }
 .disc .ico.solid { fill: currentColor; stroke: none; }
 .tiles-top .disc .ico.solid { width: 46%; height: 46%; }
 .tiles-row .disc .ico.solid { width: 50%; height: 50%; }
+.tab .ico.solid { fill: currentColor; stroke: none; width: 26px; height: 26px; }
