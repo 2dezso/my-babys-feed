@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=98';
+import { analyse } from './patterns.js?v=99';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -1904,7 +1904,7 @@ milestoneSave.addEventListener('click', async () => {
   if (pendingPhotoDataUrl) changes.photoDataUrl = pendingPhotoDataUrl;
   try {
     await setDoc(doc(db, 'households', code, 'milestones', editingDateKey), changes, { merge: true });
-    showToast('Milestone saved');
+    showToast('Moment saved');
     milestoneModal.hidden = true;
   } catch (e) {
     console.error(e);
@@ -1917,7 +1917,7 @@ milestoneDelete.addEventListener('click', async () => {
   if (!code || !editingDateKey) return;
   try {
     await deleteDoc(doc(db, 'households', code, 'milestones', editingDateKey));
-    showToast('Milestone deleted');
+    showToast('Moment deleted');
     milestoneModal.hidden = true;
   } catch (e) {
     console.error(e);
@@ -2306,7 +2306,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=98').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=99').catch(() => {});
   });
 }
 
