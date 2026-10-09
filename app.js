@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=81';
+import { analyse } from './patterns.js?v=82';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -298,6 +298,7 @@ function showScreen(name) {
     if (t.dataset.nav === name) t.setAttribute('aria-current', 'page');
     else t.removeAttribute('aria-current');
   });
+  document.documentElement.classList.toggle('on-home', name === 'home');
   if (name === 'profile') scrollBottleBrandWheelTo(selectedBottleBrand);
   window.scrollTo(0, 0);
 }
@@ -2218,7 +2219,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=81').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=82').catch(() => {});
   });
 }
 

@@ -521,3 +521,10 @@ textarea.field-input { padding: 12px 14px; }
 .tiles-top .disc .ico { width: 36%; height: 36%; }
 .tiles-row .disc { width: min(84px, 12vh); height: min(84px, 12vh); }
 .home-foot { margin-top: 0; }
+
+/* Make sure the home page really is one screen. On iPhones, 100vh is the height with the browser bars hidden, so the
+   page was a little taller than what is visible and could still scroll. While Home is showing the page is pinned to
+   the visible area instead. */
+html.on-home, html.on-home body { height: 100dvh; min-height: 0; overflow: hidden; overscroll-behavior: none; }
+html.on-home #home-screen { position: fixed; inset: 0; height: auto; }
+html.on-home .homea { padding-top: calc(env(safe-area-inset-top, 0px) + max(20px, 3.5vh)); }
