@@ -621,3 +621,10 @@ html:has(.modal:not([hidden])), html:has(.modal:not([hidden])) body { overflow: 
 /* Hours and minutes sit close together either side of the colon; each column still takes half the sheet to scroll. */
 #time-hours .tw-item { text-align: right; padding-right: 14px; }
 #time-mins .tw-item { text-align: left; padding-left: 14px; }
+
+/* An installed iPhone app reports 100vh as taller than the space it really has, which pushed the links at the foot of
+   the home page off the bottom. The home page is sized from the pinned box only, never from vh. */
+html.on-home #home-screen { min-height: 0; display: flex; flex-direction: column; }
+html.on-home #home-screen[hidden] { display: none; }
+html.on-home .homea { flex: 1 1 auto; width: 100%; height: auto; min-height: 0; }
+html.on-home .home-foot { flex: none; }
