@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=89';
+import { analyse } from './patterns.js?v=90';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -79,6 +79,9 @@ const logModalTitle = document.getElementById('log-modal-title');
 const feedDateInput = document.getElementById('feed-date');
 const feedDayChips = document.getElementById('feed-day-chips');
 const feedTimeInput = document.getElementById('feed-time');
+const timeWheel = document.getElementById('time-wheel');
+const timeHours = document.getElementById('time-hours');
+const timeMins = document.getElementById('time-mins');
 const sheetHint = document.getElementById('sheet-hint');
 const amountTrack = document.getElementById('amount-track');
 const sheetGapEl = document.getElementById('sheet-gap');
@@ -2014,6 +2017,68 @@ gapMore.addEventListener('click', () => nudgeGap(INTERVAL_STEP));
   feedTimeInput.addEventListener(evt, drawSheet);
 });
 
+// --- Time wheel: hours and minutes you scroll, right in the sheet ---
+// For a new past feed the wheels start on the current time as a place to scroll from, but the time only counts once
+// a wheel has been touched. Until then the button asks for the time, so a feed is never saved at a guessed time.
+const TIME_ROW = 44; // height of one row in px; must match .tw-item in style.css
+let timeTouched = false;
+
+function buildTimeColumn(el, count) {
+  let html = '';
+  for (let i = 0; i < count; i++) html += `<div class="tw-item" role="option" data-v="${i}">${String(i).padStart(2, '0')}</div>`;
+  el.innerHTML = html;
+}
+buildTimeColumn(timeHours, 24);
+buildTimeColumn(timeMins, 60);
+
+function timeColumnIndex(el) {
+  return Math.max(0, Math.min(el.children.length - 1, Math.round(el.scrollTop / TIME_ROW)));
+}
+
+function highlightTimeColumn(el) {
+  const index = timeColumnIndex(el);
+  Array.from(el.children).forEach((c, i) => {
+    c.classList.toggle('active', i === index);
+    c.setAttribute('aria-selected', String(i === index));
+  });
+}
+
+function readTimeWheel() {
+  highlightTimeColumn(timeHours);
+  highlightTimeColumn(timeMins);
+  timeWheel.classList.toggle('unset', !timeTouched);
+  feedTimeInput.value = timeTouched
+    ? `${String(timeColumnIndex(timeHours)).padStart(2, '0')}:${String(timeColumnIndex(timeMins)).padStart(2, '0')}`
+    : '';
+  drawSheet();
+}
+
+function setTimeWheel(hours, minutes, touched) {
+  timeTouched = touched;
+  timeHours.scrollTo({ top: hours * TIME_ROW, behavior: 'auto' });
+  timeMins.scrollTo({ top: minutes * TIME_ROW, behavior: 'auto' });
+  readTimeWheel();
+}
+
+[timeHours, timeMins].forEach((col) => {
+  // Only a real touch, click, mouse wheel or key press counts as choosing a time; placing the wheel from code does not.
+  ['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach(evt => col.addEventListener(evt, () => { timeTouched = true; }, { passive: true }));
+  col.addEventListener('scroll', readTimeWheel);
+  col.addEventListener('click', (e) => {
+    const item = e.target.closest('.tw-item');
+    if (!item) return;
+    timeTouched = true;
+    col.scrollTo({ top: Number(item.dataset.v) * TIME_ROW, behavior: 'smooth' });
+    readTimeWheel();
+  });
+  col.addEventListener('keydown', (e) => {
+    const d = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
+    if (!d) return;
+    e.preventDefault();
+    col.scrollTo({ top: Math.max(0, Math.min(col.children.length - 1, timeColumnIndex(col) + d)) * TIME_ROW, behavior: 'smooth' });
+  });
+});
+
 function openLogModal(feed) {
   editingFeedId = feed ? feed.id : null;
   const isPending = !!feed && feed.amountMl == null;
@@ -2025,13 +2090,15 @@ function openLogModal(feed) {
   buildAmountWheel(startMl);
 
   feedDateInput.max = todayDateString();
+  let startTime;
   if (feed) {
     const d = new Date(feed.timestamp);
     setFeedDay(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
-    feedTimeInput.value = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    startTime = [d.getHours(), d.getMinutes(), true];
   } else {
     setFeedDay(todayDateString());
-    feedTimeInput.value = '';
+    const n = new Date();
+    startTime = [n.getHours(), n.getMinutes(), false];
   }
 
   logModalTitle.textContent = sheetMode === 'log' ? 'Log a feed' : (isPending ? 'Complete feed' : 'Edit feed');
@@ -2040,6 +2107,7 @@ function openLogModal(feed) {
   logModal.hidden = false;
   // The wheel can only be positioned once the sheet is on screen.
   scrollAmountTo(startMl);
+  setTimeWheel(startTime[0], startTime[1], startTime[2]);
   onAmountChanged(startMl);
 }
 
@@ -2203,7 +2271,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=89').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=90').catch(() => {});
   });
 }
 
