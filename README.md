@@ -188,3 +188,20 @@ Firestore: `households/{code}/milestones/{dateKey}` → `{ photoDataUrl?, captio
 
 ## Costs
 Firebase Spark (free) plan covers this comfortably — Firestore free tier is 50K reads / 20K writes per day, far beyond what a feeding tracker for one baby will use. GitHub Pages hosting is free.
+
+## iPhone app (Capacitor)
+
+The iPhone app is this same website wrapped in a native shell (Capacitor). The wrapper only adds what a website cannot do, which today is the **next feed reminder** (a local notification set on the phone). Everything else, including the data in Firebase, is unchanged. Inside the app the reminder setting appears in Profile; in a normal browser it is hidden.
+
+Files: `package.json`, `capacitor.config.json` (app id `com.charliesfirstyear.app`, which cannot be changed once the app is in App Store Connect), `scripts/build-www.sh` (copies the site into `www/`).
+
+Building needs macOS with Xcode (a Mac, or a cloud Mac such as a GitHub Actions macOS runner), then:
+
+```
+npm install
+npx cap add ios        # once
+npm run sync           # after any change to the website files
+npx cap open ios       # opens Xcode: set the team, then Product > Archive
+```
+
+Reminder behaviour: one notification (id 1) is scheduled for the expected next feed time minus the chosen lead (On time, 10 or 30 minutes before). It is replaced whenever the feeds change and cancelled while a feed is running. The setting is kept per device in `localStorage` (`babyfeed_reminder_lead`).

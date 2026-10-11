@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=108">
+<link rel="manifest" href="manifest.json?v=109">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=108">
+<link rel="stylesheet" href="style.css?v=109">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -337,6 +337,18 @@
       </div>
     </section>
 
+    <section id="reminder-card" class="profile-card" hidden>
+      <h3 class="profile-card-title">Next feed reminder</h3>
+      <p class="profile-card-hint">A notification before the next feed is due. It is set on this phone only.</p>
+      <div class="seg" id="reminder-choice" role="group" aria-label="Reminder">
+        <button type="button" class="segment" data-lead="off">Off</button>
+        <button type="button" class="segment" data-lead="0">On time</button>
+        <button type="button" class="segment" data-lead="10">10 min before</button>
+        <button type="button" class="segment" data-lead="30">30 min before</button>
+      </div>
+      <p id="reminder-hint" class="profile-card-hint" hidden></p>
+    </section>
+
     <section class="profile-card">
       <h3 class="profile-card-title">Your data</h3>
       <p class="profile-card-hint">A copy of every feed, nappy and moment, saved as a file on your device. Keep it private: it includes your photos.</p>
@@ -571,6 +583,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=108"></script>
+<script type="module" src="app.js?v=109"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=108';
+import { analyse } from './patterns.js?v=109';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
@@ -746,6 +746,7 @@ function renderSinceLastFeed() {
 
 // The next feed is a guess, so a late feed is never "overdue": the pill and line turn amber and say how long ago it was expected.
 function renderNextFeed() {
+  syncReminder();
   const last = latestFeeds[0];
   nextFeedLabelEl.textContent = 'Next feed';
   nextFeedInEl.classList.remove('late');
@@ -2330,6 +2331,89 @@ joinForm.addEventListener('submit', (e) => {
 });
 
 
+// --- Next feed reminder ---
+// Only inside the iPhone app. The reminder is a notification set on the phone itself, so it fires when the app is
+// closed and with no signal. The setting stays on this device and is never saved to the household's data.
+const nativeNotifications = (() => {
+  try {
+    return window.Capacitor?.isNativePlatform?.() ? window.Capacitor.registerPlugin('LocalNotifications') : null;
+  } catch (e) {
+    return null;
+  }
+})();
+const REMINDER_ID = 1;
+const REMINDER_KEY = 'babyfeed_reminder_lead';
+const reminderCard = document.getElementById('reminder-card');
+const reminderChoice = document.getElementById('reminder-choice');
+const reminderHint = document.getElementById('reminder-hint');
+function readReminderLead() {
+  const raw = localStorage.getItem(REMINDER_KEY);
+  return raw === null || raw === 'off' ? null : Number(raw);
+}
+let reminderLead = readReminderLead();
+let reminderScheduled = '';
+
+async function syncReminder() {
+  if (!nativeNotifications) return;
+  const last = latestFeeds[0];
+  // Nothing to remind about while a feed is running or before there is a finished feed to count from.
+  const due = reminderLead !== null && last && last.amountMl != null
+    ? last.timestamp + (last.intervalHours || 3) * 3600000
+    : null;
+  const at = due === null ? null : due - reminderLead * 60000;
+  const name = profileFirstName || 'Charlie';
+  const signature = at !== null && at > Date.now() ? `${at}|${name}|${due}` : '';
+  if (signature === reminderScheduled) return;
+  reminderScheduled = signature;
+  try {
+    await nativeNotifications.cancel({ notifications: [{ id: REMINDER_ID }] });
+    if (signature) {
+      await nativeNotifications.schedule({
+        notifications: [{
+          id: REMINDER_ID,
+          title: `${name}’s next feed`,
+          body: reminderLead === 0 ? 'Feed time is about now.' : `Due around ${formatClock(due)}.`,
+          schedule: { at: new Date(at) },
+        }],
+      });
+    }
+  } catch (e) {
+    console.warn('Could not set the reminder', e);
+    reminderScheduled = '';
+  }
+}
+
+function drawReminderChoice() {
+  const value = reminderLead === null ? 'off' : String(reminderLead);
+  reminderChoice.querySelectorAll('.segment').forEach(b => b.classList.toggle('active', b.dataset.lead === value));
+}
+if (nativeNotifications) {
+  reminderCard.hidden = false;
+  drawReminderChoice();
+  reminderChoice.querySelectorAll('.segment').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      reminderHint.hidden = true;
+      if (btn.dataset.lead === 'off') {
+        reminderLead = null;
+      } else {
+        try {
+          const asked = await nativeNotifications.requestPermissions();
+          if (asked.display !== 'granted') throw new Error('not allowed');
+          reminderLead = Number(btn.dataset.lead);
+        } catch (e) {
+          reminderLead = null;
+          reminderHint.textContent = 'Notifications are switched off for this app. Turn them on in the iPhone Settings app, then try again.';
+          reminderHint.hidden = false;
+        }
+      }
+      localStorage.setItem(REMINDER_KEY, reminderLead === null ? 'off' : String(reminderLead));
+      drawReminderChoice();
+      reminderScheduled = '';
+      syncReminder();
+    });
+  });
+}
+
 // --- Backup ---
 // Reads everything in the household and saves it as one file. It only reads, so it cannot change the stored data.
 // Two taps on purpose: the first prepares the file, the second hands it to the phone (iPhone only allows saving or
@@ -2412,7 +2496,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=108').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=109').catch(() => {});
   });
 }
 

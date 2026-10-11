@@ -681,3 +681,5 @@ html.on-home .home-foot { flex: none; }
 a.text-link-btn { display: inline-block; margin-top: 10px; text-decoration: none; }
 #backup-btn { margin-top: 4px; }
 #backup-status { margin-top: 8px; }
+#reminder-choice { width: 100%; }
+#reminder-choice .segment { flex: 1; white-space: nowrap; padding-inline: 4px; }

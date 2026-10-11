@@ -23,6 +23,7 @@ trap 'rm -rf "$tmp"' EXIT
 # App files only: top-level web files. Never CNAME (would claim the real domain),
 # README, prototypes, or tooling folders.
 for f in *.html *.js *.css *.json; do
+  case "$f" in package.json|package-lock.json|capacitor.config.json) continue ;; esac
   [ -f "$f" ] && cp "$f" "$tmp/$f"
 done
 
