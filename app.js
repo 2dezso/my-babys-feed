@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=100';
+import { analyse } from './patterns.js?v=101';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -36,6 +36,7 @@ const btnCreateHousehold = document.getElementById('btn-create-household');
 
 const heroCard = document.getElementById('hero-card');
 const pendingTimeEl = document.getElementById('pending-time');
+const pendingDetailEl = document.getElementById('pending-detail');
 const nextFeedLabelEl = document.getElementById('next-feed-label');
 const heroLine = document.getElementById('hero-line');
 const todayBottle = document.getElementById('today-bottle');
@@ -704,7 +705,7 @@ function updateFeedActionButtons(isPending) {
   // Both buttons stay where they are: Log past is only dimmed and switched off while a feed is running.
   btnLogFeed.disabled = isPending;
   btnStartFeedNow.classList.toggle('pending', isPending);
-  btnStartFeedSub.textContent = isPending && latestFeeds[0] ? `Feeding for ${durationString(Date.now() - latestFeeds[0].timestamp)}` : '';
+  btnStartFeedSub.textContent = isPending ? 'Add the amount' : '';
 }
 
 function renderSinceLastFeed() {
@@ -720,17 +721,12 @@ function renderSinceLastFeed() {
   const since = durationString(Date.now() - last.timestamp);
   if (isPending) {
     pendingTimeEl.textContent = since;
+    pendingDetailEl.textContent = `Started at ${formatClock(last.timestamp)}`;
   } else {
     sinceLastFeedEl.textContent = since;
     lastFeedDetailEl.textContent = `ago · ${last.amountMl}ml`;
   }
 }
-
-heroCard.addEventListener('click', () => {
-  if (latestFeeds.length && latestFeeds[0].amountMl == null) {
-    openLogModal(latestFeeds[0]);
-  }
-});
 
 // The next feed is a guess, so a late feed is never "overdue": the pill and line turn amber and say how long ago it was expected.
 function renderNextFeed() {
@@ -2136,7 +2132,7 @@ function openLogModal(feed) {
     startTime = [n.getHours(), n.getMinutes(), false];
   }
 
-  logModalTitle.textContent = sheetMode === 'log' ? 'Log a feed' : (isPending ? 'Complete feed' : 'Edit feed');
+  logModalTitle.textContent = sheetMode === 'log' ? 'Log a feed' : (isPending ? 'Finish feed' : 'Edit feed');
   feedWhenLabel.textContent = isPending ? 'Started' : 'When';
   sheetDel.hidden = sheetMode !== 'edit';
   logModal.hidden = false;
@@ -2306,7 +2302,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=100').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=101').catch(() => {});
   });
 }
 
