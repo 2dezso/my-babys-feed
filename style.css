@@ -688,3 +688,9 @@ a.text-link-btn { color: var(--muted); }
 .psize { min-height: 78px; }
 .ptitle-ico { width: 30px; height: 30px; }
 .ptitle-ico .ico { width: 17px; height: 17px; }
+
+/* Hours until next feed: one tidy bar, like the Today / Other day switch. Exactly five hours show at a time, none cut
+   off at the edges, and the bar scrolls sideways inside itself for shorter or longer gaps. */
+.gapchips { margin: -4px 0 0; padding: 4px; gap: 0; background: var(--fill); border-radius: 14px; scroll-snap-type: x mandatory; scroll-padding: 0; }
+.gapchips button { width: 20%; min-width: 0; height: 40px; border-radius: 10px; background: none; color: var(--muted); font-size: 1.0625rem; box-shadow: none; scroll-snap-align: center; }
+.gapchips button[aria-pressed="true"] { background: var(--card); color: var(--ink); font-size: 1.0625rem; box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
