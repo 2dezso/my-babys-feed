@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=116';
+import { analyse } from './patterns.js?v=117';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
@@ -14,11 +14,13 @@ try { enableIndexedDbPersistence(db); } catch (e) { /* multiple tabs open, fine 
 // Every device signs in quietly (no email or password) and registers itself as a member of the household. The
 // security rules (firestore.rules) only let registered members read or write that household's data.
 const auth = getAuth(app);
+const MEMBER_KEY = 'babyfeed_member_of';
 async function joinHousehold(code) {
   try {
     await auth.authStateReady();
     if (!auth.currentUser) await signInAnonymously(auth);
-    const member = setDoc(doc(db, 'households', code, 'members', auth.currentUser.uid), { lastSeen: Date.now() }, { merge: true });
+    const member = setDoc(doc(db, 'households', code, 'members', auth.currentUser.uid), { lastSeen: Date.now() }, { merge: true })
+      .then(() => localStorage.setItem(MEMBER_KEY, `${code}:${auth.currentUser.uid}`));
     // Offline, the write waits for the connection, so never hold the app up for it.
     await Promise.race([member, new Promise((resolve) => setTimeout(resolve, 4000))]);
   } catch (e) {
@@ -337,7 +339,11 @@ async function enterApp(code) {
     history.replaceState(null, '', '#feed');
   }
   applyRouteFromHash();
-  await joinHousehold(code);
+  // A device that has registered before starts straight away; only the very first open waits for it.
+  const joining = joinHousehold(code);
+  let known = false;
+  try { await auth.authStateReady(); known = !!auth.currentUser && localStorage.getItem(MEMBER_KEY) === `${code}:${auth.currentUser.uid}`; } catch (e) { /* treat as a first open */ }
+  if (!known) await joining;
   listenToFeeds(code);
   listenToProfile(code);
   listenToPoos(code);
@@ -2546,7 +2552,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=116').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=117').catch(() => {});
   });
 }
 
