@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=105';
+import { analyse } from './patterns.js?v=106';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -2037,7 +2037,8 @@ let gapShown = null;
 for (let h = INTERVAL_MIN; h <= INTERVAL_MAX; h += INTERVAL_STEP) {
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.innerHTML = `<b>${h % 1 ? `${Math.floor(h)}½h` : `${h}h`}</b><small></small>`;
+  btn.textContent = h % 1 ? `${Math.floor(h)}½` : String(h);
+  btn.setAttribute('aria-label', formatIntervalLabel(h));
   btn.addEventListener('click', () => {
     selectedIntervalHours = h;
     intervalOverridden = true;
@@ -2054,11 +2055,11 @@ function shownTimeTs() {
 }
 function drawGapChips() {
   const base = shownTimeTs();
+  document.getElementById('gap-at').textContent = base == null ? '' : `around ${formatClock(base + selectedIntervalHours * 3600000)}`;
   let chosen = null;
   for (const { h, btn } of gapButtons) {
     const on = h === selectedIntervalHours;
     btn.setAttribute('aria-pressed', String(on));
-    btn.lastElementChild.textContent = base == null ? '' : formatClock(base + h * 3600000);
     if (on) chosen = btn;
   }
   // Only move the row when the choice itself changes, so swiping along it to look is never undone.
@@ -2329,7 +2330,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=105').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=106').catch(() => {});
   });
 }
 
