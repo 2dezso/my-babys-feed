@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=102';
+import { analyse } from './patterns.js?v=103';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -721,13 +721,8 @@ function renderSinceLastFeed() {
   const since = durationString(Date.now() - last.timestamp);
   if (isPending) {
     pendingTimeEl.textContent = since;
+    pendingTimeEl.classList.toggle('long', since.length > 4); // "1h 12m" has to fit inside the ring
     pendingDetailEl.textContent = `Started at ${formatClock(last.timestamp)}`;
-    // The lower half of the card stays useful while feeding: what the last feed was, and the day's milk so far.
-    const prev = latestFeeds.find(f => f.amountMl != null);
-    document.getElementById('pending-last').textContent = prev ? `${prev.amountMl}ml` : '—';
-    const dayStart = startOfToday();
-    const soFar = latestFeeds.filter(f => f.timestamp >= dayStart).reduce((sum, f) => sum + (f.amountMl || 0), 0);
-    document.getElementById('pending-today').textContent = `${soFar}ml`;
   } else {
     sinceLastFeedEl.textContent = since;
     lastFeedDetailEl.textContent = `ago · ${last.amountMl}ml`;
@@ -2308,7 +2303,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=102').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=103').catch(() => {});
   });
 }
 

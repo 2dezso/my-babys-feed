@@ -654,4 +654,13 @@ html.on-home .home-foot { flex: none; }
 .hero-pending { cursor: default; }
 .startbtn.pending { background: var(--sec); box-shadow: 0 6px 16px rgba(17, 17, 20, .16); }
 .add-amount-btn { background: var(--sec); color: #fff; font-weight: 800; white-space: nowrap; }
-#pending-facts { position: absolute; left: 0; right: 0; bottom: 0; margin-top: 0; }
+
+/* While feeding, the card is just a big timer in the middle inside a soft ring; the bottle steps aside. */
+.hlayer.feeding { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.hlayer.feeding::before { content: ""; position: absolute; left: 50%; top: 50%; width: 198px; height: 198px; margin: -99px 0 0 -99px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, .24); }
+.hlayer.feeding > * { position: relative; }
+#pending-time { font-size: 3.75rem; margin: 0 0 2px; }
+.sigbottle { transition: opacity .35s cubic-bezier(.22, 1, .36, 1); }
+#hero-card.hero-pending .sigbottle { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .sigbottle { transition: none; } }
+#pending-time.long { font-size: 2.75rem; }
