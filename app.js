@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=117';
+import { analyse } from './patterns.js?v=118';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
@@ -230,10 +230,36 @@ function rangeCutoff(range) {
   return startOfToday();
 }
 
-function showToast(msg) {
+// A short message at the bottom of the screen. With an action (such as Undo) it stays longer and carries a button.
+let toastTimer = null;
+function showToast(msg, action) {
+  clearTimeout(toastTimer);
   toast.textContent = msg;
+  if (action) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'toast-act';
+    btn.textContent = action.label;
+    btn.addEventListener('click', () => { toast.hidden = true; action.run(); });
+    toast.appendChild(btn);
+  }
+  toast.classList.toggle('has-act', !!action);
   toast.hidden = false;
-  setTimeout(() => { toast.hidden = true; }, 2000);
+  toastTimer = setTimeout(() => { toast.hidden = true; }, action ? 7000 : 2000);
+}
+
+// Puts a just-deleted feed or poo back exactly as it was, under the same id.
+async function restoreDeleted(kind, item) {
+  const code = getHouseholdCode();
+  if (!code || !item) return;
+  const { id, ...data } = item;
+  try {
+    await setDoc(doc(db, 'households', code, kind, id), data);
+    showToast(kind === 'feeds' ? 'Feed put back' : 'Poo put back');
+  } catch (e) {
+    console.error(e);
+    showToast('Could not put it back. Check your connection');
+  }
 }
 
 function generateHouseholdCode() {
@@ -398,9 +424,15 @@ function listenToProfile(code) {
   });
 }
 
+// The profile picture is a drawn baby face. The saved value is still the old skin-tone marker, so nothing stored changes.
+const AVATAR_SKIN = { '🏻': '#f9dcc4', '': '#f1c9a5', '🏽': '#d9a37a', '🏾': '#a86f47', '🏿': '#6b4630' };
+function babyFaceSvg(tone) {
+  const skin = AVATAR_SKIN[tone] || AVATAR_SKIN[''];
+  return `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="10.5" cy="35" r="4.5" fill="${skin}"/><circle cx="53.5" cy="35" r="4.5" fill="${skin}"/><circle cx="32" cy="34" r="22" fill="${skin}"/><path d="M32 12c-3 0-5 2-5 4.500 0 1.800 1.600 2.800 3 2.200" fill="none" stroke="#2b201c" stroke-width="2.400" stroke-linecap="round"/><circle cx="24.500" cy="34" r="2.600" fill="#2b201c"/><circle cx="39.500" cy="34" r="2.600" fill="#2b201c"/><ellipse cx="19.500" cy="41" rx="3.600" ry="2.400" fill="#ff9fb1" opacity=".6"/><ellipse cx="44.500" cy="41" rx="3.600" ry="2.400" fill="#ff9fb1" opacity=".6"/><path d="M26.500 42c2.800 3.600 8.200 3.600 11 0" fill="none" stroke="#2b201c" stroke-width="2.400" stroke-linecap="round"/></svg>`;
+}
+avatarToneChips.querySelectorAll('.tone-chip').forEach(c => { c.innerHTML = babyFaceSvg(c.dataset.tone); });
 function updateAvatarIcons() {
-  const icon = `👶${selectedAvatarTone}`;
-  profileIconBig.textContent = icon;
+  profileIconBig.innerHTML = babyFaceSvg(selectedAvatarTone);
 }
 
 function highlightToneChip() {
@@ -654,8 +686,10 @@ async function updatePoo(id, timestamp, size, note) {
 async function deletePoo(id) {
   const code = getHouseholdCode();
   if (!code) return;
+  const removed = latestPoos.find(p => p.id === id);
   try {
     await deleteDoc(doc(db, 'households', code, 'poos', id));
+    showToast('Poo deleted', { label: 'Undo', run: () => restoreDeleted('poos', removed) });
   } catch (e) {
     console.error(e);
     showToast('Could not delete');
@@ -1358,8 +1392,10 @@ async function finishFeed(id, timestamp, amountMl, intervalHours, completing = f
 async function deleteFeed(id) {
   const code = getHouseholdCode();
   if (!code) return;
+  const removed = latestFeeds.find(f => f.id === id);
   try {
     await deleteDoc(doc(db, 'households', code, 'feeds', id));
+    showToast('Feed deleted', { label: 'Undo', run: () => restoreDeleted('feeds', removed) });
   } catch (e) {
     console.error(e);
     showToast('Could not delete');
@@ -2552,7 +2588,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=117').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=118').catch(() => {});
   });
 }
 

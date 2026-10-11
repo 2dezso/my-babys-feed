@@ -694,3 +694,19 @@ a.text-link-btn { color: var(--muted); }
 .gapchips { margin: -4px 0 0; padding: 4px; gap: 0; background: var(--fill); border-radius: 14px; scroll-snap-type: x mandatory; scroll-padding: 0; }
 .gapchips button { width: 20%; min-width: 0; height: 40px; border-radius: 10px; background: none; color: var(--muted); font-size: 1.0625rem; box-shadow: none; scroll-snap-align: center; }
 .gapchips button[aria-pressed="true"] { background: var(--card); color: var(--ink); font-size: 1.0625rem; box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
+
+/* Drawn baby face in Profile, and its skin-tone choices. */
+.profile-avatar svg { width: 80%; height: 80%; }
+.tone-chip svg { width: 78%; height: 78%; }
+
+/* Thumb-sized tap areas: small controls keep their look but respond to a touch up to 44px tall. */
+.seg button, .mini, .close, .history-delete, .add-amount-btn { position: relative; }
+.seg button::after, .mini::after, .close::after, .history-delete::after, .add-amount-btn::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
+.close::after, .history-delete::after { left: 50%; right: auto; width: 44px; transform: translate(-50%, -50%); }
+.history-delete { width: 32px; height: 32px; }
+.seg button { min-height: 36px; }
+
+/* Undo sits inside the message. */
+.toast.has-act { display: flex; align-items: center; gap: 14px; padding: 6px 6px 6px 20px; }
+.toast.has-act[hidden] { display: none; }
+.toast-act { min-height: 40px; padding: 0 16px; border-radius: 99px; background: var(--bg); color: var(--ink); font-weight: 800; font-size: .9375rem; }
