@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=109">
+<link rel="manifest" href="manifest.json?v=110">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=109">
+<link rel="stylesheet" href="style.css?v=110">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -79,16 +79,16 @@
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card">
-    <h1>🍼 Charlie's First Year</h1>
-    <p class="muted">Track feeds, synced between everyone looking after the baby.</p>
+    <h1>Your baby’s first year</h1>
+    <p class="muted">A simple diary for feeds, poos and moments, shared with everyone who looks after your baby. No account or sign-up needed.</p>
 
     <div class="setup-choice">
-      <button id="btn-create-household" class="btn btn-primary">Start a new household</button>
+      <button id="btn-create-household" class="btn btn-primary">Start a new diary</button>
       <div class="or-divider">or</div>
       <form id="join-form">
-        <label for="join-code">Enter the code someone shared with you</label>
-        <input id="join-code" type="text" inputmode="text" autocapitalize="characters" placeholder="e.g. ABCD12" maxlength="8">
-        <button type="submit" class="btn btn-secondary">Join household</button>
+        <label for="join-code">Got a code from a partner or family member?</label>
+        <input id="join-code" type="text" inputmode="text" autocapitalize="characters" placeholder="ABCD1234" maxlength="8">
+        <button type="submit" class="btn btn-secondary">Join with this code</button>
       </form>
     </div>
     <p id="setup-error" class="error" hidden></p>
@@ -301,23 +301,21 @@
     </section>
 
     <section class="profile-card">
-      <h3 class="profile-card-title">Boy or girl</h3>
-      <p class="profile-card-hint">Sets the colour of the Feeds section.</p>
+      <h3 class="profile-card-title">Feeds colour</h3>
+      <p class="profile-card-hint">Green or rose, whichever you like.</p>
       <div class="gender-cards" id="gender-chips">
         <button class="gender-card" data-gender="male">
-          <span class="gender-emoji">👦</span>
-          <span>Boy</span>
+          <span>Green</span>
           <span class="gender-swatch gender-swatch-green"></span>
         </button>
         <button class="gender-card" data-gender="female">
-          <span class="gender-emoji">👧</span>
-          <span>Girl</span>
+          <span>Rose</span>
           <span class="gender-swatch gender-swatch-pink"></span>
         </button>
       </div>
     </section>
 
-    <section class="profile-card">
+    <section class="profile-card" id="bottle-card" hidden><!-- Hidden until more than one bottle design exists; the saved choice is kept. -->
       <h3 class="profile-card-title">Bottle</h3>
       <p class="profile-card-hint">The bottle you feed with. Every brand shows the same bottle for now.</p>
       <div class="wheel-picker" id="bottle-brand-wheel">
@@ -502,8 +500,8 @@
 <div id="share-modal" class="modal" hidden>
   <div class="modal-card">
     <span class="grab"></span>
-    <h2>Household code</h2>
-    <p class="muted">Share this with anyone else feeding the baby. They enter it on the "Join household" screen.</p>
+    <h2>Your share code</h2>
+    <p class="muted">Give this to anyone else who feeds the baby. On a new phone they choose "Join with this code" and type it in.</p>
     <div id="share-code" class="share-code"></div>
     <div class="modal-actions">
       <button id="share-close" class="btn btn-primary">Done</button>
@@ -583,6 +581,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=109"></script>
+<script type="module" src="app.js?v=110"></script>
 </body>
 </html>
