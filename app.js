@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=114';
+import { analyse } from './patterns.js?v=115';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
@@ -1996,7 +1996,7 @@ milestoneDelete.addEventListener('click', async () => {
 
 let sheetMode = 'log'; // 'log' | 'complete' | 'edit'
 let amountValues = [];
-const AMOUNT_ROW = 56; // height of one wheel row in px; must match .amt-item in style.css
+const AMOUNT_ROW = 44; // height of one wheel row in px; must match .amt-item in style.css
 
 function formatIntervalLabel(hours) {
   const whole = Math.floor(hours);
@@ -2148,7 +2148,7 @@ function drawGapChips() {
 // --- Time wheel: hours and minutes you scroll, right in the sheet ---
 // For a new past feed the wheels start on the current time as a place to scroll from, but the time only counts once
 // a wheel has been touched. Until then the button asks for the time, so a feed is never saved at a guessed time.
-const TIME_ROW = 44; // height of one row in px; must match .tw-item in style.css
+const TIME_ROW = 36; // height of one row in px; must match .tw-item in style.css
 let timeTouched = false;
 
 function buildTimeColumn(el, count) {
@@ -2546,7 +2546,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=114').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=115').catch(() => {});
   });
 }
 

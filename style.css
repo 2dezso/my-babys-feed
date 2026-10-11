@@ -665,3 +665,26 @@ a.text-link-btn { color: var(--muted); }
 .go-poo:disabled { background: var(--fill); color: var(--muted); }
 #poo-time-modal .field-input:focus { border-color: var(--nappy); }
 @media (prefers-reduced-motion: reduce) { .psize .ico { transition: none; } }
+
+/* Compact sheets: Log a feed and Log a poo are a size smaller all round so the whole sheet reads at a glance.
+   Row heights must match TIME_ROW (36) and AMOUNT_ROW (44) in app.js. */
+#log-modal .modal-card, #poo-time-modal .modal-card { gap: 12px; padding-top: 10px; }
+#log-modal .top h2, #poo-time-modal .top h2 { font-size: 1.1875rem; }
+.time-wheel { height: 108px; }
+.tw-band, .time-wheel .tw-band { top: 36px; height: 36px; border-radius: 13px; }
+.tw-col { padding: 36px 0; }
+.tw-item { height: 36px; line-height: 36px; font-size: 1.0625rem; }
+.tw-item.active { font-size: 1.5rem; }
+.tw-sep { font-size: 1.5rem; }
+.amt-wheel { height: 132px; }
+.amt-band { top: 44px; height: 44px; border-radius: 14px; }
+.amt-track { padding: 44px 0; }
+.amt-item { height: 44px; line-height: 44px; font-size: 1.125rem; }
+.amt-item.active { font-size: 2rem; }
+.amt-item.active small { font-size: 1rem; }
+.gapchips button { width: 62px; height: 44px; font-size: 1.1875rem; }
+.gapchips button[aria-pressed="true"] { font-size: 1.3125rem; }
+.go { min-height: 50px; font-size: 1rem; }
+.psize { min-height: 78px; }
+.ptitle-ico { width: 30px; height: 30px; }
+.ptitle-ico .ico { width: 17px; height: 17px; }
