@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=111';
+import { analyse } from './patterns.js?v=112';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
@@ -374,10 +374,10 @@ function listenToProfile(code) {
     if (!profileScreen.hidden) scrollBottleBrandWheelTo(selectedBottleBrand);
     profileTileLabel.textContent = firstName ? `${firstName}’s profile` : 'Profile';
     profileFirstName = firstName;
-    const babyTitleName = firstName || 'Charlie';
+    const babyTitleName = firstName || 'Your baby';
     homeTitleEl.textContent = `${babyTitleName}’${babyTitleName.endsWith('s') ? '' : 's'} First Year`;
     document.title = `${babyTitleName}'s First Year`;
-    const initial = babyTitleName.charAt(0).toUpperCase();
+    const initial = firstName ? firstName.charAt(0).toUpperCase() : '·';
     document.querySelectorAll('.me:not(.back)').forEach(el => { el.textContent = initial; });
     document.body.classList.toggle('gender-pink', selectedGender === 'female');
     updateAvatarIcons();
@@ -2496,7 +2496,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=111').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=112').catch(() => {});
   });
 }
 
