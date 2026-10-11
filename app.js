@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=112';
+import { analyse } from './patterns.js?v=113';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
@@ -656,13 +656,64 @@ async function deletePoo(id) {
   }
 }
 
+// --- Log a poo sheet ---
+// The same shape as Log a feed: When (Today or Other day, then the time wheels), then the one choice that is particular
+// to a poo, its size, as three cards, then an optional note. The time starts on now, since a poo is usually logged
+// straight away, and a size is optional.
+const pooHours = document.getElementById('poo-hours');
+const pooMins = document.getElementById('poo-mins');
+buildTimeColumn(pooHours, 24);
+buildTimeColumn(pooMins, 60);
+
+function readPooWheel() {
+  highlightTimeColumn(pooHours);
+  highlightTimeColumn(pooMins);
+  pooTimeInput.value = `${String(timeColumnIndex(pooHours)).padStart(2, '0')}:${String(timeColumnIndex(pooMins)).padStart(2, '0')}`;
+}
+function setPooWheel(hours, minutes) {
+  pooHours.scrollTo({ top: hours * TIME_ROW, behavior: 'auto' });
+  pooMins.scrollTo({ top: minutes * TIME_ROW, behavior: 'auto' });
+  readPooWheel();
+}
+[pooHours, pooMins].forEach((col) => {
+  col.addEventListener('scroll', readPooWheel);
+  col.addEventListener('click', (e) => {
+    const item = e.target.closest('.tw-item');
+    if (!item) return;
+    col.scrollTo({ top: Number(item.dataset.v) * TIME_ROW, behavior: 'smooth' });
+    readPooWheel();
+  });
+  col.addEventListener('keydown', (e) => {
+    const d = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
+    if (!d) return;
+    e.preventDefault();
+    col.scrollTo({ top: Math.max(0, Math.min(col.children.length - 1, timeColumnIndex(col) + d)) * TIME_ROW, behavior: 'smooth' });
+  });
+});
+
+function setPooDay(dateStr, forceOther = false) {
+  pooDateInput.value = dateStr;
+  const which = forceOther || dateStr !== dateStringForOffset(0) ? 'other' : '0';
+  pooDayChips.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.offset === which));
+  pooDateInput.hidden = which !== 'other';
+}
+pooDayChips.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  if (btn.dataset.offset === 'other') setPooDay(pooDateInput.value || dateStringForOffset(0), true);
+  else setPooDay(dateStringForOffset(0));
+});
+pooDateInput.addEventListener('change', () => { if (pooDateInput.value) setPooDay(pooDateInput.value, true); });
+
 function highlightPooSizeChip() {
-  pooSizeChips.querySelectorAll('.chip').forEach(c => {
-    c.classList.toggle('selected', c.dataset.size === selectedPooSize);
+  pooSizeChips.querySelectorAll('.psize').forEach(c => {
+    const on = c.dataset.size === selectedPooSize;
+    c.classList.toggle('selected', on);
+    c.setAttribute('aria-pressed', String(on));
   });
 }
 
-pooSizeChips.querySelectorAll('.chip').forEach(chip => {
+pooSizeChips.querySelectorAll('.psize').forEach(chip => {
   chip.addEventListener('click', () => {
     selectedPooSize = selectedPooSize === chip.dataset.size ? '' : chip.dataset.size;
     highlightPooSizeChip();
@@ -672,16 +723,16 @@ pooSizeChips.querySelectorAll('.chip').forEach(chip => {
 function openPooTimeModal(poo) {
   editingPooId = poo ? poo.id : null;
   const baseTime = poo ? new Date(poo.timestamp) : new Date();
-  pooDateInput.value = `${baseTime.getFullYear()}-${String(baseTime.getMonth() + 1).padStart(2, '0')}-${String(baseTime.getDate()).padStart(2, '0')}`;
   pooDateInput.max = todayDateString();
-  syncDayChips(pooDateInput, pooDayChips);
-  pooTimeInput.value = `${String(baseTime.getHours()).padStart(2, '0')}:${String(baseTime.getMinutes()).padStart(2, '0')}`;
+  setPooDay(`${baseTime.getFullYear()}-${String(baseTime.getMonth() + 1).padStart(2, '0')}-${String(baseTime.getDate()).padStart(2, '0')}`);
   selectedPooSize = poo?.size || '';
   highlightPooSizeChip();
   pooNoteInput.value = poo?.note || '';
-  pooTimeModalTitle.textContent = poo ? 'Edit poo' : 'Log poo';
+  pooTimeModalTitle.lastChild.textContent = poo ? 'Edit poo' : 'Log a poo';
   pooTimeConfirm.textContent = poo ? 'Save' : 'Log poo';
   pooTimeModal.hidden = false;
+  // The wheels can only be positioned once the sheet is on screen.
+  setPooWheel(baseTime.getHours(), baseTime.getMinutes());
 }
 
 btnLogPoo.addEventListener('click', () => openPooTimeModal());
@@ -2206,7 +2257,6 @@ function wireDayPicker(input, chipsEl) {
   });
 }
 
-wireDayPicker(pooDateInput, pooDayChips);
 
 function combineDateTimeToTimestamp(dateStr, timeStr) {
   const now = new Date();
@@ -2496,7 +2546,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=112').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=113').catch(() => {});
   });
 }
 

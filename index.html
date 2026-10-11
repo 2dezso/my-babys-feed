@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=112">
+<link rel="manifest" href="manifest.json?v=113">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=112">
+<link rel="stylesheet" href="style.css?v=113">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -386,40 +386,45 @@
   </div>
 </div>
 
-<div id="poo-time-modal" class="modal" hidden>
-  <div class="modal-card">
+<div id="poo-time-modal" class="modal s-nappy" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="poo-time-modal-title">
     <span class="grab"></span>
-    <h2 id="poo-time-modal-title">Log poo</h2>
-    <div class="modal-section">
-      <div class="section-label">When</div>
-      <div class="day-chips" id="poo-day-chips">
-        <button type="button" class="chip" data-offset="0">Today</button>
-        <button type="button" class="chip" data-offset="1">Yesterday</button>
+    <div class="top">
+      <h2 id="poo-time-modal-title"><span class="ptitle-ico" aria-hidden="true"><svg class="ico solid"><use href="#h-poo"/></svg></span>Log a poo</h2>
+      <button id="poo-time-cancel" class="close" aria-label="Close"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+
+    <div class="frow">
+      <div class="when-head">
+        <span class="flabel">When</span>
+        <div class="seg" id="poo-day-chips" role="group" aria-label="Which day">
+          <button type="button" class="segment" data-offset="0">Today</button>
+          <button type="button" class="segment" data-offset="other">Other day</button>
+        </div>
       </div>
-      <div class="datetime-row">
-        <input id="poo-date" type="date" aria-label="Date">
-        <input id="poo-time" type="time" aria-label="Time">
+      <div class="when-fields">
+        <input id="poo-date" type="date" class="fsel" aria-label="Date" hidden>
+      </div>
+      <div class="time-wheel" id="poo-time-wheel">
+        <div class="tw-band" aria-hidden="true"></div>
+        <div class="tw-col" id="poo-hours" role="listbox" tabindex="0" aria-label="Hour"></div>
+        <span class="tw-sep" aria-hidden="true">:</span>
+        <div class="tw-col" id="poo-mins" role="listbox" tabindex="0" aria-label="Minutes"></div>
+        <input id="poo-time" type="hidden">
       </div>
     </div>
 
-    <div class="modal-section">
-      <div class="section-label">Size</div>
-      <div class="amount-chips" id="poo-size-chips">
-        <button class="chip" data-size="Small">Small</button>
-        <button class="chip" data-size="Medium">Medium</button>
-        <button class="chip" data-size="Big">Big</button>
-      </div>
+    <span class="flabel" id="poo-size-label">How big</span>
+    <div class="psizes" id="poo-size-chips" role="group" aria-labelledby="poo-size-label">
+      <button type="button" class="psize" data-size="Small"><svg class="ico solid" aria-hidden="true"><use href="#h-poo"/></svg>Small</button>
+      <button type="button" class="psize" data-size="Medium"><svg class="ico solid" aria-hidden="true"><use href="#h-poo"/></svg>Medium</button>
+      <button type="button" class="psize" data-size="Big"><svg class="ico solid" aria-hidden="true"><use href="#h-poo"/></svg>Big</button>
     </div>
 
-    <div class="modal-section">
-      <label class="field-label" for="poo-note">Note (optional)</label>
-      <input id="poo-note" class="field-input" type="text" placeholder="e.g. a little runny">
-    </div>
+    <label class="flabel" for="poo-note">Note, if you want one</label>
+    <input id="poo-note" class="field-input" type="text" placeholder="e.g. a little runny">
 
-    <div class="modal-actions">
-      <button id="poo-time-cancel" class="btn btn-secondary">Cancel</button>
-      <button id="poo-time-confirm" class="btn btn-primary">Log poo</button>
-    </div>
+    <button id="poo-time-confirm" class="go go-poo">Log poo</button>
   </div>
 </div>
 
@@ -551,6 +556,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=112"></script>
+<script type="module" src="app.js?v=113"></script>
 </body>
 </html>

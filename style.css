@@ -649,3 +649,19 @@ a.text-link-btn { color: var(--muted); }
 /* Share code is how a partner joins, so it reads as a button rather than a quiet link. */
 .home-foot #btn-share { background: var(--card); color: var(--ink); border-radius: 99px; padding: 0 18px; box-shadow: 0 1px 4px rgba(0, 0, 0, .08); }
 @media (prefers-color-scheme: dark) { .bottle.bottle-expired .mini, .bottle.bottle-expired .timer-ic { background: rgba(255, 216, 138, .16); } }
+
+/* Log a poo sheet: same layout as Log a feed, in the poo colour, with size as three cards. */
+#poo-time-modal .top h2 { display: flex; align-items: center; gap: 10px; }
+.ptitle-ico { width: 36px; height: 36px; border-radius: 50%; background: var(--nappy); color: #fff; display: grid; place-items: center; flex: none; }
+.ptitle-ico .ico { width: 20px; height: 20px; }
+.psizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.psize { min-height: 92px; border-radius: 18px; background: var(--fill); color: var(--muted); font-weight: 800; font-size: .9375rem; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; padding: 10px 6px 12px; }
+.psize .ico { fill: var(--nappy-soft); stroke: none; width: 34px; height: 34px; transition: transform .15s ease; }
+.psize[data-size="Small"] .ico { width: 28px; height: 28px; }
+.psize[data-size="Big"] .ico { width: 44px; height: 44px; }
+.psize.selected { background: var(--nappy); color: #fff; }
+.psize.selected .ico { fill: #fff; }
+.go-poo { background: var(--nappy); color: #fff; }
+.go-poo:disabled { background: var(--fill); color: var(--muted); }
+#poo-time-modal .field-input:focus { border-color: var(--nappy); }
+@media (prefers-reduced-motion: reduce) { .psize .ico { transition: none; } }
