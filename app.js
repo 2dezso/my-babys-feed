@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=110';
+import { analyse } from './patterns.js?v=111';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
@@ -2496,7 +2496,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=110').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=111').catch(() => {});
   });
 }
 
@@ -2528,3 +2528,13 @@ async function checkForNewVersion() {
 document.addEventListener('visibilitychange', checkForNewVersion);
 window.addEventListener('pageshow', checkForNewVersion);
 window.addEventListener('focus', checkForNewVersion);
+
+// Pinching in is blocked so the page can't be zoomed by accident, but pinching out is left alone so the browser's
+// own gesture (such as the tab overview on iPad) still works. iOS Safari ignores user-scalable=no, so this is done
+// here: any gesture that would enlarge the page (scale above 1) is cancelled; one that shrinks it is not.
+['gesturechange', 'gestureend'].forEach(evt => {
+  document.addEventListener(evt, (e) => { if (e.scale > 1) e.preventDefault(); });
+});
+document.addEventListener('touchmove', (e) => {
+  if (e.touches.length > 1 && e.scale && e.scale > 1) e.preventDefault();
+}, { passive: false });
