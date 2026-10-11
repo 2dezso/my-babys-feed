@@ -654,3 +654,4 @@ html.on-home .home-foot { flex: none; }
 .hero-pending { cursor: default; }
 .startbtn.pending { background: var(--sec); box-shadow: 0 6px 16px rgba(17, 17, 20, .16); }
 .add-amount-btn { background: var(--sec); color: #fff; font-weight: 800; white-space: nowrap; }
+#pending-facts { position: absolute; left: 0; right: 0; bottom: 0; margin-top: 0; }
