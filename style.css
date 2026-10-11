@@ -676,3 +676,8 @@ html.on-home .home-foot { flex: none; }
 .gapchips { scroll-snap-type: x proximity; scroll-padding: 0 20px; margin-top: -4px; }
 .gapchips button { width: 70px; min-width: 0; height: 52px; padding: 0; font-size: 1.375rem; font-weight: 800; letter-spacing: -.01em; scroll-snap-align: center; }
 .gapchips button[aria-pressed="true"] { font-size: 1.5rem; }
+
+/* Profile: backup and privacy link */
+a.text-link-btn { display: inline-block; margin-top: 10px; text-decoration: none; }
+#backup-btn { margin-top: 4px; }
+#backup-status { margin-top: 8px; }

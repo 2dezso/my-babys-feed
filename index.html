@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=107">
+<link rel="manifest" href="manifest.json?v=108">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=107">
+<link rel="stylesheet" href="style.css?v=108">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -92,6 +92,7 @@
       </form>
     </div>
     <p id="setup-error" class="error" hidden></p>
+    <a class="text-link-btn" href="privacy.html">Privacy</a>
   </div>
 </div>
 
@@ -336,6 +337,14 @@
       </div>
     </section>
 
+    <section class="profile-card">
+      <h3 class="profile-card-title">Your data</h3>
+      <p class="profile-card-hint">A copy of every feed, nappy and moment, saved as a file on your device. Keep it private: it includes your photos.</p>
+      <button id="backup-btn" type="button" class="btn btn-secondary">Download a backup</button>
+      <p id="backup-status" class="profile-card-hint" hidden></p>
+      <a class="text-link-btn" href="privacy.html">Privacy</a>
+    </section>
+
     <div class="profile-actions">
       <button id="profile-save" class="btn btn-primary">Save profile</button>
       <button id="profile-skip" class="text-link-btn" hidden>Skip for now</button>
@@ -562,6 +571,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=107"></script>
+<script type="module" src="app.js?v=108"></script>
 </body>
 </html>

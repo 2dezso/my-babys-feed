@@ -1,10 +1,10 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=107';
+import { analyse } from './patterns.js?v=108';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
-  query, where, orderBy, limit, documentId, onSnapshot, enableIndexedDbPersistence,
+  query, where, orderBy, limit, documentId, onSnapshot, enableIndexedDbPersistence, getDocs,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 const app = initializeApp(firebaseConfig);
@@ -2329,6 +2329,70 @@ joinForm.addEventListener('submit', (e) => {
   enterApp(code);
 });
 
+
+// --- Backup ---
+// Reads everything in the household and saves it as one file. It only reads, so it cannot change the stored data.
+// Two taps on purpose: the first prepares the file, the second hands it to the phone (iPhone only allows saving or
+// sharing straight after a tap).
+const backupBtn = document.getElementById('backup-btn');
+const backupStatus = document.getElementById('backup-status');
+let backupFile = null;
+function setBackupStatus(text) {
+  backupStatus.textContent = text;
+  backupStatus.hidden = !text;
+}
+async function prepareBackup(code) {
+  const data = { app: "Charlie's First Year", exportedAt: new Date().toISOString(), household: code, collections: {} };
+  for (const name of ['feeds', 'poos', 'milestones', 'feedback', 'profile', 'bottle']) {
+    const snap = await getDocs(collection(db, 'households', code, name));
+    data.collections[name] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+  const day = new Date().toISOString().slice(0, 10);
+  const file = new File([JSON.stringify(data)], `charlies-first-year-backup-${day}.json`, { type: 'application/json' });
+  const photos = data.collections.milestones.filter(m => m.photoDataUrl).length;
+  return { file, summary: `${data.collections.feeds.length} feeds, ${data.collections.poos.length} poos, ${photos} photos` };
+}
+async function saveBackup() {
+  const file = backupFile;
+  if (navigator.canShare?.({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: file.name }); } catch (e) { if (e.name !== 'AbortError') throw e; }
+    return;
+  }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = file.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+backupBtn.addEventListener('click', async () => {
+  const code = getHouseholdCode();
+  if (!code) return;
+  backupBtn.disabled = true;
+  try {
+    if (!backupFile) {
+      backupBtn.textContent = 'Preparing…';
+      const { file, summary } = await prepareBackup(code);
+      backupFile = file;
+      setBackupStatus(`Ready: ${summary}.`);
+      backupBtn.textContent = 'Save the backup';
+    } else {
+      await saveBackup();
+      backupFile = null;
+      setBackupStatus('');
+      backupBtn.textContent = 'Download a backup';
+    }
+  } catch (e) {
+    console.error(e);
+    backupFile = null;
+    backupBtn.textContent = 'Download a backup';
+    setBackupStatus('Could not make the backup. Check your connection and try again.');
+  } finally {
+    backupBtn.disabled = false;
+  }
+});
 renderHeaderDate();
 setInterval(() => { renderHeaderDate(); renderSinceLastFeed(); renderNextFeed(); renderTodayTotal(); renderSinceLastPoo(); renderPooStats(); renderProfileAge(); renderBottleStatus(); }, 15000);
 
@@ -2348,7 +2412,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=107').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=108').catch(() => {});
   });
 }
 
