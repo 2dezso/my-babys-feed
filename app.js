@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=104';
+import { analyse } from './patterns.js?v=105';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -88,7 +88,6 @@ const sheetHint = document.getElementById('sheet-hint');
 const amountTrack = document.getElementById('amount-track');
 const gapChips = document.getElementById('gap-chips');
 const feedWhenLabel = document.getElementById('feed-when-label');
-const sheetAtEl = document.getElementById('sheet-at');
 const sheetDel = document.getElementById('sheet-del');
 const logCancel = document.getElementById('log-cancel');
 const logConfirm = document.getElementById('log-confirm');
@@ -2016,7 +2015,6 @@ function pickedTimeTs() {
 function drawSheet() {
   drawGapChips();
   const ts = pickedTimeTs();
-  sheetAtEl.textContent = ts == null ? '–:–' : formatClock(ts + selectedIntervalHours * 3600000);
   logConfirm.disabled = ts == null;
   if (sheetMode === 'log') logConfirm.textContent = ts == null ? 'Choose the time' : 'Log feed';
   else logConfirm.textContent = sheetMode === 'complete' ? 'Save amount' : 'Save';
@@ -2039,7 +2037,7 @@ let gapShown = null;
 for (let h = INTERVAL_MIN; h <= INTERVAL_MAX; h += INTERVAL_STEP) {
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.textContent = formatIntervalLabel(h);
+  btn.innerHTML = `<b>${h % 1 ? `${Math.floor(h)}½h` : `${h}h`}</b><small></small>`;
   btn.addEventListener('click', () => {
     selectedIntervalHours = h;
     intervalOverridden = true;
@@ -2048,14 +2046,23 @@ for (let h = INTERVAL_MIN; h <= INTERVAL_MAX; h += INTERVAL_STEP) {
   gapChips.appendChild(btn);
   gapButtons.push({ h, btn });
 }
+// The time the wheels are showing, whether or not it has been chosen yet, so the next feed can be previewed straight away.
+function shownTimeTs() {
+  if (!feedDateInput.value) return null;
+  const hhmm = `${String(timeColumnIndex(timeHours)).padStart(2, '0')}:${String(timeColumnIndex(timeMins)).padStart(2, '0')}`;
+  return combineDateTimeToTimestamp(feedDateInput.value, hhmm);
+}
 function drawGapChips() {
+  const base = shownTimeTs();
   let chosen = null;
   for (const { h, btn } of gapButtons) {
     const on = h === selectedIntervalHours;
     btn.setAttribute('aria-pressed', String(on));
+    btn.lastElementChild.textContent = base == null ? '' : formatClock(base + h * 3600000);
     if (on) chosen = btn;
   }
-  if (!chosen || logModal.hidden) return;
+  // Only move the row when the choice itself changes, so swiping along it to look is never undone.
+  if (!chosen || logModal.hidden || gapShown === selectedIntervalHours) return;
   const left = chosen.offsetLeft - (gapChips.clientWidth - chosen.offsetWidth) / 2;
   // Jump when the sheet has just opened, glide when the choice moves while it is open.
   gapChips.scrollTo({ left, behavior: gapShown == null ? 'auto' : 'smooth' });
@@ -2322,7 +2329,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=104').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=105').catch(() => {});
   });
 }
 
