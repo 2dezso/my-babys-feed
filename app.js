@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=103';
+import { analyse } from './patterns.js?v=104';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
@@ -86,9 +86,7 @@ const timeHours = document.getElementById('time-hours');
 const timeMins = document.getElementById('time-mins');
 const sheetHint = document.getElementById('sheet-hint');
 const amountTrack = document.getElementById('amount-track');
-const sheetGapEl = document.getElementById('sheet-gap');
-const gapLess = document.getElementById('gap-less');
-const gapMore = document.getElementById('gap-more');
+const gapChips = document.getElementById('gap-chips');
 const feedWhenLabel = document.getElementById('feed-when-label');
 const sheetAtEl = document.getElementById('sheet-at');
 const sheetDel = document.getElementById('sheet-del');
@@ -2016,9 +2014,7 @@ function pickedTimeTs() {
 }
 
 function drawSheet() {
-  sheetGapEl.textContent = formatIntervalLabel(selectedIntervalHours);
-  gapLess.disabled = selectedIntervalHours <= INTERVAL_MIN;
-  gapMore.disabled = selectedIntervalHours >= INTERVAL_MAX;
+  drawGapChips();
   const ts = pickedTimeTs();
   sheetAtEl.textContent = ts == null ? '–:–' : formatClock(ts + selectedIntervalHours * 3600000);
   logConfirm.disabled = ts == null;
@@ -2036,13 +2032,35 @@ function onAmountChanged(value) {
   drawSheet();
 }
 
-function nudgeGap(delta) {
-  selectedIntervalHours = Math.max(INTERVAL_MIN, Math.min(INTERVAL_MAX, selectedIntervalHours + delta));
-  intervalOverridden = true;
-  drawSheet();
+// The gap is a row of buttons that scrolls sideways: the usual gaps are in view, shorter and longer ones are a swipe
+// away. The chosen one is kept in the middle.
+const gapButtons = [];
+let gapShown = null;
+for (let h = INTERVAL_MIN; h <= INTERVAL_MAX; h += INTERVAL_STEP) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = formatIntervalLabel(h);
+  btn.addEventListener('click', () => {
+    selectedIntervalHours = h;
+    intervalOverridden = true;
+    drawSheet();
+  });
+  gapChips.appendChild(btn);
+  gapButtons.push({ h, btn });
 }
-gapLess.addEventListener('click', () => nudgeGap(-INTERVAL_STEP));
-gapMore.addEventListener('click', () => nudgeGap(INTERVAL_STEP));
+function drawGapChips() {
+  let chosen = null;
+  for (const { h, btn } of gapButtons) {
+    const on = h === selectedIntervalHours;
+    btn.setAttribute('aria-pressed', String(on));
+    if (on) chosen = btn;
+  }
+  if (!chosen || logModal.hidden) return;
+  const left = chosen.offsetLeft - (gapChips.clientWidth - chosen.offsetWidth) / 2;
+  // Jump when the sheet has just opened, glide when the choice moves while it is open.
+  gapChips.scrollTo({ left, behavior: gapShown == null ? 'auto' : 'smooth' });
+  gapShown = selectedIntervalHours;
+}
 
 ['input', 'change'].forEach(evt => {
   feedDateInput.addEventListener(evt, drawSheet);
@@ -2136,6 +2154,7 @@ function openLogModal(feed) {
   logModalTitle.textContent = sheetMode === 'log' ? 'Log a feed' : (isPending ? 'Finish feed' : 'Edit feed');
   feedWhenLabel.textContent = isPending ? 'Started' : 'When';
   sheetDel.hidden = sheetMode !== 'edit';
+  gapShown = null;
   logModal.hidden = false;
   // The wheel can only be positioned once the sheet is on screen.
   scrollAmountTo(startMl);
@@ -2303,7 +2322,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=103').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=104').catch(() => {});
   });
 }
 

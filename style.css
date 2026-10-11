@@ -664,3 +664,9 @@ html.on-home .home-foot { flex: none; }
 #hero-card.hero-pending .sigbottle { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .sigbottle { transition: none; } }
 #pending-time.long { font-size: 2.75rem; }
+
+/* Next feed gap: a row of buttons that scrolls sideways, running to the edges of the sheet so it is clear there is more. */
+.gapchips { display: flex; gap: 8px; overflow-x: auto; margin: 0 -20px; padding: 2px 20px; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-x; }
+.gapchips::-webkit-scrollbar { display: none; }
+.gapchips button { flex: none; min-width: 68px; height: 46px; padding: 0 14px; border-radius: 14px; background: var(--fill); color: var(--muted); font-size: 1rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.gapchips button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: inset 0 0 0 2.5px var(--ink); }

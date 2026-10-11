@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=103">
+<link rel="manifest" href="manifest.json?v=104">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=103">
+<link rel="stylesheet" href="style.css?v=104">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
 </head>
 <body>
@@ -472,13 +472,9 @@
 
     <div class="nextrow">
       <span class="nl">Next feed in</span>
-      <span class="gapctl" role="group" aria-label="Time until the next feed">
-        <button type="button" id="gap-less" aria-label="30 minutes less"><svg class="ico" aria-hidden="true"><use href="#i-minus"/></svg></button>
-        <b id="sheet-gap">3h</b>
-        <button type="button" id="gap-more" aria-label="30 minutes more"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg></button>
-      </span>
       <span class="at">around <b id="sheet-at">–:–</b></span>
     </div>
+    <div id="gap-chips" class="gapchips" role="group" aria-label="Time until the next feed"></div>
 
     <button id="log-confirm" class="go">Log feed</button>
     <button id="sheet-del" class="dellink" hidden>Delete this feed</button>
@@ -569,6 +565,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=103"></script>
+<script type="module" src="app.js?v=104"></script>
 </body>
 </html>
