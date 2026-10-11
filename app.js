@@ -1,6 +1,7 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=106';
+import { analyse } from './patterns.js?v=107';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
   query, where, orderBy, limit, documentId, onSnapshot, enableIndexedDbPersistence,
@@ -9,6 +10,22 @@ import {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 try { enableIndexedDbPersistence(db); } catch (e) { /* multiple tabs open, fine */ }
+
+// Every device signs in quietly (no email or password) and registers itself as a member of the household. The
+// security rules (firestore.rules) only let registered members read or write that household's data.
+const auth = getAuth(app);
+async function joinHousehold(code) {
+  try {
+    await auth.authStateReady();
+    if (!auth.currentUser) await signInAnonymously(auth);
+    const member = setDoc(doc(db, 'households', code, 'members', auth.currentUser.uid), { lastSeen: Date.now() }, { merge: true });
+    // Offline, the write waits for the connection, so never hold the app up for it.
+    await Promise.race([member, new Promise((resolve) => setTimeout(resolve, 4000))]);
+  } catch (e) {
+    // Sign-in not switched on yet, or no connection: carry on, the older rules still allow the app to work.
+    console.warn('Could not register this device', e);
+  }
+}
 
 const STORAGE_KEY = 'babyfeed_household_code';
 const DEFAULT_ML = 90;
@@ -220,7 +237,7 @@ function showToast(msg) {
 function generateHouseholdCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
   let code = '';
-  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
 }
 
@@ -314,12 +331,13 @@ document.querySelectorAll('[data-nav]').forEach(el => {
   el.addEventListener('click', () => goTo(el.dataset.nav));
 });
 
-function enterApp(code) {
+async function enterApp(code) {
   setupScreen.hidden = true;
   if (!(location.hash.slice(1) in SCREENS)) {
     history.replaceState(null, '', '#feed');
   }
   applyRouteFromHash();
+  await joinHousehold(code);
   listenToFeeds(code);
   listenToProfile(code);
   listenToPoos(code);
@@ -2330,7 +2348,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=106').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=107').catch(() => {});
   });
 }
 

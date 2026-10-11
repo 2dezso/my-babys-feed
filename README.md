@@ -33,6 +33,20 @@ This means: anyone who knows the exact household code can read/write everything 
 ### 3. Deploy to GitHub Pages
 Already wired up for `github.com/2dezso/my-babys-feed` — see [Deploy](#deploy) below.
 
+
+## Security (v107)
+
+Each device signs in quietly with Firebase Anonymous sign-in (no email, no password) and registers itself under `households/{code}/members/{device id}`. The rules in `firestore.rules` then only let registered devices read or write that household. New household codes are 8 characters long (older 6-character codes keep working).
+
+**Switching it on has to happen in this order, or the app stops loading:**
+
+1. Firebase console, **Build, Authentication, Sign-in method**: turn on **Anonymous**.
+2. Publish the app version that contains this section, and open the app once on each device you use (it registers itself).
+3. Only then paste `firestore.rules` into **Firestore, Rules** and **Publish**. Before this step the old open rules are still in place, so nothing breaks.
+
+To go back, paste the old rules from the section above into the Rules tab and publish.
+
+What this does and does not do: strangers can no longer read or write a household without registering, and a household can now see which devices have joined. Registering still only needs the code, so the code is still the secret. Anyone who has the code can join.
 ## Local testing
 Just open `index.html` in a browser — it's a static site, no build step, no server required (though some browsers restrict ES module imports over `file://`; if that happens, run any static file server, e.g. `npx serve` or use the deployed GitHub Pages URL).
 
