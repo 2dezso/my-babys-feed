@@ -1,10 +1,10 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=118';
+import { analyse } from './patterns.js?v=120';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
-  query, where, orderBy, limit, documentId, onSnapshot, enableIndexedDbPersistence, getDocs,
+  query, where, orderBy, limit, documentId, onSnapshot, enableIndexedDbPersistence, getDocs, getCountFromServer,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 const app = initializeApp(firebaseConfig);
@@ -47,6 +47,24 @@ const homeScreen = document.getElementById('home-screen');
 const milestonesScreen = document.getElementById('milestones-screen');
 const trendsScreen = document.getElementById('trends-screen');
 const profileScreen = document.getElementById('profile-screen');
+const babySheet = document.getElementById('baby-sheet');
+const profileBornEl = document.getElementById('profile-born');
+const profileTitleEl = document.getElementById('profile-title');
+const editBabyValueEl = document.getElementById('edit-baby-v');
+const sofarEl = document.getElementById('sofar');
+const yearBlock = document.getElementById('year-block');
+const yearNudge = document.getElementById('year-nudge');
+const yearDayEl = document.getElementById('year-day');
+const yearLeftEl = document.getElementById('year-left');
+const yearBarEl = document.getElementById('year-bar');
+const yearTicksEl = document.getElementById('year-ticks');
+const yearNextEl = document.getElementById('year-next');
+const statFeedsEl = document.getElementById('stat-feeds');
+const statLitresEl = document.getElementById('stat-litres');
+const statPoosEl = document.getElementById('stat-poos');
+const statMomentsEl = document.getElementById('stat-moments');
+const shareCodeRowEl = document.getElementById('share-code-row');
+const settingsScreen = document.getElementById('settings-screen');
 const pooScreen = document.getElementById('poo-screen');
 const joinForm = document.getElementById('join-form');
 const joinCodeInput = document.getElementById('join-code');
@@ -200,6 +218,7 @@ let selectedGender = '';
 let profileOnboarding = false;
 let profileDob = '';
 let profileFirstName = '';
+let profileLastName = '';
 let selectedPooSize = '';
 let bottleMadeAt = null;
 let bottleFeedStartedAt = null;
@@ -321,6 +340,7 @@ const SCREENS = {
   milestones: milestonesScreen,
   trends: trendsScreen,
   profile: profileScreen,
+  settings: settingsScreen,
   poo: pooScreen,
 };
 
@@ -330,7 +350,6 @@ function showScreen(name) {
   if (!(name in SCREENS)) name = 'feed';
   Object.values(SCREENS).forEach(el => { el.hidden = true; });
   SCREENS[name].hidden = false;
-  feedbackFab.hidden = name !== 'home';
   tabbar.hidden = !(name in TAB_SECTION);
   tabbar.className = `tabs ${TAB_SECTION[name] || 's-feed'}`;
   tabbar.querySelectorAll('.tab').forEach(t => {
@@ -338,7 +357,8 @@ function showScreen(name) {
     else t.removeAttribute('aria-current');
   });
   document.documentElement.classList.toggle('on-home', name === 'home');
-  if (name === 'profile') scrollBottleBrandWheelTo(selectedBottleBrand);
+  if (name === 'profile') { scrollBottleBrandWheelTo(selectedBottleBrand); refreshProfileCounts(); }
+  if (name === 'settings') shareCodeRowEl.textContent = getHouseholdCode() || '';
   window.scrollTo(0, 0);
 }
 
@@ -380,6 +400,7 @@ function listenToFeeds(code) {
   const q = query(feedsCollection(code), orderBy('timestamp', 'desc'), limit(3000));
   onSnapshot(q, (snapshot) => {
     latestFeeds = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderProfileCounts();
     renderSinceLastFeed();
     renderNextFeed();
     renderTodayTotal();
@@ -395,9 +416,13 @@ function listenToProfile(code) {
   onSnapshot(profileDocRef(code), (snap) => {
     const data = snap.data() || {};
     const firstName = data.firstName || data.name || '';
-    profileNameInput.value = firstName;
-    profileLastNameInput.value = data.lastName || '';
-    profileDobInput.value = data.dob || '';
+    // The sheet's boxes are only refreshed while it is closed, so a change arriving mid-typing never overwrites what is typed.
+    if (babySheet.hidden) {
+      profileNameInput.value = firstName;
+      profileLastNameInput.value = data.lastName || '';
+      profileDobInput.value = data.dob || '';
+    }
+    profileLastName = data.lastName || '';
     profileDob = data.dob || '';
     selectedAvatarTone = data.avatarTone || '';
     selectedGender = data.gender || '';
@@ -430,36 +455,41 @@ function babyFaceSvg(tone) {
   const skin = AVATAR_SKIN[tone] || AVATAR_SKIN[''];
   return `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="10.5" cy="35" r="4.5" fill="${skin}"/><circle cx="53.5" cy="35" r="4.5" fill="${skin}"/><circle cx="32" cy="34" r="22" fill="${skin}"/><path d="M32 12c-3 0-5 2-5 4.500 0 1.800 1.600 2.800 3 2.200" fill="none" stroke="#2b201c" stroke-width="2.400" stroke-linecap="round"/><circle cx="24.500" cy="34" r="2.600" fill="#2b201c"/><circle cx="39.500" cy="34" r="2.600" fill="#2b201c"/><ellipse cx="19.500" cy="41" rx="3.600" ry="2.400" fill="#ff9fb1" opacity=".6"/><ellipse cx="44.500" cy="41" rx="3.600" ry="2.400" fill="#ff9fb1" opacity=".6"/><path d="M26.500 42c2.800 3.600 8.200 3.600 11 0" fill="none" stroke="#2b201c" stroke-width="2.400" stroke-linecap="round"/></svg>`;
 }
-avatarToneChips.querySelectorAll('.tone-chip').forEach(c => { c.innerHTML = babyFaceSvg(c.dataset.tone); });
+avatarToneChips.querySelectorAll('.swatch').forEach(c => { c.style.background = AVATAR_SKIN[c.dataset.tone]; });
 function updateAvatarIcons() {
   profileIconBig.innerHTML = babyFaceSvg(selectedAvatarTone);
 }
 
 function highlightToneChip() {
-  avatarToneChips.querySelectorAll('.tone-chip').forEach(c => {
+  avatarToneChips.querySelectorAll('.swatch').forEach(c => {
     c.classList.toggle('selected', c.dataset.tone === selectedAvatarTone);
+    c.setAttribute('aria-pressed', String(c.dataset.tone === selectedAvatarTone));
   });
 }
 
-avatarToneChips.querySelectorAll('.tone-chip').forEach(chip => {
+avatarToneChips.querySelectorAll('.swatch').forEach(chip => {
   chip.addEventListener('click', () => {
     selectedAvatarTone = chip.dataset.tone;
+    saveProfileFields({ avatarTone: selectedAvatarTone });
     updateAvatarIcons();
     highlightToneChip();
   });
 });
 
 function highlightGenderChip() {
-  genderChips.querySelectorAll('.gender-card').forEach(c => {
-    c.classList.toggle('selected', c.dataset.gender === selectedGender);
+  genderChips.querySelectorAll('.swatch').forEach(c => {
+    const on = c.dataset.gender === (selectedGender === 'female' ? 'female' : 'male');
+    c.classList.toggle('selected', on);
+    c.setAttribute('aria-pressed', String(on));
   });
 }
 
-genderChips.querySelectorAll('.gender-card').forEach(chip => {
+genderChips.querySelectorAll('.swatch').forEach(chip => {
   chip.addEventListener('click', () => {
-    selectedGender = selectedGender === chip.dataset.gender ? '' : chip.dataset.gender;
+    selectedGender = chip.dataset.gender;
     highlightGenderChip();
     document.body.classList.toggle('gender-pink', selectedGender === 'female');
+    saveProfileFields({ gender: selectedGender });
   });
 });
 
@@ -496,20 +526,90 @@ function ageString(dobStr) {
   return `${diffDays} day${diffDays !== 1 ? 's' : ''} old`;
 }
 
+// The baby page: age, how far through the first year, and the next month birthday. All worked out from the birthday.
+const YEAR_MONTH_MS = 86400000;
+function parseDobString(dobStr) {
+  if (!dobStr) return null;
+  const [y, m, d] = dobStr.split('-').map(Number);
+  const dob = new Date(y, m - 1, d);
+  return Number.isNaN(dob.getTime()) ? null : dob;
+}
+function monthsAfter(date, n) {
+  return new Date(date.getFullYear(), date.getMonth() + n, date.getDate());
+}
+function plural(n, word) {
+  return `${n} ${word}${n === 1 ? '' : 's'}`;
+}
+
 function renderProfileAge() {
-  profileAgeEl.textContent = profileDob ? ageString(profileDob) : '';
+  const dob = parseDobString(profileDob);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const valid = dob && dob.getTime() <= today.getTime();
+  profileAgeEl.textContent = valid ? ageString(profileDob) : '';
+  profileBornEl.textContent = valid ? `Born ${dob.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}` : '';
+  yearBlock.hidden = !valid;
+  yearNudge.hidden = !!valid;
+  if (!valid) return;
+
+  const firstBirthday = monthsAfter(dob, 12);
+  const total = Math.round((firstBirthday - dob) / YEAR_MONTH_MS);
+  const done = Math.max(0, Math.min(total, Math.round((today - dob) / YEAR_MONTH_MS)));
+  const finished = today.getTime() >= firstBirthday.getTime();
+  let months = (today.getFullYear() - dob.getFullYear()) * 12 + today.getMonth() - dob.getMonth();
+  if (monthsAfter(dob, months).getTime() > today.getTime()) months -= 1;
+  months = Math.max(0, months);
+
+  yearDayEl.textContent = finished ? 'First year complete' : `Day ${done + 1} of the first year`;
+  yearLeftEl.textContent = finished ? '' : `${plural(total - done, 'day')} to go`;
+  yearBarEl.style.transform = `scaleX(${(done / total).toFixed(4)})`;
+  yearTicksEl.innerHTML = Array.from({ length: 12 }, (_, i) => `<span class="${i < months ? 'done' : ''}">${i + 1}</span>`).join('');
+  if (finished) {
+    yearNextEl.textContent = 'Happy first birthday and beyond';
+  } else {
+    const next = monthsAfter(dob, months + 1);
+    const left = Math.round((next - today) / YEAR_MONTH_MS);
+    const when = next.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+    yearNextEl.textContent = `${months + 1 === 12 ? 'First birthday' : `${plural(months + 1, 'month')} old`} on ${when}, ${left === 0 ? 'today' : `in ${plural(left, 'day')}`}`;
+  }
 }
 
 function renderProfilePreview() {
-  const fullName = [profileNameInput.value.trim(), profileLastNameInput.value.trim()].filter(Boolean).join(' ');
+  const fullName = [profileFirstName, profileLastName].filter(Boolean).join(' ');
   profileNamePreview.textContent = fullName || 'Your baby';
+  profileTitleEl.textContent = profileFirstName || 'Your baby';
+  editBabyValueEl.textContent = fullName;
+  sofarEl.textContent = `${profileFirstName || 'Your baby'} so far`;
 }
 
+// The four totals. Feeds, litres and poos come from the lists the app already keeps; moments are counted on the server
+// without downloading the photos.
+function renderProfileCounts() {
+  const done = latestFeeds.filter(f => f.amountMl != null);
+  const ml = done.reduce((sum, f) => sum + f.amountMl, 0);
+  statFeedsEl.textContent = done.length.toLocaleString();
+  statLitresEl.textContent = (ml / 1000).toLocaleString(undefined, { maximumFractionDigits: ml >= 10000 ? 0 : 1 });
+  statPoosEl.textContent = latestPoos.length >= 500 ? '500+' : String(latestPoos.length);
+}
+async function refreshProfileCounts() {
+  renderProfileCounts();
+  const code = getHouseholdCode();
+  if (!code) return;
+  try {
+    const counted = await getCountFromServer(milestonesCollection(code));
+    statMomentsEl.textContent = String(counted.data().count);
+  } catch (e) {
+    statMomentsEl.textContent = '–';
+  }
+}
+
+// A first-time household opens the name sheet straight away; Continue and Skip both lead on to the Feeds page.
 function setProfileOnboarding(on) {
   profileOnboarding = on;
   profileWelcome.hidden = !on;
   profileSkipBtn.hidden = !on;
-  profileSaveBtn.textContent = on ? 'Save and continue' : 'Save profile';
+  profileSaveBtn.hidden = !on;
+  if (on) openBabySheet();
 }
 
 function finishProfileOnboarding() {
@@ -523,6 +623,7 @@ function listenToPoos(code) {
   const q = query(poosCollection(code), orderBy('timestamp', 'desc'), limit(500));
   onSnapshot(q, (snapshot) => {
     latestPoos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderProfileCounts();
     renderSinceLastPoo();
     renderPooStats();
     renderPooHistory();
@@ -1556,31 +1657,51 @@ bottleBrandTrack.addEventListener('keydown', (e) => {
 });
 
 // --- Profile ---
+// Nothing here has a Save button: every change is written as soon as it is made, and only the field that changed.
 
-profileDobInput.addEventListener('input', () => {
-  profileDob = profileDobInput.value;
-  renderProfileAge();
-});
-
-profileNameInput.addEventListener('input', renderProfilePreview);
-profileLastNameInput.addEventListener('input', renderProfilePreview);
-
-profileSaveBtn.addEventListener('click', async () => {
+async function saveProfileFields(fields) {
   const code = getHouseholdCode();
-  if (!code) return;
-  const firstName = profileNameInput.value.trim();
-  const lastName = profileLastNameInput.value.trim();
-  const dob = profileDobInput.value;
+  if (!code) return false;
   try {
-    await setDoc(profileDocRef(code), { firstName, lastName, dob, avatarTone: selectedAvatarTone, gender: selectedGender, bottleBrand: selectedBottleBrand }, { merge: true });
-    showToast('Profile saved');
-    if (profileOnboarding) finishProfileOnboarding();
+    await setDoc(profileDocRef(code), fields, { merge: true });
+    return true;
   } catch (e) {
     console.error(e);
-    showToast('Could not save — check connection');
+    showToast('Could not save. Check your connection');
+    return false;
   }
+}
+
+function openBabySheet() {
+  profileNameInput.value = profileFirstName;
+  profileLastNameInput.value = profileLastName;
+  profileDobInput.value = profileDob;
+  profileDobInput.max = todayDateString();
+  babySheet.hidden = false;
+  if (!profileFirstName) profileNameInput.focus();
+}
+document.getElementById('edit-baby').addEventListener('click', openBabySheet);
+yearNudge.addEventListener('click', openBabySheet);
+document.getElementById('baby-cancel').addEventListener('click', () => { babySheet.hidden = true; });
+babySheet.addEventListener('click', (e) => { if (e.target === babySheet) babySheet.hidden = true; });
+document.getElementById('baby-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fields = {
+    firstName: profileNameInput.value.trim(),
+    lastName: profileLastNameInput.value.trim(),
+    dob: profileDobInput.value,
+  };
+  babySheet.hidden = true;
+  // Show the change straight away; the saved copy arriving from the server then confirms it.
+  profileFirstName = fields.firstName;
+  profileLastName = fields.lastName;
+  profileDob = fields.dob;
+  renderProfilePreview();
+  renderProfileAge();
+  await saveProfileFields(fields);
 });
 
+profileSaveBtn.addEventListener('click', finishProfileOnboarding);
 profileSkipBtn.addEventListener('click', finishProfileOnboarding);
 
 // --- Trends & Facts ---
@@ -2588,7 +2709,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=118').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=120').catch(() => {});
   });
 }
 

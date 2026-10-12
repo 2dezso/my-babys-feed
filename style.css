@@ -710,3 +710,46 @@ a.text-link-btn { color: var(--muted); }
 .toast.has-act { display: flex; align-items: center; gap: 14px; padding: 6px 6px 6px 20px; }
 .toast.has-act[hidden] { display: none; }
 .toast-act { min-height: 40px; padding: 0 16px; border-radius: 99px; background: var(--bg); color: var(--ink); font-weight: 800; font-size: .9375rem; }
+
+/* ---- Profile (the baby) and Settings (the app) ---- */
+:root { --gold: #a87a2c; --gold-tint: #fbf1dc; }
+@media (prefers-color-scheme: dark) { :root { --gold: #e2bd72; --gold-tint: #33290f; } }
+
+.lt-btns { display: flex; gap: 8px; }
+.keep { background: var(--card); border-radius: 24px; padding: 18px 16px 16px; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; box-shadow: var(--shadow); }
+.keep .profile-avatar { width: 92px; height: 92px; margin-bottom: 6px; }
+.keep-name { font-size: 1.625rem; font-weight: 900; letter-spacing: -.02em; line-height: 1.1; overflow-wrap: anywhere; }
+.keep-born { font-size: .75rem; font-weight: 800; color: var(--gold); letter-spacing: .08em; text-transform: uppercase; margin-top: 2px; min-height: 1em; }
+.keep .profile-age { font-size: .9375rem; font-weight: 700; color: var(--muted); min-height: 1.2em; }
+.year { width: 100%; margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.year[hidden], .year-nudge[hidden] { display: none; }
+.year-lab { display: flex; justify-content: space-between; gap: 8px; font-size: .8125rem; font-weight: 800; }
+.year-lab span { color: var(--muted); font-weight: 700; }
+.year-track { position: relative; height: 12px; border-radius: 99px; background: var(--fill); overflow: hidden; }
+.year-track i { position: absolute; inset: 0; background: var(--feed); border-radius: 99px; transform-origin: left; transform: scaleX(0); transition: transform .6s cubic-bezier(.22, 1, .36, 1); }
+.year-ticks { display: grid; grid-template-columns: repeat(12, 1fr); font-size: .625rem; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
+.year-ticks span { text-align: right; padding-right: 1px; }
+.year-ticks span.done { color: var(--feed-ink); }
+.year-next { margin-top: 4px; background: var(--feed-tint); color: var(--feed-ink); border-radius: 14px; padding: 10px 12px; font-weight: 800; font-size: .875rem; }
+.year-nudge { margin-top: 10px; width: 100%; background: var(--feed-tint); color: var(--feed-ink); border-radius: 14px; padding: 12px; font-weight: 800; font-size: .875rem; }
+.sofar { font-size: .8125rem; font-weight: 800; color: var(--muted); padding: 8px 6px 0; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.stats div { background: var(--gold-tint); border-radius: 14px; padding: 10px 2px; text-align: center; min-width: 0; }
+.stats b { display: block; font-weight: 900; font-size: 1.1875rem; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.stats small { font-size: .6875rem; font-weight: 700; color: var(--muted); }
+.slist { background: var(--card); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); margin-top: 12px; }
+.sofar + .stats + .slist { margin-top: 12px; }
+.srow { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 0 16px; font-weight: 800; font-size: 1rem; color: var(--ink); text-align: left; border-top: 1px solid var(--line); }
+.srow:first-child { border-top: 0; }
+.srow:not(.static)::after { content: "›"; color: var(--muted); font-weight: 900; font-size: 1.25rem; margin-left: 4px; }
+.srow .sv { margin-left: auto; color: var(--muted); font-weight: 700; font-size: .9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
+.srow.static .swatches { margin-left: auto; }
+a.srow { text-decoration: none; }
+.swatches { display: flex; gap: 8px; }
+.swatch { width: 30px; height: 30px; border-radius: 50%; position: relative; }
+.swatch::after { content: ""; position: absolute; inset: -7px; }
+.swatch.selected { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--ink); }
+.sh { font-size: .8125rem; font-weight: 800; color: var(--muted); margin: 18px 6px -4px; }
+.snote { margin: 0; padding: 0 6px; font-size: .8125rem; font-weight: 600; color: var(--muted); line-height: 1.4; }
+#settings-screen .profile-card { margin-top: 12px; }
+@media (prefers-reduced-motion: reduce) { .year-track i { transition: none; } }
