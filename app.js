@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=121';
+import { analyse } from './patterns.js?v=122';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
@@ -34,6 +34,15 @@ const DEFAULT_ML = 90;
 const ML_MIN = 10;
 const ML_MAX = 300;
 const ML_STEP = 5;
+
+// Amounts are always saved in ml. Ounces are only how they are shown and picked, kept per device, so switching never
+// changes anything that is stored.
+const UNIT_KEY = 'babyfeed_unit';
+const ML_PER_OZ = 29.5735;
+let unit = (() => { try { return localStorage.getItem(UNIT_KEY) === 'oz' ? 'oz' : 'ml'; } catch (e) { return 'ml'; } })();
+function ozString(ml) { return String(Math.round((ml / ML_PER_OZ) * 10) / 10); }
+function amountNumber(ml) { return unit === 'oz' ? ozString(ml) : String(ml); }
+function fmtAmount(ml) { return `${amountNumber(ml)}${unit}`; }
 const WHEEL_ITEM_HEIGHT = 40;
 const INTERVAL_MIN = 1;
 const INTERVAL_MAX = 8;
@@ -588,7 +597,9 @@ function renderProfileCounts() {
   const done = latestFeeds.filter(f => f.amountMl != null);
   const ml = done.reduce((sum, f) => sum + f.amountMl, 0);
   statFeedsEl.textContent = done.length.toLocaleString();
-  statLitresEl.textContent = (ml / 1000).toLocaleString(undefined, { maximumFractionDigits: ml >= 10000 ? 0 : 1 });
+  // Litres in ml mode, fluid ounces in ounce mode.
+  statLitresEl.textContent = unit === 'oz' ? Math.round(ml / ML_PER_OZ).toLocaleString() : (ml / 1000).toLocaleString(undefined, { maximumFractionDigits: ml >= 10000 ? 0 : 1 });
+  document.getElementById('stat-litres-label').textContent = unit === 'oz' ? 'fl oz' : 'litres';
   statPoosEl.textContent = latestPoos.length >= 500 ? '500+' : String(latestPoos.length);
 }
 async function refreshProfileCounts() {
@@ -932,7 +943,7 @@ function renderSinceLastFeed() {
     pendingDetailEl.textContent = `Started at ${formatClock(last.timestamp)}`;
   } else {
     sinceLastFeedEl.textContent = since;
-    lastFeedDetailEl.textContent = `ago · ${last.amountMl}ml`;
+    lastFeedDetailEl.textContent = `ago · ${fmtAmount(last.amountMl)}`;
   }
 }
 
@@ -990,7 +1001,7 @@ function renderTodayTotal() {
   const usual = usualDailyMl() || 8 * (lastCompletedAmount() || DEFAULT_ML);
   const fill = Math.max(0, Math.min(1, total / usual));
   todayBottle.style.setProperty('--fill', fill.toFixed(3));
-  todayBottle.setAttribute('aria-label', `Today's milk so far: ${total}ml, about ${Math.round(fill * 100)}% of a usual day`);
+  todayBottle.setAttribute('aria-label', `Today's milk so far: ${fmtAmount(total)}, about ${Math.round(fill * 100)}% of a usual day`);
 }
 
 function renderHeaderDate() {
@@ -1252,7 +1263,7 @@ function renderChartStats(totals) {
   const dayAvg = completeDays.length ? Math.round(completeDays.reduce((s, t) => s + t.total, 0) / completeDays.length) : 0;
 
   const weeks = buildChartBuckets(totals, 'week').filter(w => w.complete && w.count > 0);
-  setChartStat(0, completeDays.length ? `${dayAvg}ml` : '—', 'Avg / day');
+  setChartStat(0, completeDays.length ? fmtAmount(dayAvg) : '—', 'Avg / day');
   if (weeks.length >= 2 && weeks[0].value > 0) {
     const change = Math.round((weeks[weeks.length - 1].value / weeks[0].value - 1) * 100);
     const since = new Date(weeks[0].start).toLocaleDateString([], { day: 'numeric', month: 'short' });
@@ -1301,11 +1312,11 @@ function renderHistoryChart() {
   let svg = '';
   for (const v of [0, top / 2, top]) {
     svg += `<line class="hc-grid" x1="${CHART_LEFT}" x2="${width - CHART_RIGHT}" y1="${y(v)}" y2="${y(v)}"/>`;
-    svg += `<text class="hc-axis" x="${CHART_LEFT - 4}" y="${y(v) + 3}" text-anchor="end">${v}</text>`;
+    svg += `<text class="hc-axis" x="${CHART_LEFT - 4}" y="${y(v) + 3}" text-anchor="end">${amountNumber(v)}</text>`;
   }
   if (avg) {
     svg += `<line class="hc-avg" x1="${CHART_LEFT}" x2="${width - CHART_RIGHT}" y1="${y(avg)}" y2="${y(avg)}"/>`;
-    svg += `<text class="hc-axis" x="${CHART_LEFT + 4}" y="${y(avg) - 4}">avg ${avg}ml</text>`;
+    svg += `<text class="hc-axis" x="${CHART_LEFT + 4}" y="${y(avg) - 4}">avg ${fmtAmount(avg)}</text>`;
   }
   buckets.forEach((b, i) => {
     const slotX = CHART_LEFT + i * slot;
@@ -1322,7 +1333,7 @@ function renderHistoryChart() {
   });
   const sel = buckets[selectedIndex];
   if (sel.value > 0) {
-    svg += `<text class="hc-val" x="${CHART_LEFT + selectedIndex * slot + slot / 2}" y="${y(sel.value) - 5}" text-anchor="middle">${sel.value}</text>`;
+    svg += `<text class="hc-val" x="${CHART_LEFT + selectedIndex * slot + slot / 2}" y="${y(sel.value) - 5}" text-anchor="middle">${amountNumber(sel.value)}</text>`;
   }
 
   historyChartSvg.setAttribute('viewBox', `0 0 ${width} ${CHART_H}`);
@@ -1331,8 +1342,8 @@ function renderHistoryChart() {
   if (selectionReset) historyChartScroll.scrollLeft = historyChartScroll.scrollWidth;
 
   historyChartCaption.textContent = byWeek
-    ? 'Total ml per week, each week starting Monday. Tap a bar to see that week.'
-    : 'Total ml each day. Tap a bar to see that day.';
+    ? `Total ${unit} per week, each week starting Monday. Tap a bar to see that week.`
+    : `Total ${unit} each day. Tap a bar to see that day.`;
   renderChartStats(totals);
   return sel;
 }
@@ -1386,7 +1397,7 @@ function renderHistory() {
     const headerLi = document.createElement('li');
     const isToday = key === startOfToday();
     headerLi.className = `day-group-header${isToday ? ' today' : ''}`;
-    headerLi.innerHTML = `<span class="day-group-label">${dayLabelForKey(key)}${isToday ? ` · ${dayFeeds.length} ${dayFeeds.length === 1 ? 'feed' : 'feeds'}` : ''}</span><span class="day-group-total">${dayTotal}ml</span>`;
+    headerLi.innerHTML = `<span class="day-group-label">${dayLabelForKey(key)}${isToday ? ` · ${dayFeeds.length} ${dayFeeds.length === 1 ? 'feed' : 'feeds'}` : ''}</span><span class="day-group-total">${fmtAmount(dayTotal)}</span>`;
     historyList.appendChild(headerLi);
 
     for (const feed of dayFeeds) {
@@ -1394,7 +1405,7 @@ function renderHistory() {
       const older = latestFeeds[fullIndex + 1];
       const gap = older ? durationString(feed.timestamp - older.timestamp) : '—';
       const amountHtml = feed.amountMl != null
-        ? `<span class="history-amount-val">${feed.amountMl}ml</span>`
+        ? `<span class="history-amount-val">${fmtAmount(feed.amountMl)}</span>`
         : `<button class="add-amount-btn">Add amount</button>`;
 
       const li = document.createElement('li');
@@ -1845,16 +1856,16 @@ function volumeItem(r) {
   if (!v || v.status === 'none' || !r.dailyTotals || r.dailyTotals.length < 7) return null;
   const before = v.before != null ? Math.round(v.before) : null;
   let text;
-  if (v.status === 'recognised') text = `${changeWord(v, 'Up', 'Down')} two weeks in a row. It was ${before}ml last week.`;
-  else if (v.status === 'emerging') text = `${changeWord(v, 'Up', 'Down')} from ${before}ml last week.`;
-  else if (v.status === 'early') text = `The last few days. Before that it was ${before}ml.`;
+  if (v.status === 'recognised') text = `${changeWord(v, 'Up', 'Down')} two weeks in a row. It was ${fmtAmount(before)} last week.`;
+  else if (v.status === 'emerging') text = `${changeWord(v, 'Up', 'Down')} from ${fmtAmount(before)} last week.`;
+  else if (v.status === 'early') text = `The last few days. Before that it was ${fmtAmount(before)}.`;
   else text = 'Holding steady from week to week.';
   const chart = patternBarsSvg(r.dailyTotals.map((d) => d.v), {
     max: Math.max(...r.dailyTotals.map((d) => d.v)),
     label: `Milk per day for the last ${r.dailyTotals.length} days`,
   });
   return trendItem({ short: 'Milk per day', title: 'Milk per day', badge: trendBadge(v), tier: trendTier(v),
-    value: `${Math.round(v.recent)}ml`, unit: 'a day', text, extra: chart, note: `Each bar is one day, last ${r.dailyTotals.length} days.` });
+    value: fmtAmount(Math.round(v.recent)), unit: 'a day', text, extra: chart, note: `Each bar is one day, last ${r.dailyTotals.length} days.` });
 }
 
 function gapsItem(r) {
@@ -2166,13 +2177,26 @@ function formatIntervalLabel(hours) {
   return hours % 1 === 0 ? `${whole}h` : `${whole}h 30m`;
 }
 
-// The wheel holds 10 to 300ml in 5ml steps. An older feed with an odd amount (say 123ml) gets its own row.
+// The wheel holds 10 to 300ml in 5ml steps, or in ounces a quarter ounce at a time. Either way the value it hands back
+// is ml. An older feed with an odd amount (say 123ml) gets its own row, so editing a feed never changes its amount.
 function buildAmountWheel(extra) {
   const values = [];
-  for (let v = ML_MIN; v <= ML_MAX; v += ML_STEP) values.push(v);
+  const labels = new Map();
+  if (unit === 'oz') {
+    for (let q = 1; q <= 40; q++) {
+      const ml = Math.round((q * ML_PER_OZ) / 4);
+      values.push(ml);
+      labels.set(ml, String(q / 4));
+    }
+  } else {
+    for (let v = ML_MIN; v <= ML_MAX; v += ML_STEP) values.push(v);
+  }
   if (extra != null && !values.includes(extra)) { values.push(extra); values.sort((a, b) => a - b); }
   amountValues = values;
-  amountTrack.innerHTML = values.map(v => `<div class="amt-item" role="option" data-v="${v}">${v}<small>ml</small></div>`).join('');
+  amountTrack.innerHTML = values.map(v => `<div class="amt-item" role="option" data-v="${v}">${labels.get(v) ?? amountNumber(v)}<small>${unit}</small></div>`).join('');
+}
+function nearestAmount(ml) {
+  return amountValues.reduce((best, v) => (Math.abs(v - ml) < Math.abs(best - ml) ? v : best), amountValues[0]);
 }
 
 function amountIndexAtScroll() {
@@ -2257,7 +2281,7 @@ function onAmountChanged(value) {
   selectedMl = value;
   const lastAmt = lastCompletedAmount(editingFeedId);
   if (sheetMode === 'edit' || lastAmt == null) sheetHint.textContent = '';
-  else sheetHint.textContent = value === lastAmt ? 'Same as the last feed' : `Last feed was ${lastAmt}ml`;
+  else sheetHint.textContent = (unit === 'oz' ? Math.abs(value - lastAmt) < 4 : value === lastAmt) ? 'Same as the last feed' : `Last feed was ${fmtAmount(lastAmt)}`;
   // The gap follows the amount until it is changed by hand.
   if (!intervalOverridden) selectedIntervalHours = computeAutoIntervalHours(value);
   drawSheet();
@@ -2375,10 +2399,12 @@ function openLogModal(feed) {
   const isPending = !!feed && feed.amountMl == null;
   sheetMode = !feed ? 'log' : (isPending ? 'complete' : 'edit');
 
-  const startMl = feed?.amountMl ?? lastCompletedAmount(feed?.id) ?? DEFAULT_ML;
+  let startMl = feed?.amountMl ?? lastCompletedAmount(feed?.id) ?? DEFAULT_ML;
   intervalOverridden = !!feed && !isPending;
   selectedIntervalHours = feed?.intervalHours || computeAutoIntervalHours(startMl);
-  buildAmountWheel(startMl);
+  // In ounces a new feed starts on the nearest quarter ounce; an existing feed keeps its exact ml as its own row.
+  buildAmountWheel(unit === 'oz' && feed?.amountMl == null ? null : startMl);
+  if (!amountValues.includes(startMl)) startMl = nearestAmount(startMl);
 
   feedDateInput.max = todayDateString();
   let startTime;
@@ -2627,6 +2653,29 @@ if (nativeNotifications) {
   });
 }
 
+// --- Units ---
+function drawUnitChoice() {
+  document.querySelectorAll('#unit-choice .segment').forEach(b => b.classList.toggle('active', b.dataset.unit === unit));
+}
+function applyUnit() {
+  drawUnitChoice();
+  renderSinceLastFeed();
+  renderTodayTotal();
+  renderHistory();
+  renderTrends();
+  renderProfileCounts();
+
+}
+document.querySelectorAll('#unit-choice .segment').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.unit === unit) return;
+    unit = btn.dataset.unit;
+    try { localStorage.setItem(UNIT_KEY, unit); } catch (e) { /* the choice just will not be remembered */ }
+    applyUnit();
+  });
+});
+drawUnitChoice();
+
 // --- Backup ---
 // Reads everything in the household and saves it as one file. It only reads, so it cannot change the stored data.
 // Two taps on purpose: the first prepares the file, the second hands it to the phone (iPhone only allows saving or
@@ -2709,7 +2758,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=121').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=122').catch(() => {});
   });
 }
 
