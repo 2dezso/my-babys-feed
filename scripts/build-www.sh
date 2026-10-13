@@ -7,4 +7,5 @@ for f in *.html *.js *.css *.json *.png; do
   case "$f" in package.json|package-lock.json|capacitor.config.json) continue ;; esac
   [ -f "$f" ] && cp "$f" "www/$f"
 done
+cp -r vendor fonts www/
 echo "www/ ready: $(ls www | wc -l) files"

@@ -205,3 +205,11 @@ npx cap open ios       # opens Xcode: set the team, then Product > Archive
 ```
 
 Reminder behaviour: one notification (id 1) is scheduled for the expected next feed time minus the chosen lead (On time, 10 or 30 minutes before). It is replaced whenever the feeds change and cancelled while a feed is running. The setting is kept per device in `localStorage` (`babyfeed_reminder_lead`).
+
+## Working offline (v123)
+
+Firebase (`vendor/firebase-app.js`, `firebase-auth.js`, `firebase-firestore.js`, version 10.14.1) and the Nunito font (`fonts/`) are saved inside the project, not loaded from the internet, so the app opens with no signal. The service worker keeps them with the rest of the app, and `scripts/build-www.sh` and `scripts/deploy-staging.sh` copy both folders.
+
+- The three Firebase files must keep identical addresses: `app.js` imports `./vendor/firebase-app.js` and the other two import `./firebase-app.js`, which resolve to the same file. Adding a `?v=` to one of them would load Firebase twice and break it.
+- To update Firebase, download the same three files for the new version from `https://www.gstatic.com/firebasejs/<version>/`, and replace `https://www.gstatic.com/firebasejs/<version>/firebase-app.js` inside the auth and firestore files with `./firebase-app.js`.
+- Data written with no signal is kept on the phone by Firestore and sent when the connection returns.

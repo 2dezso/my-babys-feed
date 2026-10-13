@@ -27,6 +27,8 @@ for f in *.html *.js *.css *.json *.png; do
   [ -f "$f" ] && cp "$f" "$tmp/$f"
 done
 
+cp -r vendor fonts "$tmp/"
+
 cd "$tmp"
 
 # Orange name, icon and title so the test app is obvious next to the real one.

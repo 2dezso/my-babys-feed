@@ -1,11 +1,11 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=122';
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import { analyse } from './patterns.js?v=123';
+import { initializeApp } from './vendor/firebase-app.js';
+import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
   query, where, orderBy, limit, documentId, onSnapshot, enableIndexedDbPersistence, getDocs, getCountFromServer,
-} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+} from './vendor/firebase-firestore.js';
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -277,18 +277,6 @@ function showToast(msg, action) {
 }
 
 // Puts a just-deleted feed or poo back exactly as it was, under the same id.
-async function restoreDeleted(kind, item) {
-  const code = getHouseholdCode();
-  if (!code || !item) return;
-  const { id, ...data } = item;
-  try {
-    await setDoc(doc(db, 'households', code, kind, id), data);
-    showToast(kind === 'feeds' ? 'Feed put back' : 'Poo put back');
-  } catch (e) {
-    console.error(e);
-    showToast('Could not put it back. Check your connection');
-  }
-}
 
 function generateHouseholdCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
@@ -763,50 +751,6 @@ pooHistoryRange.querySelectorAll('.segment').forEach(seg => {
   });
 });
 
-async function logPoo(timestamp, size, note) {
-  const code = getHouseholdCode();
-  if (!code) return;
-  try {
-    await addDoc(poosCollection(code), {
-      timestamp,
-      ...(size ? { size } : {}),
-      ...(note ? { note } : {}),
-    });
-    showToast('Poo logged');
-  } catch (e) {
-    console.error(e);
-    showToast('Could not log poo — check connection');
-  }
-}
-
-async function updatePoo(id, timestamp, size, note) {
-  const code = getHouseholdCode();
-  if (!code) return;
-  try {
-    await updateDoc(doc(db, 'households', code, 'poos', id), {
-      timestamp,
-      size: size || deleteField(),
-      note: note || deleteField(),
-    });
-    showToast('Poo updated');
-  } catch (e) {
-    console.error(e);
-    showToast('Could not save — check connection');
-  }
-}
-
-async function deletePoo(id) {
-  const code = getHouseholdCode();
-  if (!code) return;
-  const removed = latestPoos.find(p => p.id === id);
-  try {
-    await deleteDoc(doc(db, 'households', code, 'poos', id));
-    showToast('Poo deleted', { label: 'Undo', run: () => restoreDeleted('poos', removed) });
-  } catch (e) {
-    console.error(e);
-    showToast('Could not delete');
-  }
-}
 
 // --- Log a poo sheet ---
 // The same shape as Log a feed: When (Today or Other day, then the time wheels), then the one choice that is particular
@@ -1079,26 +1023,16 @@ function renderBottleStatus() {
 async function startBottleTimer(minsAgo) {
   const code = getHouseholdCode();
   if (!code) return;
-  try {
-    await setDoc(bottleDocRef(code), { madeAt: Date.now() - minsAgo * 60000, feedStartedAt: null }, { merge: true });
-    showToast(minsAgo > 0 ? `Bottle timer started (${minsAgo}m ago)` : 'Bottle timer started');
-  } catch (e) {
-    console.error(e);
-    showToast('Could not save — check connection');
-  }
+  inBackground(setDoc(bottleDocRef(code), { madeAt: Date.now() - minsAgo * 60000, feedStartedAt: null }, { merge: true }), 'Could not save. Check your connection');
+  showToast(minsAgo > 0 ? `Bottle timer started (${minsAgo}m ago)` : 'Bottle timer started');
 }
 
 
 bottlePillClear.addEventListener('click', async () => {
   const code = getHouseholdCode();
   if (!code) return;
-  try {
-    await setDoc(bottleDocRef(code), { madeAt: null, feedStartedAt: null }, { merge: true });
-    showToast('Bottle timer cleared');
-  } catch (e) {
-    console.error(e);
-    showToast('Could not save — check connection');
-  }
+  inBackground(setDoc(bottleDocRef(code), { madeAt: null, feedStartedAt: null }, { merge: true }), 'Could not save. Check your connection');
+  showToast('Bottle timer cleared');
 });
 
 // --- Bottle adjust wheel picker ---
@@ -1439,78 +1373,93 @@ historyRange.querySelectorAll('.segment').forEach(seg => {
   });
 });
 
+// Firestore finishes a write only once the server has confirmed it, which can mean a long wait with no signal. The entry
+// already shows on screen from the phone's own copy, so messages and follow-up steps never wait for that confirmation.
+// A write that is turned down (rather than just waiting) still tells the user.
+function inBackground(write, failMessage) {
+  Promise.resolve(write).catch((e) => {
+    console.error(e);
+    if (failMessage) showToast(failMessage);
+  });
+}
+async function restoreDeleted(kind, item) {
+  const code = getHouseholdCode();
+  if (!code || !item) return;
+  const { id, ...data } = item;
+  inBackground(setDoc(doc(db, 'households', code, kind, id), data), 'Could not put it back. Check your connection');
+  showToast(kind === 'feeds' ? 'Feed put back' : 'Poo put back');
+}
+async function deletePoo(id) {
+  const code = getHouseholdCode();
+  if (!code) return;
+  const removed = latestPoos.find(p => p.id === id);
+  inBackground(deleteDoc(doc(db, 'households', code, 'poos', id)), 'Could not delete. Check your connection');
+  showToast('Poo deleted', { label: 'Undo', run: () => restoreDeleted('poos', removed) });
+}
+async function deleteFeed(id) {
+  const code = getHouseholdCode();
+  if (!code) return;
+  const removed = latestFeeds.find(f => f.id === id);
+  inBackground(deleteDoc(doc(db, 'households', code, 'feeds', id)), 'Could not delete. Check your connection');
+  showToast('Feed deleted', { label: 'Undo', run: () => restoreDeleted('feeds', removed) });
+}
+
+async function logPoo(timestamp, size, note) {
+  const code = getHouseholdCode();
+  if (!code) return;
+  inBackground(addDoc(poosCollection(code), {
+    timestamp,
+    ...(size ? { size } : {}),
+    ...(note ? { note } : {}),
+  }), 'Could not log poo. Check your connection');
+  showToast('Poo logged');
+}
+
+async function updatePoo(id, timestamp, size, note) {
+  const code = getHouseholdCode();
+  if (!code) return;
+  inBackground(updateDoc(doc(db, 'households', code, 'poos', id), {
+    timestamp,
+    size: size || deleteField(),
+    note: note || deleteField(),
+  }), 'Could not save. Check your connection');
+  showToast('Poo updated');
+}
+
 async function logFeed(timestamp, amountMl, intervalHours) {
   const code = getHouseholdCode();
   if (!code) return;
-  try {
-    await addDoc(feedsCollection(code), {
-      type: 'bottle',
-      timestamp,
-      amountMl,
-      intervalHours,
-    });
-    showToast('Feed logged');
-  } catch (e) {
-    console.error(e);
-    showToast('Could not log feed — check connection');
-  }
+  inBackground(addDoc(feedsCollection(code), {
+    type: 'bottle',
+    timestamp,
+    amountMl,
+    intervalHours,
+  }), 'Could not log feed. Check your connection');
+  showToast('Feed logged');
 }
 
 async function startFeed(timestamp, intervalHours) {
   const code = getHouseholdCode();
   if (!code) return;
-  try {
-    await addDoc(feedsCollection(code), {
-      type: 'bottle',
-      timestamp,
-      intervalHours,
-    });
-    showToast('Feed started');
-  } catch (e) {
-    console.error(e);
-    showToast('Could not start feed — check connection');
-    return;
-  }
+  inBackground(addDoc(feedsCollection(code), {
+    type: 'bottle',
+    timestamp,
+    intervalHours,
+  }), 'Could not start feed. Check your connection');
+  showToast('Feed started');
   // The bottle is now being drunk from: it is good for 1 hour from now, or until 2 hours after it was made if that
   // comes first. The made time is kept so that limit can be worked out (see bottleState).
-  try {
-    await setDoc(bottleDocRef(code), { feedStartedAt: timestamp }, { merge: true });
-  } catch (e) {
-    console.error(e);
-  }
+  inBackground(setDoc(bottleDocRef(code), { feedStartedAt: timestamp }, { merge: true }));
 }
 
 async function finishFeed(id, timestamp, amountMl, intervalHours, completing = false) {
   const code = getHouseholdCode();
   if (!code) return;
-  try {
-    await updateDoc(doc(db, 'households', code, 'feeds', id), { timestamp, amountMl, intervalHours });
-    showToast('Feed updated');
-  } catch (e) {
-    console.error(e);
-    showToast('Could not save — check connection');
-    return;
-  }
+  inBackground(updateDoc(doc(db, 'households', code, 'feeds', id), { timestamp, amountMl, intervalHours }), 'Could not save. Check your connection');
+  showToast('Feed updated');
   // The feed is over, so the bottle that was being drunk from is done with. A fresh bottle made since is left alone.
   if (completing && bottleFeedStartedAt && (!bottleMadeAt || bottleMadeAt <= bottleFeedStartedAt)) {
-    try {
-      await setDoc(bottleDocRef(code), { madeAt: null, feedStartedAt: null }, { merge: true });
-    } catch (e) {
-      console.error(e);
-    }
-  }
-}
-
-async function deleteFeed(id) {
-  const code = getHouseholdCode();
-  if (!code) return;
-  const removed = latestFeeds.find(f => f.id === id);
-  try {
-    await deleteDoc(doc(db, 'households', code, 'feeds', id));
-    showToast('Feed deleted', { label: 'Undo', run: () => restoreDeleted('feeds', removed) });
-  } catch (e) {
-    console.error(e);
-    showToast('Could not delete');
+    inBackground(setDoc(bottleDocRef(code), { madeAt: null, feedStartedAt: null }, { merge: true }));
   }
 }
 
@@ -2758,7 +2707,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=122').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=123').catch(() => {});
   });
 }
 

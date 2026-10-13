@@ -1,10 +1,19 @@
-const CACHE_NAME = 'baby-feed-v122';
+const CACHE_NAME = 'baby-feed-v123';
 const SHELL_FILES = [
   './index.html',
-  './style.css?v=122',
-  './app.js?v=122',
-  './patterns.js?v=122',
-  './manifest.json?v=122',
+  './style.css?v=123',
+  './app.js?v=123',
+  './patterns.js?v=123',
+  './manifest.json?v=123',
+  './fonts/nunito.css?v=123',
+  './fonts/nunito-latin.woff2',
+  './fonts/nunito-latin-ext.woff2',
+  './fonts/nunito-vietnamese.woff2',
+  './fonts/nunito-cyrillic.woff2',
+  './fonts/nunito-cyrillic-ext.woff2',
+  './vendor/firebase-app.js',
+  './vendor/firebase-auth.js',
+  './vendor/firebase-firestore.js',
 ];
 
 self.addEventListener('install', (event) => {
