@@ -753,3 +753,16 @@ a.srow { text-decoration: none; }
 .snote { margin: 0; padding: 0 6px; font-size: .8125rem; font-weight: 600; color: var(--muted); line-height: 1.4; }
 #settings-screen .profile-card { margin-top: 12px; }
 @media (prefers-reduced-motion: reduce) { .year-track i { transition: none; } }
+
+/* Finish feed, short version: only the amount is asked for. The time and next-feed controls stay in the page, out of
+   sight and out of the layout, so they keep their position and open when Change is tapped. */
+#log-modal .modal-card { position: relative; }
+#log-modal.compact .frow, #log-modal.compact .gaphead, #log-modal.compact #gap-chips { position: absolute; left: 0; right: 0; visibility: hidden; pointer-events: none; height: 0; overflow: hidden; }
+.ssum { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--fill); border-radius: 16px; padding: 10px 14px; }
+.ssum[hidden] { display: none; }
+.ssum-l { display: flex; flex-direction: column; gap: 2px; font-size: .875rem; font-weight: 700; color: var(--muted); min-width: 0; }
+.ssum-l b { color: var(--ink); font-weight: 800; font-variant-numeric: tabular-nums; }
+.ssum-change { flex: none; min-height: 40px; padding: 0 16px; border-radius: 99px; background: var(--card); color: var(--ink); font-weight: 800; font-size: .9375rem; box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
+.timeonly { align-self: center; min-height: 44px; margin-top: -4px; padding: 0 8px; font-weight: 800; font-size: .9375rem; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-align: center; }
+.timeonly[hidden] { display: none; }
+.timeonly:disabled { color: var(--muted); text-decoration: none; opacity: .6; }
