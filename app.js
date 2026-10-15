@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=127';
+import { analyse } from './patterns.js?v=128';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2787,7 +2787,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=127').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=128').catch(() => {});
   });
 }
 
@@ -2832,5 +2832,14 @@ document.addEventListener('touchmove', (e) => {
 
 // A note in Settings that a paid upgrade is coming. Set to false to hide it (for example, if App Review objects to a
 // "coming soon" notice in the iPhone app).
-const SHOW_PLUS_TEASER = true;
+const SHOW_PLUS_TEASER = false;
 document.getElementById('plus-teaser').hidden = !SHOW_PLUS_TEASER;
+
+// "Rate the app" opens the App Store review page. The link is not known until the app is published, so for now the
+// button only says so. To switch it on, set APP_STORE_REVIEW_URL, for example
+// 'itms-apps://itunes.apple.com/app/id0000000000?action=write-review' with the app's real number.
+const APP_STORE_REVIEW_URL = '';
+document.getElementById('rate-app').addEventListener('click', () => {
+  if (APP_STORE_REVIEW_URL) window.location.href = APP_STORE_REVIEW_URL;
+  else showToast('Thank you. Rating opens once the app is on the App Store');
+});

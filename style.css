@@ -767,3 +767,5 @@ a.srow { text-decoration: none; }
 .plus-tag { align-self: flex-start; font-size: .6875rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--gold); background: var(--gold-tint); border-radius: 99px; padding: 3px 10px; }
 .plus-price { font-size: 1.75rem; font-weight: 900; letter-spacing: -.02em; line-height: 1.1; }
 .plus-card .plus-free { margin-top: 2px; padding-top: 8px; border-top: 1px solid var(--line); }
+.rate-btn { align-self: flex-start; margin-top: 6px; min-height: 44px; padding: 0 18px; border-radius: 99px; background: var(--fill); color: var(--ink); font-weight: 800; font-size: .9375rem; }
+.plus-price small { font-size: .8125rem; font-weight: 700; color: var(--muted); letter-spacing: 0; }
