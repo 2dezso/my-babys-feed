@@ -213,3 +213,7 @@ Firebase (`vendor/firebase-app.js`, `firebase-auth.js`, `firebase-firestore.js`,
 - The three Firebase files must keep identical addresses: `app.js` imports `./vendor/firebase-app.js` and the other two import `./firebase-app.js`, which resolve to the same file. Adding a `?v=` to one of them would load Firebase twice and break it.
 - To update Firebase, download the same three files for the new version from `https://www.gstatic.com/firebasejs/<version>/`, and replace `https://www.gstatic.com/firebasejs/<version>/firebase-app.js` inside the auth and firestore files with `./firebase-app.js`.
 - Data written with no signal is kept on the phone by Firestore and sent when the connection returns.
+
+## Reading feeds cheaply (v125)
+
+Google charges per document read, so the app does not read every feed each time it opens. `listenToFeeds` follows only the last 35 days (`FEED_WINDOW_DAYS`), plus the single most recent older feed so "Last feed" is right after a long break. Older feeds are read, live, only when the Past feeds "All" tab is opened (`ensureOlderFeeds`). The Profile totals use Google-side `count` and `sum` queries (`refreshProfileCounts`), and Trends gets the date of the first feed from one small read (`lookupOldestFeed`). Nothing stored changes. Trends needs at most 21 days (three weekly windows in `patterns.js`), so 35 days leaves room.

@@ -1,10 +1,10 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=124';
+import { analyse } from './patterns.js?v=125';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
-  query, where, orderBy, limit, documentId, onSnapshot, enableIndexedDbPersistence, getDocs, getCountFromServer,
+  query, where, orderBy, limit, documentId, onSnapshot, enableIndexedDbPersistence, getDocs, getCountFromServer, getAggregateFromServer, count, sum,
 } from './vendor/firebase-firestore.js';
 
 const app = initializeApp(firebaseConfig);
@@ -397,20 +397,65 @@ async function enterApp(code) {
   listenToBottle(code);
 }
 
+// The feed list is read as a recent window (the last 35 days) rather than everything, so opening the app costs a few
+// hundred reads however long it has been used. The most recent older feed is also read, so "Last feed" is right after a
+// long break. Everything older is read only when the All tab is opened.
+const FEED_WINDOW_DAYS = 35;
+let windowFeeds = [];
+let olderFeeds = [];
+let olderAllLoaded = false;
+let feedCutoff = 0;
+let oldestFeedTs = null;
+
+function setFeeds() {
+  const seen = new Set(windowFeeds.map(f => f.id));
+  latestFeeds = [...windowFeeds, ...olderFeeds.filter(f => !seen.has(f.id))].sort((a, b) => b.timestamp - a.timestamp);
+  renderSinceLastFeed();
+  renderNextFeed();
+  renderTodayTotal();
+  renderHistory();
+  renderTrends();
+}
+
 function listenToFeeds(code) {
-  const q = query(feedsCollection(code), orderBy('timestamp', 'desc'), limit(3000));
-  onSnapshot(q, (snapshot) => {
-    latestFeeds = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderProfileCounts();
-    renderSinceLastFeed();
-    renderNextFeed();
-    renderTodayTotal();
-    renderHistory();
-    renderTrends();
+  feedCutoff = startOfToday() - FEED_WINDOW_DAYS * 86400000;
+  onSnapshot(query(feedsCollection(code), where('timestamp', '>=', feedCutoff), orderBy('timestamp', 'desc')), (snapshot) => {
+    windowFeeds = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    setFeeds();
   }, (err) => {
     console.error(err);
     showToast('Sync error — check connection');
   });
+  onSnapshot(query(feedsCollection(code), where('timestamp', '<', feedCutoff), orderBy('timestamp', 'desc'), limit(1)), (snapshot) => {
+    if (olderAllLoaded) return;
+    olderFeeds = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    setFeeds();
+  }, (err) => console.error(err));
+  lookupOldestFeed(code);
+}
+
+// All the feeds older than the window, live, once the All tab asks for them.
+function ensureOlderFeeds() {
+  const code = getHouseholdCode();
+  if (!code || olderAllLoaded) return;
+  olderAllLoaded = true;
+  onSnapshot(query(feedsCollection(code), where('timestamp', '<', feedCutoff), orderBy('timestamp', 'desc')), (snapshot) => {
+    olderFeeds = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    setFeeds();
+  }, (err) => {
+    console.error(err);
+    olderAllLoaded = false;
+    showToast('Could not load the older feeds. Check your connection');
+  });
+}
+
+// One small read for the date of the very first feed, so Trends can say how many days it covers.
+async function lookupOldestFeed(code) {
+  try {
+    const first = await getDocs(query(feedsCollection(code), orderBy('timestamp', 'asc'), limit(1)));
+    oldestFeedTs = first.docs.length ? first.docs[0].data().timestamp : null;
+    renderTrends();
+  } catch (e) { /* offline: the label falls back to the window */ }
 }
 
 function listenToProfile(code) {
@@ -583,27 +628,35 @@ function renderProfilePreview() {
   sofarEl.textContent = `${profileFirstName || 'Your baby'} so far`;
 }
 
-// The four totals. Feeds, litres and poos come from the lists the app already keeps; moments are counted on the server
-// without downloading the photos.
+// The four totals are worked out by Google on its side (a count and a sum, charged at about one read per thousand
+// entries), so they stay exact however many feeds there are and nothing is downloaded.
+let profileCounts = { feeds: null, ml: null, poos: null, moments: null };
 function renderProfileCounts() {
-  const done = latestFeeds.filter(f => f.amountMl != null);
-  const ml = done.reduce((sum, f) => sum + f.amountMl, 0);
-  statFeedsEl.textContent = done.length.toLocaleString();
-  // Litres in ml mode, fluid ounces in ounce mode.
-  statLitresEl.textContent = unit === 'oz' ? Math.round(ml / ML_PER_OZ).toLocaleString() : (ml / 1000).toLocaleString(undefined, { maximumFractionDigits: ml >= 10000 ? 0 : 1 });
+  const c = profileCounts;
+  statFeedsEl.textContent = c.feeds == null ? '–' : c.feeds.toLocaleString();
+  if (c.ml == null) statLitresEl.textContent = '–';
+  else if (unit === 'oz') statLitresEl.textContent = Math.round(c.ml / ML_PER_OZ).toLocaleString();
+  else statLitresEl.textContent = (c.ml / 1000).toLocaleString(undefined, { maximumFractionDigits: c.ml >= 10000 ? 0 : 1 });
   document.getElementById('stat-litres-label').textContent = unit === 'oz' ? 'fl oz' : 'litres';
-  statPoosEl.textContent = latestPoos.length >= 500 ? '500+' : String(latestPoos.length);
+  statPoosEl.textContent = c.poos == null ? '–' : c.poos.toLocaleString();
+  statMomentsEl.textContent = c.moments == null ? '–' : c.moments.toLocaleString();
 }
 async function refreshProfileCounts() {
   renderProfileCounts();
   const code = getHouseholdCode();
   if (!code) return;
-  try {
-    const counted = await getCountFromServer(milestonesCollection(code));
-    statMomentsEl.textContent = String(counted.data().count);
-  } catch (e) {
-    statMomentsEl.textContent = '–';
-  }
+  const [feeds, poos, moments] = await Promise.allSettled([
+    getAggregateFromServer(query(feedsCollection(code), where('amountMl', '>=', 0)), { feeds: count(), ml: sum('amountMl') }),
+    getCountFromServer(poosCollection(code)),
+    getCountFromServer(milestonesCollection(code)),
+  ]);
+  profileCounts = {
+    feeds: feeds.status === 'fulfilled' ? feeds.value.data().feeds : null,
+    ml: feeds.status === 'fulfilled' ? feeds.value.data().ml : null,
+    poos: poos.status === 'fulfilled' ? poos.value.data().count : null,
+    moments: moments.status === 'fulfilled' ? moments.value.data().count : null,
+  };
+  renderProfileCounts();
 }
 
 // A first-time household opens the name sheet straight away; Continue and Skip both lead on to the Feeds page.
@@ -626,7 +679,6 @@ function listenToPoos(code) {
   const q = query(poosCollection(code), orderBy('timestamp', 'desc'), limit(500));
   onSnapshot(q, (snapshot) => {
     latestPoos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderProfileCounts();
     renderSinceLastPoo();
     renderPooStats();
     renderPooHistory();
@@ -1370,6 +1422,7 @@ function renderHistory() {
 historyRange.querySelectorAll('.segment').forEach(seg => {
   seg.addEventListener('click', () => {
     currentRange = seg.dataset.range;
+    if (currentRange === 'all') ensureOlderFeeds();
     chartSelectedStart = null;
     historyRange.querySelectorAll('.segment').forEach(s => s.classList.remove('active'));
     seg.classList.add('active');
@@ -1871,7 +1924,8 @@ function trendsHero(r) {
 function renderTrends() {
   if (!trendsPatternsEl) return;
   const r = analyse(latestFeeds);
-  const dayCount = new Set(latestFeeds.map((f) => dayKeyForTimestamp(f.timestamp))).size;
+  const firstFeedTs = oldestFeedTs ?? (latestFeeds.length ? latestFeeds[latestFeeds.length - 1].timestamp : null);
+  const dayCount = firstFeedTs == null ? 0 : Math.round((startOfToday() - dayKeyForTimestamp(firstFeedTs)) / 86400000) + 1;
   trendsSubEl.textContent = dayCount ? `From ${dayCount} ${dayCount === 1 ? 'day' : 'days'} of feeds` : 'From the feed log';
 
   const items = trendItems(r);
@@ -2733,7 +2787,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=124').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=125').catch(() => {});
   });
 }
 
