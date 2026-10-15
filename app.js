@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=125';
+import { analyse } from './patterns.js?v=126';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -138,9 +138,6 @@ const sheetDel = document.getElementById('sheet-del');
 const logCancel = document.getElementById('log-cancel');
 const logConfirm = document.getElementById('log-confirm');
 const logTimeOnly = document.getElementById('log-time-only');
-const sheetSummary = document.getElementById('sheet-summary');
-const ssumStarted = document.getElementById('ssum-started');
-const ssumNext = document.getElementById('ssum-next');
 
 const shareModal = document.getElementById('share-modal');
 const btnShare = document.getElementById('btn-share');
@@ -2285,10 +2282,6 @@ function drawSheet() {
   // A past feed can also be saved with just its time. It then waits for its amount, like a feed that was started.
   logTimeOnly.hidden = sheetMode !== 'log';
   logTimeOnly.disabled = ts == null;
-  // Finishing a started feed shows a short summary in place of the time and gap controls, until Change is tapped.
-  if (!logModal.classList.contains('compact')) return;
-  ssumStarted.textContent = ts == null ? '–' : formatClock(ts);
-  ssumNext.textContent = ts == null ? '–' : `around ${formatClock(ts + selectedIntervalHours * 3600000)} (${formatIntervalLabel(selectedIntervalHours)})`;
 }
 
 function onAmountChanged(value) {
@@ -2437,8 +2430,6 @@ function openLogModal(feed) {
   sheetDel.hidden = sheetMode !== 'edit';
   gapShown = null;
   logModal.hidden = false;
-  logModal.classList.toggle('compact', sheetMode === 'complete');
-  sheetSummary.hidden = sheetMode !== 'complete';
   // The wheel can only be positioned once the sheet is on screen.
   scrollAmountTo(startMl);
   setTimeWheel(startTime[0], startTime[1], startTime[2]);
@@ -2508,11 +2499,6 @@ logConfirm.addEventListener('click', () => {
   } else {
     logFeed(timestamp, selectedMl, selectedIntervalHours);
   }
-});
-
-document.getElementById('ssum-change').addEventListener('click', () => {
-  logModal.classList.remove('compact');
-  sheetSummary.hidden = true;
 });
 
 logTimeOnly.addEventListener('click', () => {
@@ -2787,7 +2773,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=125').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=126').catch(() => {});
   });
 }
 
