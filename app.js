@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=128';
+import { analyse } from './patterns.js?v=129';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -356,6 +356,7 @@ function showScreen(name) {
   });
   document.documentElement.classList.toggle('on-home', name === 'home');
   if (name === 'profile') { scrollBottleBrandWheelTo(selectedBottleBrand); refreshProfileCounts(); }
+  if (name === 'poo') ensurePoosListener();
   if (name === 'settings') shareCodeRowEl.textContent = getHouseholdCode() || '';
   window.scrollTo(0, 0);
 }
@@ -390,14 +391,13 @@ async function enterApp(code) {
   if (!known) await joining;
   listenToFeeds(code);
   listenToProfile(code);
-  listenToPoos(code);
   listenToBottle(code);
 }
 
-// The feed list is read as a recent window (the last 35 days) rather than everything, so opening the app costs a few
+// The feed list is read as a recent window (the last 28 days) rather than everything, so opening the app costs a few
 // hundred reads however long it has been used. The most recent older feed is also read, so "Last feed" is right after a
 // long break. Everything older is read only when the All tab is opened.
-const FEED_WINDOW_DAYS = 35;
+const FEED_WINDOW_DAYS = 28;
 let windowFeeds = [];
 let olderFeeds = [];
 let olderAllLoaded = false;
@@ -672,10 +672,19 @@ function finishProfileOnboarding() {
   shareModal.hidden = false;
 }
 
-// Like the feeds, the poo list follows only the last 35 days, plus the single most recent older poo, so "Last poo" is
+// Like the feeds, the poo list follows only the last 28 days, plus the single most recent older poo, so "Last poo" is
 // right after a long gap and the oldest recent poo still shows its gap. Nothing here needs older poos: the list shows
 // 1 or 7 days, and the page's totals come from the server (see refreshProfileCounts).
 let windowPoos = [];
+let poosLoaded = false;
+let poosListening = false;
+// The poo list is only read when the Poos page is first opened, so people who rarely use it never pay for it.
+function ensurePoosListener() {
+  const code = getHouseholdCode();
+  if (!code || poosListening) return;
+  poosListening = true;
+  listenToPoos(code);
+}
 let olderPoo = [];
 function setPoos() {
   const seen = new Set(windowPoos.map(p => p.id));
@@ -688,6 +697,7 @@ function listenToPoos(code) {
   const cutoff = startOfToday() - FEED_WINDOW_DAYS * 86400000;
   onSnapshot(query(poosCollection(code), where('timestamp', '>=', cutoff), orderBy('timestamp', 'desc')), (snapshot) => {
     windowPoos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    poosLoaded = true;
     setPoos();
   }, (err) => {
     console.error(err);
@@ -700,6 +710,11 @@ function listenToPoos(code) {
 }
 
 function renderSinceLastPoo() {
+  if (!poosLoaded) {
+    sinceLastPooEl.textContent = '—';
+    lastPooDetailEl.textContent = 'Loading…';
+    return;
+  }
   if (latestPoos.length === 0) {
     sinceLastPooEl.textContent = '—';
     lastPooDetailEl.textContent = 'No poos yet';
@@ -714,6 +729,11 @@ function renderSinceLastPoo() {
 const POO_WEEK_MAX_BAR = 5;
 
 function renderPooStats() {
+  if (!poosLoaded) {
+    pooTodayCountEl.textContent = '—';
+    pooAvgGapEl.textContent = '—';
+    return;
+  }
   const today = startOfToday();
   const todayCount = latestPoos.filter(p => p.timestamp >= today).length;
   pooTodayCountEl.textContent = todayCount === 1 ? '1 poo' : `${todayCount} poos`;
@@ -765,6 +785,11 @@ function escapeHtml(str) {
 }
 
 function renderPooHistory() {
+  if (!poosLoaded) {
+    pooHistoryList.innerHTML = '';
+    pooHistoryEmpty.hidden = true;
+    return;
+  }
   const cutoff = rangeCutoff(currentPooRange);
   const filtered = latestPoos.filter(p => p.timestamp >= cutoff);
   pooHistoryList.innerHTML = '';
@@ -2787,7 +2812,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=128').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=129').catch(() => {});
   });
 }
 
