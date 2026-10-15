@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=126';
+import { analyse } from './patterns.js?v=127';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -672,17 +672,31 @@ function finishProfileOnboarding() {
   shareModal.hidden = false;
 }
 
+// Like the feeds, the poo list follows only the last 35 days, plus the single most recent older poo, so "Last poo" is
+// right after a long gap and the oldest recent poo still shows its gap. Nothing here needs older poos: the list shows
+// 1 or 7 days, and the page's totals come from the server (see refreshProfileCounts).
+let windowPoos = [];
+let olderPoo = [];
+function setPoos() {
+  const seen = new Set(windowPoos.map(p => p.id));
+  latestPoos = [...windowPoos, ...olderPoo.filter(p => !seen.has(p.id))].sort((a, b) => b.timestamp - a.timestamp);
+  renderSinceLastPoo();
+  renderPooStats();
+  renderPooHistory();
+}
 function listenToPoos(code) {
-  const q = query(poosCollection(code), orderBy('timestamp', 'desc'), limit(500));
-  onSnapshot(q, (snapshot) => {
-    latestPoos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderSinceLastPoo();
-    renderPooStats();
-    renderPooHistory();
+  const cutoff = startOfToday() - FEED_WINDOW_DAYS * 86400000;
+  onSnapshot(query(poosCollection(code), where('timestamp', '>=', cutoff), orderBy('timestamp', 'desc')), (snapshot) => {
+    windowPoos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    setPoos();
   }, (err) => {
     console.error(err);
     showToast('Sync error — check connection');
   });
+  onSnapshot(query(poosCollection(code), where('timestamp', '<', cutoff), orderBy('timestamp', 'desc'), limit(1)), (snapshot) => {
+    olderPoo = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    setPoos();
+  }, (err) => console.error(err));
 }
 
 function renderSinceLastPoo() {
@@ -2773,7 +2787,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=126').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=127').catch(() => {});
   });
 }
 
@@ -2815,3 +2829,8 @@ window.addEventListener('focus', checkForNewVersion);
 document.addEventListener('touchmove', (e) => {
   if (e.touches.length > 1 && e.scale && e.scale > 1) e.preventDefault();
 }, { passive: false });
+
+// A note in Settings that a paid upgrade is coming. Set to false to hide it (for example, if App Review objects to a
+// "coming soon" notice in the iPhone app).
+const SHOW_PLUS_TEASER = true;
+document.getElementById('plus-teaser').hidden = !SHOW_PLUS_TEASER;

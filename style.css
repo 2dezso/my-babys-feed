@@ -757,3 +757,13 @@ a.srow { text-decoration: none; }
 .timeonly { align-self: center; min-height: 44px; margin-top: -4px; padding: 0 8px; font-weight: 800; font-size: .9375rem; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-align: center; }
 .timeonly[hidden] { display: none; }
 .timeonly:disabled { color: var(--muted); text-decoration: none; opacity: .6; }
+
+/* Settings: free to use, and the paid upgrade that is coming */
+.free-card { background: var(--card); border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--shadow); }
+.free-card b { font-size: 1.0625rem; font-weight: 900; }
+.free-card p, .plus-card p { margin: 0; font-size: .875rem; font-weight: 600; color: var(--muted); line-height: 1.45; }
+.plus-card { background: var(--card); border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; border: 2px solid var(--gold); }
+.plus-card[hidden] { display: none; }
+.plus-tag { align-self: flex-start; font-size: .6875rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--gold); background: var(--gold-tint); border-radius: 99px; padding: 3px 10px; }
+.plus-price { font-size: 1.75rem; font-weight: 900; letter-spacing: -.02em; line-height: 1.1; }
+.plus-card .plus-free { margin-top: 2px; padding-top: 8px; border-top: 1px solid var(--line); }

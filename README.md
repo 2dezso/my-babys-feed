@@ -217,3 +217,5 @@ Firebase (`vendor/firebase-app.js`, `firebase-auth.js`, `firebase-firestore.js`,
 ## Reading feeds cheaply (v125)
 
 Google charges per document read, so the app does not read every feed each time it opens. `listenToFeeds` follows only the last 35 days (`FEED_WINDOW_DAYS`), plus the single most recent older feed so "Last feed" is right after a long break. Older feeds are read, live, only when the Past feeds "All" tab is opened (`ensureOlderFeeds`). The Profile totals use Google-side `count` and `sum` queries (`refreshProfileCounts`), and Trends gets the date of the first feed from one small read (`lookupOldestFeed`). Nothing stored changes. Trends needs at most 21 days (three weekly windows in `patterns.js`), so 35 days leaves room.
+
+The poo list follows the same 35 days (plus the single most recent older poo), and the Settings page shows a "Free to use" card and a "Plus, coming soon" note. The note is shown unless `SHOW_PLUS_TEASER` at the end of `app.js` is set to `false`.
