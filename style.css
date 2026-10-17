@@ -772,8 +772,7 @@ a.srow { text-decoration: none; }
 
 /* First open: one welcome screen, then pointers on Feeds and a one-time share card */
 .card.welcome { display: flex; flex-direction: column; gap: 12px; }
-.welcome-logo { width: 64px; height: 64px; border-radius: 16px; background: var(--feed); display: grid; place-items: center; }
-.welcome-logo svg { width: 36px; height: 36px; fill: #fffaf2; }
+.welcome-logo { width: 64px; height: 64px; border-radius: 15px; display: block; box-shadow: 0 4px 12px rgba(0, 0, 0, .14); }
 #setup-screen .card.welcome h1 { margin: 4px 0 0; font-size: 1.75rem; font-weight: 900; }
 .card.welcome .muted { margin: 0; line-height: 1.5; }
 .card.welcome .setup-choice { margin-top: 4px; display: flex; flex-direction: column; gap: 8px; }
