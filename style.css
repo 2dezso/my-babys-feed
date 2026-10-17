@@ -794,3 +794,23 @@ a.srow { text-decoration: none; }
 .share-card-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
 .share-card-btns .btn { min-height: 44px; }
 #since-last-feed.is-empty { font-size: 2rem; max-width: 62%; line-height: 1.1; margin-top: 4px; }
+
+/* Sheets taller than the screen scroll instead of squashing their contents (the hours bar was crushed on small phones). */
+.modal-card > * { flex-shrink: 0; }
+
+/* Small phones (iPhone SE and similar): keep the main buttons on one line. */
+@media (max-width: 360px) {
+  .acts { grid-template-columns: 1fr 96px; }
+  .startbtn { padding: 0 12px; gap: 8px; }
+  .startbtn .sb-t b { white-space: nowrap; }
+  .startbtn .sb-t small { display: none; }
+  #btn-log-feed .ico { display: none; }
+  .year-lab { font-size: .75rem; }
+}
+
+/* The first-feed pointer is dark on light pages, and a soft panel in dark mode rather than a bright white block. */
+@media (prefers-color-scheme: dark) {
+  .feed-tip { background: var(--fill); color: var(--ink); }
+  .feed-tip::before { border-bottom-color: var(--fill); }
+  .feed-tip .n { background: var(--ink); color: var(--bg); }
+}
