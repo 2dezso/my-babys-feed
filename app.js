@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=131';
+import { analyse } from './patterns.js?v=132';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2871,7 +2871,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=131').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=132').catch(() => {});
   });
 }
 
@@ -2927,3 +2927,13 @@ document.getElementById('rate-app').addEventListener('click', () => {
   if (APP_STORE_REVIEW_URL) window.location.href = APP_STORE_REVIEW_URL;
   else showToast('Thank you. Rating opens once the app is on the App Store');
 });
+
+// The household code is the only way back in on a new phone, so offer to email it to yourself. This opens the phone's
+// mail app with the message ready; nothing is sent by the app itself.
+function emailCodeToSelf() {
+  const code = getHouseholdCode() || '';
+  const subject = encodeURIComponent("Our baby's feed diary code");
+  const body = encodeURIComponent(`Our code is ${code}\n\nTo get back to our feeds on a new phone, open charliesfirstyear.com, tap "I have a code from someone" and enter the code.`);
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+document.querySelectorAll('.email-code').forEach(btn => btn.addEventListener('click', emailCodeToSelf));

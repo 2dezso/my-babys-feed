@@ -814,3 +814,4 @@ a.srow { text-decoration: none; }
   .feed-tip::before { border-bottom-color: var(--fill); }
   .feed-tip .n { background: var(--ink); color: var(--bg); }
 }
+.share-card .email-code { margin-top: 2px; color: var(--muted); }
