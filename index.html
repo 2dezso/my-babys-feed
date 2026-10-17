@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=129">
-<link rel="stylesheet" href="fonts/nunito.css?v=129">
-<link rel="stylesheet" href="style.css?v=129">
-<link rel="icon" type="image/png" href="icon-192.png?v=129">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=129">
+<link rel="manifest" href="manifest.json?v=130">
+<link rel="stylesheet" href="fonts/nunito.css?v=130">
+<link rel="stylesheet" href="style.css?v=130">
+<link rel="icon" type="image/png" href="icon-192.png?v=130">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=130">
 </head>
 <body>
 
@@ -48,19 +48,23 @@
 </svg>
 
 <div id="setup-screen" class="screen" hidden>
-  <div class="card">
-    <h1>Your baby’s first year</h1>
-    <p class="muted">A simple diary for feeds, poos and moments, shared with everyone who looks after your baby. No account or sign-up needed.</p>
+  <div class="card welcome">
+    <span class="welcome-logo" aria-hidden="true"><svg><use href="#h-bottle"/></svg></span>
+    <h1>Track feeds together</h1>
+    <p class="muted">Log a feed in one tap. Everyone looking after your baby sees it straight away. No account needed.</p>
 
     <div class="setup-choice">
-      <button id="btn-create-household" class="btn btn-primary">Start a new diary</button>
-      <div class="or-divider">or</div>
-      <form id="join-form">
-        <label for="join-code">Got a code from a partner or family member?</label>
-        <input id="join-code" type="text" inputmode="text" autocapitalize="characters" placeholder="ABCD1234" maxlength="8">
-        <button type="submit" class="btn btn-secondary">Join with this code</button>
-      </form>
+      <label class="field-label" for="welcome-name">Your baby’s first name</label>
+      <input id="welcome-name" class="field-input" type="text" placeholder="Optional" autocomplete="off" autocapitalize="words">
+      <button id="btn-create-household" class="btn btn-primary welcome-go">Start</button>
     </div>
+
+    <button type="button" id="show-join" class="text-link-btn">I have a code from someone</button>
+    <form id="join-form" hidden>
+      <label for="join-code">Enter the code you were given</label>
+      <input id="join-code" type="text" inputmode="text" autocapitalize="characters" placeholder="ABCD1234" maxlength="8">
+      <button type="submit" class="btn btn-secondary">Join</button>
+    </form>
     <p id="setup-error" class="error" hidden></p>
     <a class="text-link-btn" href="privacy.html">Privacy</a>
   </div>
@@ -82,7 +86,7 @@
         <div id="pending-detail" class="hero-s"></div>
       </div>
       <div id="hero-main-view" class="hlayer resting">
-        <div class="hero-l">Last feed</div>
+        <div id="last-feed-label" class="hero-l">Last feed</div>
         <div id="since-last-feed" class="hero-n">—</div>
         <div id="last-feed-detail" class="hero-s"></div>
         <div id="hero-low">
@@ -98,6 +102,17 @@
     <div class="acts">
       <button id="btn-start-feed-now" class="btn startbtn"><svg class="ico sb-ico" aria-hidden="true"><use href="#i-heart"/></svg><span class="sb-t sb-idle"><b>Start feed</b><small>Add the amount after</small></span><span class="sb-t sb-busy"><b id="btn-start-feed-label">Finish feed</b><small id="btn-start-feed-sub"></small></span><span class="sb-dot" aria-hidden="true"></span></button>
       <button id="btn-log-feed" class="btn btn-s"><svg class="ico" aria-hidden="true"><use href="#i-pencil"/></svg>Log past</button>
+    </div>
+
+    <p id="feed-tip" class="feed-tip" hidden></p>
+    <div id="share-card" class="share-card" hidden>
+      <b>Feeding with someone else?</b>
+      <p>Give them this code and their phone shows the same feeds.</p>
+      <span id="share-card-code" class="share-card-code"></span>
+      <div class="share-card-btns">
+        <button type="button" id="share-card-go" class="btn btn-primary">Share code</button>
+        <button type="button" id="share-card-later" class="btn btn-secondary">Not now</button>
+      </div>
     </div>
 
 
@@ -617,6 +632,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=129"></script>
+<script type="module" src="app.js?v=130"></script>
 </body>
 </html>

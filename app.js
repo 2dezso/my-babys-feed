@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=129';
+import { analyse } from './patterns.js?v=130';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -82,6 +82,7 @@ const btnCreateHousehold = document.getElementById('btn-create-household');
 
 const heroCard = document.getElementById('hero-card');
 const pendingTimeEl = document.getElementById('pending-time');
+const lastFeedLabelEl = document.getElementById('last-feed-label');
 const pendingDetailEl = document.getElementById('pending-detail');
 const nextFeedLabelEl = document.getElementById('next-feed-label');
 const heroLine = document.getElementById('hero-line');
@@ -403,6 +404,7 @@ let olderFeeds = [];
 let olderAllLoaded = false;
 let feedCutoff = 0;
 let oldestFeedTs = null;
+let feedsLoaded = false; // becomes true with the first answer from the feed list, so empty-state hints never flash
 
 function setFeeds() {
   const seen = new Set(windowFeeds.map(f => f.id));
@@ -412,12 +414,14 @@ function setFeeds() {
   renderTodayTotal();
   renderHistory();
   renderTrends();
+  renderFirstRunHints();
 }
 
 function listenToFeeds(code) {
   feedCutoff = startOfToday() - FEED_WINDOW_DAYS * 86400000;
   onSnapshot(query(feedsCollection(code), where('timestamp', '>=', feedCutoff), orderBy('timestamp', 'desc')), (snapshot) => {
     windowFeeds = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    feedsLoaded = true;
     setFeeds();
   }, (err) => {
     console.error(err);
@@ -485,6 +489,7 @@ function listenToProfile(code) {
     highlightGenderChip();
     renderProfileAge();
     renderProfilePreview();
+    renderSinceLastFeed();
     renderTrends();
     if (calendarInitialized) renderCalendar();
   }, (err) => {
@@ -968,10 +973,20 @@ function renderSinceLastFeed() {
   heroCard.classList.toggle('hero-pending', isPending);
   updateFeedActionButtons(isPending);
   if (!last) {
-    sinceLastFeedEl.textContent = '—';
-    lastFeedDetailEl.textContent = 'No feeds yet';
+    if (!feedsLoaded) {
+      lastFeedLabelEl.textContent = 'Last feed';
+      sinceLastFeedEl.textContent = '—';
+      lastFeedDetailEl.textContent = '';
+      return;
+    }
+    lastFeedLabelEl.textContent = profileFirstName ? `Ready for ${profileFirstName}’s first feed` : 'Ready for the first feed';
+    sinceLastFeedEl.textContent = 'No feeds yet';
+    sinceLastFeedEl.classList.add('is-empty');
+    lastFeedDetailEl.textContent = '';
     return;
   }
+  lastFeedLabelEl.textContent = 'Last feed';
+  sinceLastFeedEl.classList.remove('is-empty');
   const since = durationString(Date.now() - last.timestamp);
   if (isPending) {
     pendingTimeEl.textContent = since;
@@ -2602,12 +2617,14 @@ btnInstallApp.addEventListener('click', async () => {
 
 installModalClose.addEventListener('click', () => { installModal.hidden = true; });
 
-btnCreateHousehold.addEventListener('click', () => {
+btnCreateHousehold.addEventListener('click', async () => {
   const code = generateHouseholdCode();
   localStorage.setItem(STORAGE_KEY, code);
-  history.replaceState(null, '', '#profile');
-  setProfileOnboarding(true);
-  enterApp(code);
+  setFlag(CREATED_KEY);
+  const name = document.getElementById('welcome-name').value.trim();
+  history.replaceState(null, '', '#feed');
+  await enterApp(code);
+  if (name) saveProfileFields({ firstName: name });
 });
 
 joinForm.addEventListener('submit', (e) => {
@@ -2730,6 +2747,48 @@ document.querySelectorAll('#unit-choice .segment').forEach(btn => {
 });
 drawUnitChoice();
 
+// --- First open ---
+// One welcome screen asks for the baby's name (optional), then Feeds teaches the two buttons at the moment they are
+// needed: a pointer at Start feed while there are no feeds, then one at Finish feed while the very first feed runs.
+// After the first finished feed, the phone that made the diary offers the share code once.
+const CREATED_KEY = 'babyfeed_created_here';
+const SHARE_DONE_KEY = 'babyfeed_share_card_done';
+const feedTipEl = document.getElementById('feed-tip');
+const shareCard = document.getElementById('share-card');
+function readFlag(key) { try { return localStorage.getItem(key) === '1'; } catch (e) { return false; } }
+function setFlag(key) { try { localStorage.setItem(key, '1'); } catch (e) { /* the card may show again; harmless */ } }
+
+function renderFirstRunHints() {
+  if (!feedsLoaded) { feedTipEl.hidden = true; shareCard.hidden = true; return; }
+  const running = latestFeeds.length && latestFeeds[0].amountMl == null;
+  let tip = '';
+  if (!latestFeeds.length) tip = '<span class="n">1</span>Tap <b>Start feed</b> when the feed begins.';
+  else if (latestFeeds.length === 1 && running) tip = '<span class="n">2</span>When it is done, tap <b>Finish feed</b> and add how much.';
+  feedTipEl.innerHTML = tip;
+  feedTipEl.hidden = !tip;
+  btnStartFeedNow.classList.toggle('pulse', !!tip);
+  const showShare = readFlag(CREATED_KEY) && !readFlag(SHARE_DONE_KEY) && latestFeeds.some(f => f.amountMl != null);
+  shareCard.hidden = !showShare;
+  if (showShare) document.getElementById('share-card-code').textContent = getHouseholdCode() || '';
+}
+
+document.getElementById('share-card-go').addEventListener('click', async () => {
+  const code = getHouseholdCode() || '';
+  setFlag(SHARE_DONE_KEY);
+  renderFirstRunHints();
+  const text = `Join our baby's feeds: open charliesfirstyear.com, tap "I have a code from someone" and enter ${code}`;
+  if (navigator.share) {
+    try { await navigator.share({ text }); return; } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  shareCodeEl.textContent = code;
+  shareModal.hidden = false;
+});
+document.getElementById('share-card-later').addEventListener('click', () => { setFlag(SHARE_DONE_KEY); renderFirstRunHints(); });
+document.getElementById('show-join').addEventListener('click', () => {
+  joinForm.hidden = !joinForm.hidden;
+  if (!joinForm.hidden) joinCodeInput.focus();
+});
+
 // --- Backup ---
 // Reads everything in the household and saves it as one file. It only reads, so it cannot change the stored data.
 // Two taps on purpose: the first prepares the file, the second hands it to the phone (iPhone only allows saving or
@@ -2812,7 +2871,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=129').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=130').catch(() => {});
   });
 }
 
