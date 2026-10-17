@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=132';
+import { analyse } from './patterns.js?v=133';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2871,7 +2871,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=132').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=133').catch(() => {});
   });
 }
 
@@ -2928,12 +2928,20 @@ document.getElementById('rate-app').addEventListener('click', () => {
   else showToast('Thank you. Rating opens once the app is on the App Store');
 });
 
-// The household code is the only way back in on a new phone, so offer to email it to yourself. This opens the phone's
-// mail app with the message ready; nothing is sent by the app itself.
-function emailCodeToSelf() {
+// The household code is the only way back in on a new phone, so offer to keep a copy. On phones this opens the share
+// menu (Notes, Messages, WhatsApp, Mail, Copy and so on); elsewhere it copies the code, or falls back to an email.
+async function emailCodeToSelf() {
   const code = getHouseholdCode() || '';
-  const subject = encodeURIComponent("Our baby's feed diary code");
-  const body = encodeURIComponent(`Our code is ${code}\n\nTo get back to our feeds on a new phone, open charliesfirstyear.com, tap "I have a code from someone" and enter the code.`);
-  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  const text = `Our baby's feed diary code is ${code}\n\nTo get back to our feeds on a new phone, open charliesfirstyear.com, tap "I have a code from someone" and enter the code.`;
+  if (navigator.share) {
+    try { await navigator.share({ title: "Our baby's feed diary code", text }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Code copied. Paste it into a note or message');
+    return;
+  } catch (e) { /* no clipboard: fall back to email */ }
+  window.location.href = `mailto:?subject=${encodeURIComponent("Our baby's feed diary code")}&body=${encodeURIComponent(text)}`;
 }
 document.querySelectorAll('.email-code').forEach(btn => btn.addEventListener('click', emailCodeToSelf));
