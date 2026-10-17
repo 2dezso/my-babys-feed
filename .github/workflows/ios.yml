@@ -1,7 +1,7 @@
 # Builds the iPhone app on a GitHub cloud Mac and sends it to App Store Connect, where it appears in TestFlight.
 # It only runs when started by hand: GitHub, Actions tab, "iPhone build", Run workflow.
 #
-# Needs four repository secrets (Settings, Secrets and variables, Actions). See "iPhone app: cloud build" in README.md.
+# Needs four repository secrets (Settings, Secrets and variables, Actions). See "iPhone app: cloud build" in docs/SETUP.md.
 #   APPLE_TEAM_ID      your 10-character Apple team ID
 #   ASC_KEY_ID         App Store Connect API key ID
 #   ASC_ISSUER_ID      App Store Connect API issuer ID
