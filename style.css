@@ -818,3 +818,9 @@ a.srow { text-decoration: none; }
 /* Poo notes: a soft tinted bubble under the entry, clear of the row above, at most two lines in the list. */
 .history-list li.has-note { grid-template-rows: 50px auto; }
 .poo-note-row { grid-column: 1 / 4; justify-self: start; max-width: 100%; margin: -6px 0 12px; padding: 7px 11px; border-radius: 12px; background: var(--nappy-tint); color: var(--nappy-ink); font-size: .8125rem; font-weight: 700; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Baby blue: the Feeds section turns blue instead of green (deep enough for white text on the card). */
+body.feed-blue { --feed: #3b82c4; --feed-ink: #2a6aa6; --feed-tint: #e4f0fb; --feed-soft: #bcd8f2; }
+@media (prefers-color-scheme: dark) {
+  body.feed-blue { --feed: #2c6aa6; --feed-ink: #8cc4f2; --feed-tint: #13263a; --feed-soft: #23466b; }
+}

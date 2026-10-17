@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=135';
+import { analyse } from './patterns.js?v=136';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -484,6 +484,7 @@ function listenToProfile(code) {
     const initial = firstName ? firstName.charAt(0).toUpperCase() : '·';
     document.querySelectorAll('.me:not(.back)').forEach(el => { el.textContent = initial; });
     document.body.classList.toggle('gender-pink', selectedGender === 'female');
+    document.body.classList.toggle('feed-blue', selectedGender === 'blue');
     updateAvatarIcons();
     highlightToneChip();
     highlightGenderChip();
@@ -526,7 +527,8 @@ avatarToneChips.querySelectorAll('.swatch').forEach(chip => {
 
 function highlightGenderChip() {
   genderChips.querySelectorAll('.swatch').forEach(c => {
-    const on = c.dataset.gender === (selectedGender === 'female' ? 'female' : 'male');
+    const current = selectedGender === 'female' || selectedGender === 'blue' ? selectedGender : 'male';
+    const on = c.dataset.gender === current;
     c.classList.toggle('selected', on);
     c.setAttribute('aria-pressed', String(on));
   });
@@ -537,6 +539,7 @@ genderChips.querySelectorAll('.swatch').forEach(chip => {
     selectedGender = chip.dataset.gender;
     highlightGenderChip();
     document.body.classList.toggle('gender-pink', selectedGender === 'female');
+    document.body.classList.toggle('feed-blue', selectedGender === 'blue');
     saveProfileFields({ gender: selectedGender });
   });
 });
@@ -2871,7 +2874,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=135').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=136').catch(() => {});
   });
 }
 
