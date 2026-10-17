@@ -828,3 +828,4 @@ body.feed-blue { --feed: #3b82c4; --feed-ink: #2a6aa6; --feed-tint: #e4f0fb; --f
 .poo-note-row { grid-column: 1 / 4; display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: -4px; padding-bottom: 0; color: var(--muted); font-size: .8125rem; font-weight: 600; }
 .poo-note-row .ico { width: 14px; height: 14px; flex: none; color: var(--nappy-ink); stroke-width: 2.2; }
 .poo-note-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.welcome-links { margin: 4px 0 0; text-align: center; font-size: .875rem; font-weight: 700; color: var(--muted); } .welcome-links a { color: var(--muted); }
