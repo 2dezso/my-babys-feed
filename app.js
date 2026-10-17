@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=136';
+import { analyse } from './patterns.js?v=137';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -830,7 +830,7 @@ function renderPooHistory() {
         ${poo.size ? `<span class="poo-size-tag">${escapeHtml(poo.size)}</span>` : '<span></span>'}
         <span class="history-gap-val">${gap}</span>
         <button class="history-delete" title="Delete" aria-label="Delete">✕</button>
-        ${poo.note ? `<span class="poo-note-row">${escapeHtml(poo.note)}</span>` : ''}
+        ${poo.note ? `<span class="poo-note-row"><svg class="ico" aria-hidden="true"><use href="#i-chat"/></svg><span>${escapeHtml(poo.note)}</span></span>` : ''}
       `;
       li.addEventListener('click', () => openPooTimeModal(poo));
       li.querySelector('.history-delete').addEventListener('click', (e) => {
@@ -2874,7 +2874,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=136').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=137').catch(() => {});
   });
 }
 
