@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=138';
+import { analyse } from './patterns.js?v=139';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2754,6 +2754,23 @@ drawUnitChoice();
 // One welcome screen asks for the baby's name (optional), then Feeds teaches the two buttons at the moment they are
 // needed: a pointer at Start feed while there are no feeds, then one at Finish feed while the very first feed runs.
 // After the first finished feed, the phone that made the diary offers the share code once.
+// The App Store number, once the iPhone app is published (the digits in its App Store link, apps.apple.com/app/id...).
+// Setting it switches on "Rate the app", a "Get the iPhone app" link on the welcome screen, and a one-time card on
+// Feeds for people using the website on an iPhone. Their diary carries over with the household code.
+// Adding ?preview-app-card to the address shows the card before then, for checking how it looks.
+const APP_STORE_ID = '';
+const APP_STORE_URL = APP_STORE_ID ? `https://apps.apple.com/app/id${APP_STORE_ID}` : '';
+const APP_CARD_DONE_KEY = 'babyfeed_app_card_done';
+const isNativeApp = !!window.Capacitor?.isNativePlatform?.();
+const previewAppCard = new URLSearchParams(location.search).has('preview-app-card');
+const offerIphoneApp = !isNativeApp && ((APP_STORE_URL && isIosDevice()) || previewAppCard);
+const appCard = document.getElementById('app-card');
+if (APP_STORE_URL) document.getElementById('app-card-go').href = APP_STORE_URL;
+if (offerIphoneApp && APP_STORE_URL) {
+  const link = document.getElementById('welcome-app-link');
+  link.querySelector('a').href = APP_STORE_URL;
+  link.hidden = false;
+}
 const CREATED_KEY = 'babyfeed_created_here';
 const SHARE_DONE_KEY = 'babyfeed_share_card_done';
 const feedTipEl = document.getElementById('feed-tip');
@@ -2773,6 +2790,10 @@ function renderFirstRunHints() {
   const showShare = readFlag(CREATED_KEY) && !readFlag(SHARE_DONE_KEY) && latestFeeds.some(f => f.amountMl != null);
   shareCard.hidden = !showShare;
   if (showShare) document.getElementById('share-card-code').textContent = getHouseholdCode() || '';
+  // The iPhone app card waits until the first-run pointers and the share card are out of the way.
+  const showApp = offerIphoneApp && !tip && !showShare && (previewAppCard || !readFlag(APP_CARD_DONE_KEY));
+  appCard.hidden = !showApp;
+  if (showApp) document.getElementById('app-card-code').textContent = getHouseholdCode() || '';
 }
 
 document.getElementById('share-card-go').addEventListener('click', async () => {
@@ -2787,6 +2808,12 @@ document.getElementById('share-card-go').addEventListener('click', async () => {
   shareModal.hidden = false;
 });
 document.getElementById('share-card-later').addEventListener('click', () => { setFlag(SHARE_DONE_KEY); renderFirstRunHints(); });
+document.getElementById('app-card-later').addEventListener('click', () => { setFlag(APP_CARD_DONE_KEY); renderFirstRunHints(); });
+document.getElementById('app-card-go').addEventListener('click', (e) => {
+  if (!APP_STORE_URL) { e.preventDefault(); showToast('The App Store link goes here once the app is published'); return; }
+  setFlag(APP_CARD_DONE_KEY);
+  renderFirstRunHints();
+});
 document.getElementById('show-join').addEventListener('click', () => {
   joinForm.hidden = !joinForm.hidden;
   if (!joinForm.hidden) joinCodeInput.focus();
@@ -2874,7 +2901,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=138').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=139').catch(() => {});
   });
 }
 
@@ -2922,10 +2949,9 @@ document.addEventListener('touchmove', (e) => {
 const SHOW_PLUS_TEASER = false;
 document.getElementById('plus-teaser').hidden = !SHOW_PLUS_TEASER;
 
-// "Rate the app" opens the App Store review page. The link is not known until the app is published, so for now the
-// button only says so. To switch it on, set APP_STORE_REVIEW_URL, for example
-// 'itms-apps://itunes.apple.com/app/id0000000000?action=write-review' with the app's real number.
-const APP_STORE_REVIEW_URL = '';
+// "Rate the app" opens the App Store review page. The link is not known until the app is published, so until
+// APP_STORE_ID is set (see "First open") the button only says so.
+const APP_STORE_REVIEW_URL = APP_STORE_ID ? `itms-apps://itunes.apple.com/app/id${APP_STORE_ID}?action=write-review` : '';
 document.getElementById('rate-app').addEventListener('click', () => {
   if (APP_STORE_REVIEW_URL) window.location.href = APP_STORE_REVIEW_URL;
   else showToast('Thank you. Rating opens once the app is on the App Store');
