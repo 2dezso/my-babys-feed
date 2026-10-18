@@ -29,7 +29,22 @@ PLIST=ios/App/App/Info.plist
 /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
   || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
 
-# 5. Apple's privacy file. Capacitor's template may already list one in the project; if not, it is added with the
+# 5. iPhone only, upright only, and the reasons iOS shows when the photo picker offers the camera. Without a camera
+#    reason, tapping "Take Photo" in Moments would crash the app, which is a common cause of App Review rejection.
+set_string() {
+  /usr/libexec/PlistBuddy -c "Set :$1 $2" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :$1 string $2" "$PLIST"
+}
+set_string NSCameraUsageDescription "Take a photo to add to a Moment, such as a first smile."
+set_string NSPhotoLibraryUsageDescription "Choose a photo to add to a Moment."
+/usr/libexec/PlistBuddy -c "Delete :UISupportedInterfaceOrientations" "$PLIST" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations array" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations:0 string UIInterfaceOrientationPortrait" "$PLIST"
+/usr/libexec/PlistBuddy -c "Delete :UISupportedInterfaceOrientations~ipad" "$PLIST" 2>/dev/null || true
+sed -i.bak 's/TARGETED_DEVICE_FAMILY = "1,2";/TARGETED_DEVICE_FAMILY = 1;/g' ios/App/App.xcodeproj/project.pbxproj
+rm -f ios/App/App.xcodeproj/project.pbxproj.bak
+grep -q 'TARGETED_DEVICE_FAMILY = 1;' ios/App/App.xcodeproj/project.pbxproj || { echo "could not make the app iPhone only"; exit 1; }
+
+# 6. Apple's privacy file. Capacitor's template may already list one in the project; if not, it is added with the
 #    xcodeproj tool that comes with CocoaPods (installed on GitHub's Macs).
 cp scripts/ios-files/PrivacyInfo.xcprivacy ios/App/App/PrivacyInfo.xcprivacy
 if ! grep -q "PrivacyInfo.xcprivacy" ios/App/App.xcodeproj/project.pbxproj; then
