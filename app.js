@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=145';
+import { analyse } from './patterns.js?v=146';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -492,6 +492,7 @@ function listenToProfile(code) {
     renderProfilePreview();
     renderSinceLastFeed();
     renderTrends();
+    syncReminder(); // the reminder names the baby, so it follows the name as soon as it arrives
     if (calendarInitialized) renderCalendar();
   }, (err) => {
     console.error(err);
@@ -2997,8 +2998,8 @@ async function syncReminder() {
     ? last.timestamp + (last.intervalHours || 3) * 3600000
     : null;
   const at = due === null ? null : due - reminderLead * 60000;
-  const name = profileFirstName || 'Charlie';
-  const signature = at !== null && at > Date.now() ? `${at}|${name}|${due}` : '';
+  // Only a name that was entered is used: a household with no name must not be reminded about someone else's baby.
+  const signature = at !== null && at > Date.now() ? `${at}|${profileFirstName}|${due}` : '';
   if (signature === reminderScheduled) return;
   reminderScheduled = signature;
   try {
@@ -3007,7 +3008,7 @@ async function syncReminder() {
       await nativeNotifications.schedule({
         notifications: [{
           id: REMINDER_ID,
-          title: `${name}’s next feed`,
+          title: profileFirstName ? `${profileFirstName}’s next feed` : 'Next feed',
           body: reminderLead === 0 ? 'Feed time is about now.' : `Due around ${formatClock(due)}.`,
           schedule: { at: new Date(at) },
         }],
@@ -3221,7 +3222,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=145').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=146').catch(() => {});
   });
 }
 
