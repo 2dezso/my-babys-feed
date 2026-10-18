@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=141';
+import { analyse } from './patterns.js?v=142';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -51,6 +51,12 @@ const BOTTLE_ADJUST_MAX_MINS = 120;
 const BOTTLE_ADJUST_STEP_MINS = 5;
 
 const setupScreen = document.getElementById('setup-screen');
+const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+// The first screen is green, like the Feeds card; the browser bar and the page behind it follow.
+function markSetupScreen(on) {
+  document.body.classList.toggle('is-setup', on);
+  if (themeColorMeta) themeColorMeta.content = on ? '#1f8a4c' : '#fdf3ee';
+}
 const appScreen = document.getElementById('app-screen');
 const homeScreen = document.getElementById('home-screen');
 const milestonesScreen = document.getElementById('milestones-screen');
@@ -381,6 +387,7 @@ document.querySelectorAll('[data-nav]').forEach(el => {
 
 async function enterApp(code) {
   setupScreen.hidden = true;
+  markSetupScreen(false);
   if (!(location.hash.slice(1) in SCREENS)) {
     history.replaceState(null, '', '#feed');
   }
@@ -2642,6 +2649,8 @@ btnInstallApp.addEventListener('click', async () => {
 installModalClose.addEventListener('click', () => { installModal.hidden = true; });
 
 btnCreateHousehold.addEventListener('click', async () => {
+  const typedCode = codeFromName(welcomeName.value);
+  if (typedCode) { attemptJoin(typedCode, btnCreateHousehold, 'Join with this code'); return; }
   const code = generateHouseholdCode();
   localStorage.setItem(STORAGE_KEY, code);
   setFlag(CREATED_KEY);
@@ -2656,7 +2665,60 @@ btnCreateHousehold.addEventListener('click', async () => {
 // phone only once it is confirmed.
 const joinCheck = document.getElementById('join-check');
 const joinSubmit = joinForm.querySelector('button[type="submit"]');
+const setupNew = document.getElementById('setup-new');
+const showJoinBtn = document.getElementById('show-join');
+const backToNew = document.getElementById('back-to-new');
+const welcomeName = document.getElementById('welcome-name');
+const welcomeCodeNote = document.getElementById('welcome-code-note');
 let joinCandidate = '';
+
+// The first screen has three states: start a new diary, enter a code, or "nothing under that code, is it right?".
+function setSetupMode(mode) {
+  setupNew.hidden = mode !== 'new';
+  showJoinBtn.hidden = mode !== 'new';
+  joinForm.hidden = mode !== 'join';
+  backToNew.hidden = mode !== 'join';
+  joinCheck.hidden = mode !== 'check';
+  setupError.hidden = true;
+  if (mode === 'join') joinCodeInput.focus();
+}
+showJoinBtn.addEventListener('click', () => setSetupMode('join'));
+backToNew.addEventListener('click', () => setSetupMode('new'));
+
+// A code is 6 to 8 letters and digits. A whole pasted message, such as the share text, still yields the code, and
+// spaces or dashes are ignored.
+const CODE_PATTERN = /^[A-Z0-9]{6,8}$/i;
+function extractCode(text) {
+  const tokens = text.split(/[^A-Za-z0-9]+/).filter((t) => CODE_PATTERN.test(t));
+  const withDigit = tokens.filter((t) => /\d/.test(t));
+  const pick = withDigit.length ? withDigit[withDigit.length - 1] : tokens.filter((t) => t.length === 8).pop();
+  return pick ? pick.toUpperCase() : null;
+}
+
+// People often put the code straight into the name box, so when what is typed there looks like a code, the big button
+// joins it instead of starting a new diary. Codes nearly always contain a digit; a name made only of letters counts
+// only when it is a single word typed in capitals.
+function codeFromName(value) {
+  const text = value.trim();
+  const code = extractCode(text);
+  if (!code) return null;
+  if (/\d/.test(code)) return code;
+  return !/\s/.test(text) && text === text.toUpperCase() ? code : null;
+}
+function updateStartButton() {
+  const code = codeFromName(welcomeName.value);
+  btnCreateHousehold.textContent = code ? 'Join with this code' : 'Start';
+  welcomeCodeNote.hidden = !code;
+  welcomeCodeNote.textContent = code ? `That looks like a code, so this will join ${code}.` : '';
+}
+welcomeName.addEventListener('input', updateStartButton);
+
+function tidyCodeInput() {
+  const value = joinCodeInput.value;
+  const next = extractCode(value) || value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+  if (next !== value) joinCodeInput.value = next;
+}
+joinCodeInput.addEventListener('input', tidyCodeInput);
 
 async function lookUpDiary(code) {
   try {
@@ -2679,39 +2741,40 @@ function openJoinedDiary(code, name) {
   joinCheck.hidden = true;
   localStorage.setItem(STORAGE_KEY, code);
   enterApp(code);
-  if (name) showToast(`Joined ${name}’s diary`);
+  if (name) showToast(`Joined ${name}\u2019s diary`);
 }
 
-joinForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const code = joinCodeInput.value.trim().toUpperCase();
-  if (!code) {
-    setupError.textContent = 'Enter the code you were given.';
-    setupError.hidden = false;
-    return;
-  }
+async function attemptJoin(code, button, label) {
   setupError.hidden = true;
-  joinSubmit.disabled = true;
-  joinSubmit.textContent = 'Checking…';
+  button.disabled = true;
+  button.textContent = 'Checking\u2026';
   const found = await lookUpDiary(code);
-  joinSubmit.disabled = false;
-  joinSubmit.textContent = 'Join';
+  button.disabled = false;
+  button.textContent = label;
   if (found.state === 'found') { openJoinedDiary(code, found.name); return; }
   joinCandidate = code;
   document.getElementById('join-check-title').textContent = found.state === 'empty' ? 'Nothing here yet' : 'Could not check this code';
   document.getElementById('join-check-text').textContent = found.state === 'empty'
     ? `There are no feeds or baby name under ${code}. If someone gave you this code, check it for typos. A brand new diary is empty too.`
     : `There is no connection to look ${code} up. You can open it anyway and it will fill in once you are online, or check the code first.`;
-  joinForm.hidden = true;
-  document.getElementById('show-join').hidden = true;
-  joinCheck.hidden = false;
+  setSetupMode('check');
+}
+
+joinForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  tidyCodeInput();
+  const code = joinCodeInput.value.trim().toUpperCase();
+  if (code.length < 6) {
+    setupError.textContent = code ? 'That looks too short. Codes are 8 letters and numbers.' : 'Enter the code you were given.';
+    setupError.hidden = false;
+    return;
+  }
+  attemptJoin(code, joinSubmit, 'Join');
 });
 document.getElementById('join-check-yes').addEventListener('click', () => openJoinedDiary(joinCandidate, ''));
 document.getElementById('join-check-no').addEventListener('click', () => {
-  joinCheck.hidden = true;
-  joinForm.hidden = false;
-  document.getElementById('show-join').hidden = false;
-  joinCodeInput.focus();
+  joinCodeInput.value = joinCandidate;
+  setSetupMode('join');
 });
 
 
@@ -2885,10 +2948,6 @@ document.getElementById('app-card-go').addEventListener('click', (e) => {
   setFlag(APP_CARD_DONE_KEY);
   renderFirstRunHints();
 });
-document.getElementById('show-join').addEventListener('click', () => {
-  joinForm.hidden = !joinForm.hidden;
-  if (!joinForm.hidden) joinCodeInput.focus();
-});
 
 // --- Backup ---
 // Reads everything in the household and saves it as one file. It only reads, so it cannot change the stored data.
@@ -2968,11 +3027,12 @@ if (existingCode) {
   enterApp(existingCode);
 } else {
   setupScreen.hidden = false;
+  markSetupScreen(true);
 }
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=141').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=142').catch(() => {});
   });
 }
 

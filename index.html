@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=141">
-<link rel="stylesheet" href="fonts/nunito.css?v=141">
-<link rel="stylesheet" href="style.css?v=141">
-<link rel="icon" type="image/png" href="icon-192.png?v=141">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=141">
+<link rel="manifest" href="manifest.json?v=142">
+<link rel="stylesheet" href="fonts/nunito.css?v=142">
+<link rel="stylesheet" href="style.css?v=142">
+<link rel="icon" type="image/png" href="icon-192.png?v=142">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=142">
 </head>
 <body>
 
@@ -49,22 +49,24 @@
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card welcome">
-    <img class="welcome-logo" src="icon-192.png?v=141" alt="" width="64" height="64">
+    <img class="welcome-logo" src="icon-192.png?v=142" alt="" width="64" height="64">
     <h1>Track feeds together</h1>
     <p class="muted">Log a feed in one tap. Everyone looking after your baby sees it straight away. No account needed.</p>
 
-    <div class="setup-choice">
+    <div class="setup-choice" id="setup-new">
       <label class="field-label" for="welcome-name">Your baby’s first name</label>
-      <input id="welcome-name" class="field-input" type="text" placeholder="Optional" autocomplete="off" autocapitalize="words">
+      <input id="welcome-name" class="field-input" type="text" placeholder="Optional" autocomplete="off" autocapitalize="words" spellcheck="false">
+      <p id="welcome-code-note" class="welcome-code-note" hidden></p>
       <button id="btn-create-household" class="btn btn-primary welcome-go">Start</button>
     </div>
 
-    <button type="button" id="show-join" class="text-link-btn">I have a code from someone</button>
+    <button type="button" id="show-join" class="btn welcome-join">I have a code from someone</button>
     <form id="join-form" hidden>
-      <label for="join-code">Enter the code you were given</label>
-      <input id="join-code" type="text" inputmode="text" autocapitalize="characters" placeholder="ABCD1234" maxlength="8">
-      <button type="submit" class="btn btn-secondary">Join</button>
+      <label for="join-code">Enter or paste the code you were given</label>
+      <input id="join-code" class="join-code" type="text" inputmode="text" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="ABCD2345">
+      <button type="submit" class="btn btn-primary welcome-go">Join</button>
     </form>
+    <button type="button" id="back-to-new" class="text-link-btn" hidden>Start a new diary instead</button>
     <div id="join-check" class="join-check" hidden>
       <b id="join-check-title"></b>
       <p id="join-check-text"></p>
@@ -670,6 +672,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=141"></script>
+<script type="module" src="app.js?v=142"></script>
 </body>
 </html>
