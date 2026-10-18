@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=148';
+import { analyse } from './patterns.js?v=149';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -3239,7 +3239,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=148').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=149').catch(() => {});
   });
 }
 

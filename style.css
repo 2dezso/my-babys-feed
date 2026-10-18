@@ -860,4 +860,6 @@ body.feed-blue { --feed: #a9d3f2; --feed-ink: #25628f; --feed-tint: #eaf4fd; --f
 .poo-note-row { grid-column: 1 / 4; display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: -4px; padding-bottom: 0; color: var(--muted); font-size: .8125rem; font-weight: 600; }
 .poo-note-row .ico { width: 14px; height: 14px; flex: none; color: var(--nappy-ink); stroke-width: 2.2; }
 .poo-note-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.welcome-consent { margin: 2px 0 0; text-align: center; font-size: .8125rem; font-weight: 600; line-height: 1.45; color: var(--muted); }
+.welcome-consent a { color: var(--ink); text-decoration: underline; }
 .welcome-links { margin: 4px 0 0; text-align: center; font-size: .875rem; font-weight: 700; color: var(--muted); } .welcome-links a { color: var(--muted); }
