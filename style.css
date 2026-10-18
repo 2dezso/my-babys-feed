@@ -271,8 +271,7 @@ textarea.field-input { padding: 12px 14px; }
 #profile-dob { width: 100%; }
 
 .card { background: var(--card); border-radius: 24px; padding: 28px 24px; margin: 16px; box-shadow: var(--shadow); max-width: 440px; }
-#setup-screen { display: flex; align-items: center; justify-content: center; background: var(--feed); }
-body.is-setup { background: var(--feed); }
+#setup-screen { display: flex; align-items: center; justify-content: center; }
 #setup-screen .card { width: 100%; margin: 16px auto; }
 #setup-screen h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: 8px; }
 .setup-choice { margin-top: 20px; }
@@ -781,6 +780,12 @@ a.srow { text-decoration: none; }
 #join-form { display: flex; flex-direction: column; gap: 0; }
 #join-form[hidden] { display: none; }
 .welcome-join { background: var(--fill); color: var(--ink); box-shadow: none; }
+#setup-screen .card.welcome { border: 1px solid var(--line); border-radius: 28px; padding: 30px 24px 22px; box-shadow: 0 1px 2px rgba(74, 40, 28, .05), 0 22px 44px -18px rgba(74, 40, 28, .24); }
+@media (prefers-color-scheme: dark) { #setup-screen .card.welcome { box-shadow: 0 22px 44px -18px rgba(0, 0, 0, .5); } }
+.welcome-or { display: flex; align-items: center; gap: 12px; margin: 2px 0; color: var(--muted); font-size: .8125rem; font-weight: 700; }
+.welcome-or::before, .welcome-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+#setup-screen input { caret-color: var(--feed); }
+#setup-screen input:focus { outline: none; border-color: var(--feed); box-shadow: 0 0 0 3px var(--feed-tint); }
 #join-form .join-code { min-height: 60px; font-size: 1.5rem; font-weight: 900; letter-spacing: .14em; text-align: center; }
 .welcome-code-note { margin: 6px 0 0; font-size: .875rem; font-weight: 700; line-height: 1.4; color: var(--feed-ink); overflow-wrap: anywhere; }
 .join-check { display: flex; flex-direction: column; gap: 8px; background: var(--fill); border-radius: 16px; padding: 14px 16px; }

@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=142';
+import { analyse } from './patterns.js?v=143';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -51,12 +51,6 @@ const BOTTLE_ADJUST_MAX_MINS = 120;
 const BOTTLE_ADJUST_STEP_MINS = 5;
 
 const setupScreen = document.getElementById('setup-screen');
-const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-// The first screen is green, like the Feeds card; the browser bar and the page behind it follow.
-function markSetupScreen(on) {
-  document.body.classList.toggle('is-setup', on);
-  if (themeColorMeta) themeColorMeta.content = on ? '#1f8a4c' : '#fdf3ee';
-}
 const appScreen = document.getElementById('app-screen');
 const homeScreen = document.getElementById('home-screen');
 const milestonesScreen = document.getElementById('milestones-screen');
@@ -387,7 +381,6 @@ document.querySelectorAll('[data-nav]').forEach(el => {
 
 async function enterApp(code) {
   setupScreen.hidden = true;
-  markSetupScreen(false);
   if (!(location.hash.slice(1) in SCREENS)) {
     history.replaceState(null, '', '#feed');
   }
@@ -2676,6 +2669,7 @@ let joinCandidate = '';
 function setSetupMode(mode) {
   setupNew.hidden = mode !== 'new';
   showJoinBtn.hidden = mode !== 'new';
+  document.getElementById('welcome-or').hidden = mode !== 'new';
   joinForm.hidden = mode !== 'join';
   backToNew.hidden = mode !== 'join';
   joinCheck.hidden = mode !== 'check';
@@ -2934,7 +2928,7 @@ document.getElementById('share-card-go').addEventListener('click', async () => {
   const code = getHouseholdCode() || '';
   setFlag(SHARE_DONE_KEY);
   renderFirstRunHints();
-  const text = `Join our baby's feeds: open charliesfirstyear.com, tap "I have a code from someone" and enter ${code}`;
+  const text = `Join our baby's feeds: open charliesfirstyear.com, tap "Join a household" and enter ${code}`;
   if (navigator.share) {
     try { await navigator.share({ text }); return; } catch (e) { if (e.name === 'AbortError') return; }
   }
@@ -3027,12 +3021,11 @@ if (existingCode) {
   enterApp(existingCode);
 } else {
   setupScreen.hidden = false;
-  markSetupScreen(true);
 }
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=142').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=143').catch(() => {});
   });
 }
 
@@ -3092,7 +3085,7 @@ document.getElementById('rate-app').addEventListener('click', () => {
 // menu (Notes, Messages, WhatsApp, Mail, Copy and so on); elsewhere it copies the code, or falls back to an email.
 async function emailCodeToSelf() {
   const code = getHouseholdCode() || '';
-  const text = `Our baby's feed diary code is ${code}\n\nTo get back to our feeds on a new phone, open charliesfirstyear.com, tap "I have a code from someone" and enter the code.`;
+  const text = `Our baby's feed diary code is ${code}\n\nTo get back to our feeds on a new phone, open charliesfirstyear.com, tap "Join a household" and enter the code.`;
   if (navigator.share) {
     try { await navigator.share({ title: "Our baby's feed diary code", text }); return; }
     catch (e) { if (e.name === 'AbortError') return; }

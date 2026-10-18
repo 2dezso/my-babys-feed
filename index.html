@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=142">
-<link rel="stylesheet" href="fonts/nunito.css?v=142">
-<link rel="stylesheet" href="style.css?v=142">
-<link rel="icon" type="image/png" href="icon-192.png?v=142">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=142">
+<link rel="manifest" href="manifest.json?v=143">
+<link rel="stylesheet" href="fonts/nunito.css?v=143">
+<link rel="stylesheet" href="style.css?v=143">
+<link rel="icon" type="image/png" href="icon-192.png?v=143">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=143">
 </head>
 <body>
 
@@ -49,7 +49,7 @@
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card welcome">
-    <img class="welcome-logo" src="icon-192.png?v=142" alt="" width="64" height="64">
+    <img class="welcome-logo" src="logo-192.png?v=143" alt="" width="64" height="64">
     <h1>Track feeds together</h1>
     <p class="muted">Log a feed in one tap. Everyone looking after your baby sees it straight away. No account needed.</p>
 
@@ -60,13 +60,14 @@
       <button id="btn-create-household" class="btn btn-primary welcome-go">Start</button>
     </div>
 
-    <button type="button" id="show-join" class="btn welcome-join">I have a code from someone</button>
+    <p id="welcome-or" class="welcome-or" aria-hidden="true">or</p>
+    <button type="button" id="show-join" class="btn welcome-join">Join a household</button>
     <form id="join-form" hidden>
-      <label for="join-code">Enter or paste the code you were given</label>
+      <label for="join-code">Enter or paste the household code you were given</label>
       <input id="join-code" class="join-code" type="text" inputmode="text" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="ABCD2345">
       <button type="submit" class="btn btn-primary welcome-go">Join</button>
     </form>
-    <button type="button" id="back-to-new" class="text-link-btn" hidden>Start a new diary instead</button>
+    <button type="button" id="back-to-new" class="text-link-btn" hidden>Start a new household instead</button>
     <div id="join-check" class="join-check" hidden>
       <b id="join-check-title"></b>
       <p id="join-check-text"></p>
@@ -128,7 +129,7 @@
 
     <div id="app-card" class="share-card" hidden>
       <b>There is an iPhone app now</b>
-      <p>It does everything this does, and can remind you before the next feed. Your feeds come with you: open it, tap <b>I have a code from someone</b> and enter this code.</p>
+      <p>It does everything this does, and can remind you before the next feed. Your feeds come with you: open it, tap <b>Join a household</b> and enter this code.</p>
       <span id="app-card-code" class="share-card-code"></span>
       <div class="share-card-btns">
         <a id="app-card-go" class="btn btn-primary" href="#">Get the app</a>
@@ -672,6 +673,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=142"></script>
+<script type="module" src="app.js?v=143"></script>
 </body>
 </html>
