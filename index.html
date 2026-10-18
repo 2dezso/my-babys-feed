@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=139">
-<link rel="stylesheet" href="fonts/nunito.css?v=139">
-<link rel="stylesheet" href="style.css?v=139">
-<link rel="icon" type="image/png" href="icon-192.png?v=139">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=139">
+<link rel="manifest" href="manifest.json?v=140">
+<link rel="stylesheet" href="fonts/nunito.css?v=140">
+<link rel="stylesheet" href="style.css?v=140">
+<link rel="icon" type="image/png" href="icon-192.png?v=140">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=140">
 </head>
 <body>
 
@@ -49,7 +49,7 @@
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card welcome">
-    <img class="welcome-logo" src="icon-192.png?v=139" alt="" width="64" height="64">
+    <img class="welcome-logo" src="icon-192.png?v=140" alt="" width="64" height="64">
     <h1>Track feeds together</h1>
     <p class="muted">Log a feed in one tap. Everyone looking after your baby sees it straight away. No account needed.</p>
 
@@ -65,6 +65,14 @@
       <input id="join-code" type="text" inputmode="text" autocapitalize="characters" placeholder="ABCD1234" maxlength="8">
       <button type="submit" class="btn btn-secondary">Join</button>
     </form>
+    <div id="join-check" class="join-check" hidden>
+      <b id="join-check-title"></b>
+      <p id="join-check-text"></p>
+      <div class="join-check-btns">
+        <button type="button" id="join-check-yes" class="btn btn-primary">Open it anyway</button>
+        <button type="button" id="join-check-no" class="btn btn-secondary">Check the code</button>
+      </div>
+    </div>
     <p id="setup-error" class="error" hidden></p>
     <p class="welcome-links"><a href="help.html">Help</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms of use</a><span id="welcome-app-link" hidden> · <a href="#">Get the iPhone app</a></span></p>
   </div>
@@ -376,6 +384,7 @@
     <div class="slist">
       <button type="button" id="btn-share" class="srow"><span>Share code</span><span class="sv" id="share-code-row"></span></button>
       <button type="button" class="srow email-code"><span>Save a copy of the code</span></button>
+      <button type="button" id="btn-switch-code" class="srow"><span>Use a different code</span></button>
       <button type="button" id="btn-install-app" class="srow" hidden><span>Add to Home Screen</span></button>
     </div>
     <p class="snote">Give the code to anyone else who feeds the baby. Keep a copy somewhere safe too: if you change or lose your phone, the code is the only way back to your feeds.</p>
@@ -550,6 +559,20 @@
   </div>
 </div>
 
+<div id="switch-modal" class="modal" hidden>
+  <div class="modal-card">
+    <span class="grab"></span>
+    <h2>Use a different code?</h2>
+    <p class="muted">This phone will stop showing these feeds. Nothing is deleted, and you can come back any time with the code below. Keep a copy first.</p>
+    <div id="switch-code" class="share-code"></div>
+    <button type="button" class="text-link-btn email-code">Save a copy of the code</button>
+    <div class="modal-actions">
+      <button id="switch-cancel" class="btn btn-secondary">Cancel</button>
+      <button id="switch-confirm" class="btn btn-primary">Switch</button>
+    </div>
+  </div>
+</div>
+
 <div id="install-modal" class="modal" hidden>
   <div class="modal-card">
     <span class="grab"></span>
@@ -647,6 +670,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=139"></script>
+<script type="module" src="app.js?v=140"></script>
 </body>
 </html>

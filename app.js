@@ -1,10 +1,10 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=139';
+import { analyse } from './patterns.js?v=140';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
-  query, where, orderBy, limit, documentId, onSnapshot, enableIndexedDbPersistence, getDocs, getCountFromServer, getAggregateFromServer, count, sum,
+  query, where, orderBy, limit, documentId, onSnapshot, getDoc, enableIndexedDbPersistence, getDocs, getCountFromServer, getAggregateFromServer, count, sum,
 } from './vendor/firebase-firestore.js';
 
 const app = initializeApp(firebaseConfig);
@@ -2575,6 +2575,27 @@ btnShare.addEventListener('click', () => {
   shareModal.hidden = false;
 });
 shareClose.addEventListener('click', () => { shareModal.hidden = true; });
+
+// "Use a different code" only makes this phone forget the code, for a wrong code or a different diary. Nothing is
+// deleted. The page reloads so nothing from the old diary stays in memory, and the welcome screen takes over.
+const switchModal = document.getElementById('switch-modal');
+document.getElementById('btn-switch-code').addEventListener('click', () => {
+  document.getElementById('switch-code').textContent = getHouseholdCode() || '';
+  switchModal.hidden = false;
+});
+document.getElementById('switch-cancel').addEventListener('click', () => { switchModal.hidden = true; });
+document.getElementById('switch-confirm').addEventListener('click', async () => {
+  try {
+    if (nativeNotifications) await nativeNotifications.cancel({ notifications: [{ id: REMINDER_ID }] });
+  } catch (e) { /* the old reminder may fire once; harmless */ }
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(CREATED_KEY);
+    localStorage.removeItem(SHARE_DONE_KEY);
+  } catch (e) { /* checked below */ }
+  if (getHouseholdCode()) { switchModal.hidden = true; showToast('Could not switch. Please try again'); return; }
+  location.replace(location.pathname);
+});
 shareCodeEl.addEventListener('click', () => {
   navigator.clipboard?.writeText(getHouseholdCode()).then(() => showToast('Code copied'));
 });
@@ -2630,7 +2651,38 @@ btnCreateHousehold.addEventListener('click', async () => {
   if (name) saveProfileFields({ firstName: name });
 });
 
-joinForm.addEventListener('submit', (e) => {
+// Joining first looks the code up, so a mistyped code is caught before it is saved. A diary with a baby name or any
+// feeds opens straight away; an empty or unreachable one asks first. Looking only reads, and the code is saved on this
+// phone only once it is confirmed.
+const joinCheck = document.getElementById('join-check');
+const joinSubmit = joinForm.querySelector('button[type="submit"]');
+let joinCandidate = '';
+
+async function lookUpDiary(code) {
+  try {
+    await joinHousehold(code); // registers this phone first, which the security rules need before anything can be read
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 6000));
+    const [profile, feeds] = await Promise.race([
+      Promise.all([getDoc(profileDocRef(code)), getDocs(query(feedsCollection(code), limit(1)))]),
+      timeout,
+    ]);
+    const data = profile.exists() ? profile.data() : {};
+    const name = data.firstName || data.name || '';
+    return name || !feeds.empty ? { state: 'found', name } : { state: 'empty', name: '' };
+  } catch (e) {
+    return { state: 'unknown', name: '' };
+  }
+}
+
+function openJoinedDiary(code, name) {
+  setupError.hidden = true;
+  joinCheck.hidden = true;
+  localStorage.setItem(STORAGE_KEY, code);
+  enterApp(code);
+  if (name) showToast(`Joined ${name}’s diary`);
+}
+
+joinForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const code = joinCodeInput.value.trim().toUpperCase();
   if (!code) {
@@ -2639,8 +2691,27 @@ joinForm.addEventListener('submit', (e) => {
     return;
   }
   setupError.hidden = true;
-  localStorage.setItem(STORAGE_KEY, code);
-  enterApp(code);
+  joinSubmit.disabled = true;
+  joinSubmit.textContent = 'Checking…';
+  const found = await lookUpDiary(code);
+  joinSubmit.disabled = false;
+  joinSubmit.textContent = 'Join';
+  if (found.state === 'found') { openJoinedDiary(code, found.name); return; }
+  joinCandidate = code;
+  document.getElementById('join-check-title').textContent = found.state === 'empty' ? 'Nothing here yet' : 'Could not check this code';
+  document.getElementById('join-check-text').textContent = found.state === 'empty'
+    ? `There are no feeds or baby name under ${code}. If someone gave you this code, check it for typos. A brand new diary is empty too.`
+    : `There is no connection to look ${code} up. You can open it anyway and it will fill in once you are online, or check the code first.`;
+  joinForm.hidden = true;
+  document.getElementById('show-join').hidden = true;
+  joinCheck.hidden = false;
+});
+document.getElementById('join-check-yes').addEventListener('click', () => openJoinedDiary(joinCandidate, ''));
+document.getElementById('join-check-no').addEventListener('click', () => {
+  joinCheck.hidden = true;
+  joinForm.hidden = false;
+  document.getElementById('show-join').hidden = false;
+  joinCodeInput.focus();
 });
 
 
@@ -2901,7 +2972,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=139').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=140').catch(() => {});
   });
 }
 
