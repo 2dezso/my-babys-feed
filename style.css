@@ -796,6 +796,17 @@ a.srow { text-decoration: none; }
 .join-check p { margin: 0; font-size: .9375rem; font-weight: 600; line-height: 1.45; color: var(--muted); overflow-wrap: anywhere; }
 .join-check-btns { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
 .join-check .btn-secondary { background: var(--card); box-shadow: none; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.srow.danger { color: var(--danger); }
+.delete-goes { list-style: none; margin: 12px 0; padding: 12px 14px; background: var(--fill); border-radius: 14px; display: grid; gap: 6px; font-weight: 700; font-size: .9375rem; }
+.delete-goes li { display: flex; justify-content: space-between; gap: 12px; }
+.delete-goes li span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; }
+.delete-warn { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: var(--fill); color: var(--danger); font-weight: 800; font-size: .875rem; line-height: 1.4; }
+.delete-stack { display: grid; gap: 8px; margin-top: 4px; }
+.delete-bar { height: 10px; border-radius: 9px; background: var(--fill); overflow: hidden; margin: 16px 0 8px; }
+.delete-bar i { display: block; height: 100%; width: 0; background: var(--feed); transition: width .2s linear; }
+#delete-confirm-input { text-align: center; text-transform: uppercase; letter-spacing: .1em; font-weight: 800; font-size: 1.125rem; margin: 0 0 12px; }
+.setup-notice { margin: 0; padding: 12px 14px; border-radius: 14px; background: var(--fill); font-weight: 700; font-size: .9375rem; line-height: 1.45; }
 .feed-tip { position: relative; margin: 10px 0 0; background: var(--ink); color: var(--bg); border-radius: 14px; padding: 11px 14px; font-size: .9375rem; font-weight: 700; line-height: 1.4; }
 .feed-tip[hidden] { display: none; }
 .feed-tip::before { content: ""; position: absolute; top: -7px; left: 40px; border: 7px solid transparent; border-top: 0; border-bottom-color: var(--ink); }

@@ -16,6 +16,12 @@ service cloud.firestore {
       allow read, update, delete: if isMember(code);
     }
 
+    // A small dated marker left when a household is deleted. Any signed-in device may read it, so a phone that still
+    // holds the deleted code can be told. It holds no diary content. Members create it as the last step of a delete.
+    match /households/{code}/tombstone/{doc} {
+      allow read: if request.auth != null;
+    }
+
     // Everything else in a household (feeds, poos, profile, bottle, milestones, feedback) is members only.
     match /households/{code}/{document=**} {
       allow read, write: if isMember(code);

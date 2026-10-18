@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Charlie's First Year</title>
-<link rel="manifest" href="manifest.json?v=144">
-<link rel="stylesheet" href="fonts/nunito.css?v=144">
-<link rel="stylesheet" href="style.css?v=144">
-<link rel="icon" type="image/png" href="icon-192.png?v=144">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=144">
+<link rel="manifest" href="manifest.json?v=145">
+<link rel="stylesheet" href="fonts/nunito.css?v=145">
+<link rel="stylesheet" href="style.css?v=145">
+<link rel="icon" type="image/png" href="icon-192.png?v=145">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=145">
 </head>
 <body>
 
@@ -49,9 +49,10 @@
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card welcome">
-    <img class="welcome-logo" src="logo-192.png?v=144" alt="" width="64" height="64">
+    <img class="welcome-logo" src="logo-192.png?v=145" alt="" width="64" height="64">
     <h1>Track feeds together</h1>
     <p class="muted">Log a feed in one tap. Everyone looking after your baby sees it straight away. No account needed.</p>
+    <p id="setup-notice" class="setup-notice" hidden>This household was deleted from another phone. Start a new household, or join a different one with its code.</p>
 
     <div class="setup-choice" id="setup-new">
       <label class="field-label" for="welcome-name">Your baby’s first name</label>
@@ -397,6 +398,7 @@
       <button type="button" id="backup-btn" class="srow">Download a backup</button>
       <a class="srow" href="privacy.html"><span>Privacy</span></a>
       <a class="srow" href="terms.html"><span>Terms of use</span></a>
+      <button type="button" id="btn-delete-household" class="srow danger"><span>Delete this household</span></button>
     </div>
     <p id="backup-status" class="snote" hidden></p>
     <p class="snote">A backup is a copy of every feed, poo and moment saved as a file on your device. Keep it private: it includes your photos.</p>
@@ -576,6 +578,75 @@
   </div>
 </div>
 
+<div id="delete-modal" class="modal" hidden>
+  <div class="modal-card">
+    <span class="grab"></span>
+    <h2>Delete this household?</h2>
+    <p class="muted">This deletes everything saved under your household code, for everyone who uses it.</p>
+    <ul class="delete-goes">
+      <li><span>Feeds</span><span id="delete-n-feeds">&hellip;</span></li>
+      <li><span>Poos</span><span id="delete-n-poos">&hellip;</span></li>
+      <li><span>Moments, with photos</span><span id="delete-n-moments">&hellip;</span></li>
+      <li><span id="delete-n-profile">Profile and bottle</span><span></span></li>
+    </ul>
+    <p id="delete-warn" class="delete-warn">Everyone with the code loses access. This cannot be undone.</p>
+    <div class="delete-stack">
+      <button type="button" id="delete-backup" class="btn btn-secondary">Save a backup first</button>
+      <button type="button" id="delete-go1" class="btn btn-danger" disabled>Continue</button>
+      <button type="button" class="text-link-btn" data-delete-close>Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="delete-confirm-modal" class="modal" hidden>
+  <div class="modal-card">
+    <span class="grab"></span>
+    <h2>Type DELETE to confirm</h2>
+    <p class="muted">Deleting needs a connection and takes a few seconds.</p>
+    <label class="field-label" for="delete-confirm-input">Type the word DELETE</label>
+    <input id="delete-confirm-input" class="field-input" type="text" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="DELETE">
+    <div class="delete-stack">
+      <button type="button" id="delete-go2" class="btn btn-danger" disabled>Delete everything</button>
+      <button type="button" class="text-link-btn" data-delete-close>Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="delete-progress-modal" class="modal" hidden>
+  <div class="modal-card">
+    <span class="grab"></span>
+    <h2 id="delete-progress-title">Deleting&hellip;</h2>
+    <div class="delete-bar" aria-hidden="true"><i id="delete-bar"></i></div>
+    <p id="delete-progress-text" class="muted">Starting</p>
+    <div id="delete-error" class="delete-stack" hidden>
+      <p class="delete-warn">Check your connection and try again. Trying again is safe: it carries on where it stopped.</p>
+      <button type="button" id="delete-retry" class="btn btn-danger">Try again</button>
+      <button type="button" class="text-link-btn" data-delete-close>Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="delete-done-modal" class="modal" hidden>
+  <div class="modal-card">
+    <span class="grab"></span>
+    <h2>Household deleted</h2>
+    <p class="muted">Everything under this code is gone. A backup you saved earlier stays on your phone.</p>
+    <div class="modal-actions"><button type="button" id="delete-done" class="btn btn-primary">Done</button></div>
+  </div>
+</div>
+
+<div id="photo-notice-modal" class="modal" hidden>
+  <div class="modal-card">
+    <span class="grab"></span>
+    <h2>Before you add a photo</h2>
+    <p class="muted">Photos are saved with your household. Anyone who has the household code can see them, so only share the code with people you trust.</p>
+    <div class="modal-actions">
+      <button type="button" id="photo-notice-cancel" class="btn btn-secondary">Cancel</button>
+      <button type="button" id="photo-notice-go" class="btn btn-primary">Add photo</button>
+    </div>
+  </div>
+</div>
+
 <div id="install-modal" class="modal" hidden>
   <div class="modal-card">
     <span class="grab"></span>
@@ -673,6 +744,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=144"></script>
+<script type="module" src="app.js?v=145"></script>
 </body>
 </html>

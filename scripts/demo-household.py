@@ -3,6 +3,7 @@
 
   python scripts/demo-household.py --dump demo.json            write the example data to a file (nothing is sent)
   python scripts/demo-household.py --push CODE                 (re)write it into the real database under CODE
+  python scripts/demo-household.py --push CODE --revive        the same, if a reviewer deleted the demo from the app
   python scripts/demo-household.py --new-code                  print a fresh random household code
 
 The times are worked out from the moment the script runs, so run --push again just before submitting for review, or
@@ -135,7 +136,7 @@ def list_docs(token, path):
         page = '&pageToken=' + r['nextPageToken']
 
 
-def push(code, data):
+def push(code, data, revive=False):
     if not (6 <= len(code) <= 12) or any(c not in CODE_ALPHABET for c in code):
         sys.exit('that does not look like a household code')
     key = api_key()
@@ -145,11 +146,15 @@ def push(code, data):
     # Register this script's own sign-in as a member first, so it also works once the security rules are on.
     call(f'{FS}/{base}/members/{uid}', {'fields': fields({'lastSeen': int(dt.datetime.now().timestamp() * 1000)})}, token, 'PATCH')
 
-    old = {c: list_docs(token, f'{base}/{c}') for c in ('feeds', 'poos', 'milestones', 'profile', 'bottle')}
+    old = {c: list_docs(token, f'{base}/{c}') for c in ('feeds', 'poos', 'milestones', 'profile', 'bottle', 'tombstone')}
     if any(old.values()):
         prof = call(f'{FS}/{base}/profile/info', token=token, method='GET') if old['profile'] else {}
-        if not prof.get('fields', {}).get('demo', {}).get('booleanValue'):
-            sys.exit(f'{code} already holds a diary that is not a demo household. Nothing was changed.')
+        is_demo = prof.get('fields', {}).get('demo', {}).get('booleanValue')
+        # A household someone deleted from the app leaves only its marker. Bringing it back needs --revive.
+        deleted_only = not old['profile'] and bool(old['tombstone']) and not any(old[c] for c in ('feeds', 'poos', 'milestones', 'bottle'))
+        if not is_demo and not (deleted_only and revive):
+            hint = ' It was deleted from the app; add --revive to bring this demo back.' if deleted_only else ''
+            sys.exit(f'{code} is not a demo household that can be rewritten. Nothing was changed.{hint}')
     writes = [{'delete': n} for names in old.values() for n in names]
     full = lambda p: f'projects/{PROJECT}/databases/(default)/documents/{base}/{p}'
     writes.append({'update': {'name': full('profile/info'), 'fields': fields(data['profile'])}})
@@ -171,6 +176,7 @@ if __name__ == '__main__':
     ap.add_argument('--dump', help='write the example data to this file')
     ap.add_argument('--push', metavar='CODE', help='write it to the real database under this household code')
     ap.add_argument('--new-code', action='store_true', help='print a fresh random code and stop')
+    ap.add_argument('--revive', action='store_true', help='with --push: bring back a demo household that was deleted from the app')
     ap.add_argument('--now', help='pretend it is this time, e.g. 2026-10-18T11:40 (for screenshots)')
     ap.add_argument('--last-feed-ago', type=int, metavar='MINUTES', help='slide the whole diary so the latest feed was this many minutes ago (for screenshots)')
     a = ap.parse_args()
@@ -188,6 +194,6 @@ if __name__ == '__main__':
         Path(a.dump).write_text(json.dumps(data), encoding='utf-8')
         print('wrote', a.dump)
     if a.push:
-        push(a.push.strip().upper(), data)
+        push(a.push.strip().upper(), data, a.revive)
     if not a.dump and not a.push:
         ap.print_help()

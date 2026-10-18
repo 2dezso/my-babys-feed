@@ -1,10 +1,10 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=144';
+import { analyse } from './patterns.js?v=145';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
   getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
-  query, where, orderBy, limit, documentId, onSnapshot, getDoc, enableIndexedDbPersistence, getDocs, getCountFromServer, getAggregateFromServer, count, sum,
+  query, where, orderBy, limit, documentId, onSnapshot, getDoc, writeBatch, enableIndexedDbPersistence, getDocs, getCountFromServer, getAggregateFromServer, count, sum,
 } from './vendor/firebase-firestore.js';
 
 const app = initializeApp(firebaseConfig);
@@ -386,7 +386,7 @@ async function enterApp(code) {
   }
   applyRouteFromHash();
   // A device that has registered before starts straight away; only the very first open waits for it.
-  const joining = joinHousehold(code);
+  const joining = joinUnlessDeleted(code);
   let known = false;
   try { await auth.authStateReady(); known = !!auth.currentUser && localStorage.getItem(MEMBER_KEY) === `${code}:${auth.currentUser.uid}`; } catch (e) { /* treat as a first open */ }
   if (!known) await joining;
@@ -2146,7 +2146,19 @@ function openMilestoneModal(dateKey) {
   milestoneModal.hidden = false;
 }
 
-milestonePhotoBtn.addEventListener('click', () => milestonePhotoInput.click());
+// The first time someone adds a photo, say plainly who can see it.
+const PHOTO_NOTICE_KEY = 'babyfeed_photo_notice_done';
+const photoNoticeModal = document.getElementById('photo-notice-modal');
+milestonePhotoBtn.addEventListener('click', () => {
+  if (readFlag(PHOTO_NOTICE_KEY)) { milestonePhotoInput.click(); return; }
+  photoNoticeModal.hidden = false;
+});
+document.getElementById('photo-notice-cancel').addEventListener('click', () => { photoNoticeModal.hidden = true; });
+document.getElementById('photo-notice-go').addEventListener('click', () => {
+  setFlag(PHOTO_NOTICE_KEY);
+  photoNoticeModal.hidden = true;
+  milestonePhotoInput.click();
+});
 
 milestonePhotoInput.addEventListener('change', () => {
   const file = milestonePhotoInput.files[0];
@@ -2587,6 +2599,192 @@ document.getElementById('switch-confirm').addEventListener('click', async () => 
   if (getHouseholdCode()) { switchModal.hidden = true; showToast('Could not switch. Please try again'); return; }
   location.replace(location.pathname);
 });
+
+// --- Delete this household ---
+// Removes everything saved under the household code, for everyone who uses it, then forgets the code on this phone.
+// It only ever acts on the code stored here. The order matters because the security rules let only registered devices
+// touch a household: the diary data goes first, then the other phones' registrations, then a small dated marker (so
+// other phones can be told, and the code cannot be joined again), and this phone's own registration goes last.
+// Every step is safe to repeat, so "Try again" after a dropped connection carries on where it stopped.
+const deleteModalIds = ['delete-modal', 'delete-confirm-modal', 'delete-progress-modal', 'delete-done-modal'];
+const deleteCountEls = ['feeds', 'poos', 'moments'].map((n) => document.getElementById(`delete-n-${n}`));
+const deleteWarn = document.getElementById('delete-warn');
+const deleteGo1 = document.getElementById('delete-go1');
+const deleteGo2 = document.getElementById('delete-go2');
+const deleteInput = document.getElementById('delete-confirm-input');
+const deleteBackupBtn = document.getElementById('delete-backup');
+const deleteBar = document.getElementById('delete-bar');
+const NOTICE_KEY = 'babyfeed_notice';
+let deleteTotal = 0;
+let deleteRunning = false;
+
+function withTimeout(promise, ms) {
+  return Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+}
+function showDeleteStep(id) {
+  deleteModalIds.forEach((m) => { document.getElementById(m).hidden = m !== id; });
+}
+function closeDelete() {
+  if (deleteRunning) return;
+  showDeleteStep(null);
+  backupFile = null;
+  setBackupStatus('');
+  backupBtn.textContent = 'Download a backup';
+}
+
+document.getElementById('btn-delete-household').addEventListener('click', async () => {
+  const code = getHouseholdCode();
+  if (!code) return;
+  deleteCountEls.forEach((el) => { el.textContent = '…'; });
+  document.getElementById('delete-n-profile').textContent = `${profileFirstName || 'Your baby'}’s profile and bottle`;
+  deleteWarn.textContent = 'Everyone with the code loses access. This cannot be undone.';
+  deleteGo1.disabled = true;
+  deleteBackupBtn.textContent = 'Save a backup first';
+  showDeleteStep('delete-modal');
+  try {
+    // The counts come from the server, so they double as the check that there is a connection.
+    const counts = await Promise.all(['feeds', 'poos', 'milestones'].map((name) =>
+      withTimeout(getCountFromServer(collection(db, 'households', code, name)), 8000)));
+    const n = counts.map((c) => c.data().count);
+    deleteCountEls.forEach((el, i) => { el.textContent = String(n[i]); });
+    deleteTotal = n[0] + n[1] + n[2] + 2;
+    deleteGo1.disabled = false;
+  } catch (e) {
+    deleteCountEls.forEach((el) => { el.textContent = '—'; });
+    deleteWarn.textContent = 'No connection. Connect to the internet to delete a household, so you can be sure it really happened.';
+  }
+});
+
+deleteBackupBtn.addEventListener('click', async () => {
+  const code = getHouseholdCode();
+  if (!code) return;
+  deleteBackupBtn.disabled = true;
+  try {
+    if (!backupFile) {
+      deleteBackupBtn.textContent = 'Preparing…';
+      backupFile = (await prepareBackup(code)).file;
+      deleteBackupBtn.textContent = 'Save the backup';
+    } else {
+      await saveBackup();
+      backupFile = null;
+      deleteBackupBtn.textContent = 'Save a backup first';
+    }
+  } catch (e) {
+    console.error(e);
+    backupFile = null;
+    deleteBackupBtn.textContent = 'Could not make the backup. Try again';
+  } finally {
+    deleteBackupBtn.disabled = false;
+  }
+});
+
+deleteGo1.addEventListener('click', () => {
+  deleteInput.value = '';
+  deleteGo2.disabled = true;
+  showDeleteStep('delete-confirm-modal');
+  deleteInput.focus();
+});
+deleteInput.addEventListener('input', () => { deleteGo2.disabled = deleteInput.value.trim().toUpperCase() !== 'DELETE'; });
+document.querySelectorAll('[data-delete-close]').forEach((b) => b.addEventListener('click', closeDelete));
+
+async function deleteHousehold(code, onProgress) {
+  const part = (name) => collection(db, 'households', code, name);
+  let done = 0;
+  for (const name of ['feeds', 'poos', 'milestones', 'feedback', 'profile', 'bottle']) {
+    for (let round = 0; round < 500; round++) {
+      const snap = await withTimeout(getDocs(query(part(name), limit(400))), 20000);
+      if (snap.empty) break;
+      const batch = writeBatch(db);
+      snap.docs.forEach((d) => batch.delete(d.ref));
+      await withTimeout(batch.commit(), 30000);
+      done += snap.size;
+      onProgress(done);
+    }
+  }
+  const me = auth.currentUser ? auth.currentUser.uid : '';
+  const members = await withTimeout(getDocs(part('members')), 20000);
+  const others = members.docs.filter((d) => d.id !== me);
+  if (others.length) {
+    const batch = writeBatch(db);
+    others.forEach((d) => batch.delete(d.ref));
+    await withTimeout(batch.commit(), 30000);
+  }
+  await withTimeout(setDoc(doc(db, 'households', code, 'tombstone', 'info'), { deletedAt: Date.now() }), 20000);
+  if (me) await withTimeout(deleteDoc(doc(db, 'households', code, 'members', me)), 20000);
+}
+
+async function runDelete() {
+  const code = getHouseholdCode();
+  if (!code || deleteRunning) return;
+  deleteRunning = true;
+  document.getElementById('delete-error').hidden = true;
+  document.getElementById('delete-progress-title').textContent = 'Deleting…';
+  document.getElementById('delete-progress-text').textContent = 'Starting';
+  deleteBar.style.width = '0%';
+  showDeleteStep('delete-progress-modal');
+  try {
+    await deleteHousehold(code, (done) => {
+      const shown = Math.min(done, deleteTotal || done);
+      deleteBar.style.width = `${deleteTotal ? Math.round((shown / deleteTotal) * 100) : 50}%`;
+      document.getElementById('delete-progress-text').textContent = deleteTotal ? `${shown} of ${deleteTotal} items` : `${shown} items`;
+    });
+  } catch (e) {
+    console.error(e);
+    deleteRunning = false;
+    document.getElementById('delete-progress-title').textContent = 'Could not finish deleting';
+    document.getElementById('delete-progress-text').textContent = '';
+    document.getElementById('delete-error').hidden = false;
+    return;
+  }
+  deleteRunning = false;
+  deleteBar.style.width = '100%';
+  try {
+    if (nativeNotifications) await nativeNotifications.cancel({ notifications: [{ id: REMINDER_ID }] });
+  } catch (e) { /* the old reminder may fire once; harmless */ }
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(CREATED_KEY);
+    localStorage.removeItem(SHARE_DONE_KEY);
+  } catch (e) { /* the marker left in the database catches this on the next open */ }
+  showDeleteStep('delete-done-modal');
+}
+deleteGo2.addEventListener('click', runDelete);
+document.getElementById('delete-retry').addEventListener('click', runDelete);
+document.getElementById('delete-done').addEventListener('click', () => { location.replace(location.pathname); });
+
+// A phone that still holds the code of a deleted household finds out on its next open, forgets the code and says so.
+// It looks for the marker before registering, so a deleted household is never quietly recreated.
+async function isHouseholdDeleted(code) {
+  try {
+    await auth.authStateReady();
+    if (!auth.currentUser) await signInAnonymously(auth);
+    const snap = await withTimeout(getDoc(doc(db, 'households', code, 'tombstone', 'info')), 3000);
+    return snap.exists();
+  } catch (e) {
+    return false; // offline or unsure: carry on as normal
+  }
+}
+async function joinUnlessDeleted(code) {
+  if (await isHouseholdDeleted(code)) {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(CREATED_KEY);
+      localStorage.removeItem(SHARE_DONE_KEY);
+      localStorage.setItem(NOTICE_KEY, 'deleted');
+    } catch (e) { /* nothing more to do */ }
+    location.replace(location.pathname);
+    return;
+  }
+  await joinHousehold(code);
+}
+function showSetupNotice() {
+  try {
+    if (localStorage.getItem(NOTICE_KEY) === 'deleted') {
+      document.getElementById('setup-notice').hidden = false;
+      localStorage.removeItem(NOTICE_KEY);
+    }
+  } catch (e) { /* no notice */ }
+}
 shareCodeEl.addEventListener('click', () => {
   navigator.clipboard?.writeText(getHouseholdCode()).then(() => showToast('Code copied'));
 });
@@ -2708,6 +2906,7 @@ joinCodeInput.addEventListener('input', tidyCodeInput);
 
 async function lookUpDiary(code) {
   try {
+    if (await isHouseholdDeleted(code)) return { state: 'deleted', name: '' };
     await joinHousehold(code); // registers this phone first, which the security rules need before anything can be read
     const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 6000));
     const [profile, feeds] = await Promise.race([
@@ -2739,10 +2938,14 @@ async function attemptJoin(code, button, label) {
   button.textContent = label;
   if (found.state === 'found') { openJoinedDiary(code, found.name); return; }
   joinCandidate = code;
-  document.getElementById('join-check-title').textContent = found.state === 'empty' ? 'Nothing here yet' : 'Could not check this code';
-  document.getElementById('join-check-text').textContent = found.state === 'empty'
-    ? `There are no feeds or baby name under ${code}. If someone gave you this code, check it for typos. A brand new diary is empty too.`
-    : `There is no connection to look ${code} up. You can open it anyway and it will fill in once you are online, or check the code first.`;
+  const gone = found.state === 'deleted';
+  document.getElementById('join-check-yes').hidden = gone;
+  document.getElementById('join-check-title').textContent = gone ? 'This household was deleted' : found.state === 'empty' ? 'Nothing here yet' : 'Could not check this code';
+  document.getElementById('join-check-text').textContent = gone
+    ? `The household under ${code} was deleted, so it cannot be joined. Check the code, or start a new household.`
+    : found.state === 'empty'
+      ? `There are no feeds or baby name under ${code}. If someone gave you this code, check it for typos. A brand new diary is empty too.`
+      : `There is no connection to look ${code} up. You can open it anyway and it will fill in once you are online, or check the code first.`;
   setSetupMode('check');
 }
 
@@ -3013,11 +3216,12 @@ if (existingCode) {
   enterApp(existingCode);
 } else {
   setupScreen.hidden = false;
+  showSetupNotice();
 }
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=144').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=145').catch(() => {});
   });
 }
 

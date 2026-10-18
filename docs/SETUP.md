@@ -177,6 +177,11 @@ The Trends page reads the feed log and describes it. Nothing on it compares your
 - A "Fun fact of the week" picks one line from `FUN_BABY_FACTS` in `app.js` by week. The list is deliberately harmless trivia: nothing about health, weight, sleep needs, safety or normal ranges, because App Review looks harder at health information. Add to it only in that spirit.
 - A small note under the page says the patterns are not medical advice.
 
+## Deleting a household
+Settings, Your data, "Delete this household" (`deleteHousehold()` in `app.js`). It shows counts from the server (which also proves there is a connection), offers a backup, asks for the word DELETE, then deletes in batches of 400 in this order: feeds, poos, milestones, feedback, profile, bottle, the other devices' `members` documents, a `tombstone/info` marker (`{ deletedAt }`), and finally this device's own `members` document. The order matters because the rules need the device to still be a member while it deletes. Each step can be repeated, so a dropped connection is fixed by pressing Try again.
+
+The `tombstone` document is the only thing left. `firestore.rules` lets any signed-in device read it. Phones that still hold the deleted code check it on open (`joinUnlessDeleted()`), forget the code and show a notice, and joining a deleted code says so. No new rule is needed for the deletes themselves. **The rules file changed for this, so republish it with the rest of the security rollout.**
+
 ## Milestones
 The Milestones screen (its own lavender-themed page) is a month calendar, styled after Instagram's Stories Archive — one entry per day, days with an entry show a thumbnail circle, tap any day to add/edit/delete it.
 
