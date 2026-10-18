@@ -2720,12 +2720,12 @@ async function runDelete() {
   document.getElementById('delete-error').hidden = true;
   document.getElementById('delete-progress-title').textContent = 'Deleting…';
   document.getElementById('delete-progress-text').textContent = 'Starting';
-  deleteBar.style.width = '0%';
+  deleteBar.style.transform = 'scaleX(0)';
   showDeleteStep('delete-progress-modal');
   try {
     await deleteHousehold(code, (done) => {
       const shown = Math.min(done, deleteTotal || done);
-      deleteBar.style.width = `${deleteTotal ? Math.round((shown / deleteTotal) * 100) : 50}%`;
+      deleteBar.style.transform = `scaleX(${deleteTotal ? shown / deleteTotal : 0.5})`;
       document.getElementById('delete-progress-text').textContent = deleteTotal ? `${shown} of ${deleteTotal} items` : `${shown} items`;
     });
   } catch (e) {
@@ -2737,7 +2737,7 @@ async function runDelete() {
     return;
   }
   deleteRunning = false;
-  deleteBar.style.width = '100%';
+  deleteBar.style.transform = 'scaleX(1)';
   try {
     if (nativeNotifications) await nativeNotifications.cancel({ notifications: [{ id: REMINDER_ID }] });
   } catch (e) { /* the old reminder may fire once; harmless */ }
