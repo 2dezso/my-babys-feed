@@ -170,14 +170,12 @@ A "📲 Add to Home Screen" button on the home screen, shown only when relevant:
 - Hidden entirely once already installed, checked via `display-mode: standalone` (Android/desktop) or the iOS-only `navigator.standalone` property, and re-hidden immediately on the `appinstalled` event after a successful Android install
 
 ## Trends & Facts
-At the top, a "Fun fact of the week" card picks one line from a hardcoded list (`FUN_BABY_FACTS` in `app.js`) using `floor(days-since-epoch / 7) % list.length` — deterministic, so it's the same for everyone all week and changes to the next one every 7 days, no stored state needed.
+The Trends page reads the feed log and describes it. Nothing on it compares your baby with an average or a target, and there is no reference line (an older version had reference charts; they were removed).
 
-Below that, the Trends screen (its own peach-themed page) has three line charts, all ml-based:
-1. **Average milk intake by weight** — world-average-only reference (`app.js`'s `weightMilkRefPoints()`, derived by pairing `WORLD_AVG_WEIGHT_KG_BY_MONTH` and `WORLD_AVG_ML_BY_MONTH` at the same age, so it doesn't need its own separate table). X-axis 3–9kg
-2. **Average milk intake by age** — world-average-only reference curve (`WORLD_AVG_ML_BY_MONTH`), X-axis 0–12 months
-3. **Your baby's trend** (own section below, divided by a heading) — just your baby's own milk intake, no reference line, X-axis 0–12 months. Feeds are bucketed by the baby's age in months (from Profile's date of birth) and averaged to a daily rate per month, so the line is a monthly average rather than noisy daily totals. Underneath, a sentence compares that month's average to the age-based world average (chart 2), phrased as "about/a little/quite a bit more or less than", always paired with a reminder that it's a general average and every baby differs
-
-Both reference tables are hardcoded illustrative guideline figures, **not medical advice** and not specific to sex — this is a static site with no live data source beyond Firestore. Chart 3 (and its comparison sentence) requires a date of birth in Profile; without one, a hint prompts you to add it (charts 1–2 don't need it, since they're pure reference).
+- A hero card answers one question: how long was the longest stretch last night, with the last two weeks of nights as bars.
+- Cards for Overnight stretch, Usual feed times, Milk per day and Daytime gaps. `analyse()` in `patterns.js` finds the patterns and `app.js` draws them. A pattern only counts as established once two weeks agree; until then its card is marked as tentative.
+- A "Fun fact of the week" picks one line from `FUN_BABY_FACTS` in `app.js` by week. The list is deliberately harmless trivia: nothing about health, weight, sleep needs, safety or normal ranges, because App Review looks harder at health information. Add to it only in that spirit.
+- A small note under the page says the patterns are not medical advice.
 
 ## Milestones
 The Milestones screen (its own lavender-themed page) is a month calendar, styled after Instagram's Stories Archive — one entry per day, days with an entry show a thumbnail circle, tap any day to add/edit/delete it.

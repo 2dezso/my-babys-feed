@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=143';
+import { analyse } from './patterns.js?v=144';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -1778,28 +1778,19 @@ profileSkipBtn.addEventListener('click', finishProfileOnboarding);
 // --- Trends & Facts ---
 
 const FUN_BABY_FACTS = [
-  'Newborns blink far less often than adults — about once or twice a minute, compared to 15-20 times for grown-ups.',
   "Babies are born with about 300 bones, but adults only have 206 — many fuse together as they grow.",
-  "A baby's sense of smell is so strong they can recognize their mother's scent within days of being born.",
+  "A baby's sense of smell is so strong they can recognise their mother's scent within days of being born.",
   "Newborns can't produce tears when they cry until they're about 1-3 months old.",
   "Babies are born without kneecaps — they start as cartilage and harden into bone later.",
-  "A baby's heart beats almost twice as fast as an adult's — around 120-160 beats per minute.",
-  "Babies can recognize their mother's voice from inside the womb.",
+  "Babies can recognise their mother's voice from inside the womb.",
   "Newborns are naturally short-sighted — they focus best on things 8-12 inches away, about the distance to a parent's face while feeding.",
   "Babies can't properly taste salt until they're about 4 months old.",
   "A baby's brain reaches about 80% of its adult size by age 3.",
   'Babies have more taste buds than adults, including some on the roof of the mouth and back of the throat.',
-  'Newborns sleep 16-17 hours a day on average, just in short bursts rather than one long stretch.',
-  'Babies are born with a natural reflex to hold their breath underwater, which fades by around 6 months.',
   "A baby's skull has soft spots (fontanelles) that help them through the birth canal and allow rapid brain growth.",
   "Babies can't feel embarrassment — that emotion doesn't develop until around age 2.",
-  'Newborns typically lose 5-10% of their birth weight in the first few days before starting to gain it back.',
-  "Babies have a strong grasp reflex — strong enough that some can briefly support their own weight gripping a finger.",
   "A baby's hearing is fully developed before birth — they can hear sounds from around 18 weeks in the womb.",
-  'Babies are not great at regulating their own body heat yet, which is part of why swaddling and warm layers help.',
-  'The average baby triples their birth weight by their first birthday.',
-  'Babies produce about twice as much saliva as adults relative to their size, especially once teething starts.',
-  "A baby's eye color can keep changing for up to a year after birth as pigment develops.",
+  "A baby's eye colour can keep changing for up to a year after birth as pigment develops.",
 ];
 
 function weeklyFunFact() {
@@ -2613,7 +2604,8 @@ function isRunningStandalone() {
 
 let deferredInstallPrompt = null;
 
-if (!isRunningStandalone() && isIosDevice()) {
+// "Add to Home Screen" is for the website. Inside the App Store app it makes no sense, so it is not offered there.
+if (!isRunningStandalone() && isIosDevice() && !window.Capacitor?.isNativePlatform?.()) {
   btnInstallApp.hidden = false;
 }
 
@@ -3025,7 +3017,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=143').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=144').catch(() => {});
   });
 }
 

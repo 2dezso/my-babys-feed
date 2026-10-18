@@ -39,7 +39,7 @@ At 3am you need two answers fast: **when was the last feed, and how much did the
 | 🍼 **Feeds** | Start a feed in one tap, add the amount later, or log a past one. Shows time since the last feed, the expected next feed and today's total. |
 | 🧷 **Poos** | Quick log with size and a note. A last-7-days view. |
 | 📸 **Moments** | A calendar with one photo and a note per day. |
-| 📈 **Trends** | Longest overnight stretch, usual feed times and milk per day, against an age-based reference. |
+| 📈 **Trends** | Longest overnight stretch, usual feed times, milk per day and daytime gaps, all read from what you log. No targets and no comparison with other babies. |
 | ⏱️ **Bottle timer** | Counts down the 2 hour "good for" window and flags when it's time to bin it. |
 | 👪 **Sharing** | Join with a short household code. No accounts, no sign-up. Entered the wrong code? Switch it in Settings. |
 | 📴 **Offline** | Installs to the home screen and works with no signal. Entries sync when you're back online. |
