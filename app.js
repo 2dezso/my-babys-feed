@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=146';
+import { analyse } from './patterns.js?v=148';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -417,21 +417,48 @@ function setFeeds() {
   renderFirstRunHints();
 }
 
+// A live listener that is refused stops for good, so every listener reports to one place. The common cause once the
+// security rules are on is a phone whose registration had not landed yet (a slow first connection): it registers
+// again and reloads once. Other causes get a message that names the real problem instead of "check connection".
+let lastListenToast = 0;
+function listenToastOnce(msg) {
+  if (Date.now() - lastListenToast < 30000) return;
+  lastListenToast = Date.now();
+  showToast(msg);
+}
+async function handleListenError(err) {
+  console.error(err);
+  const reason = err && err.code;
+  if (reason === 'permission-denied') {
+    const code = getHouseholdCode();
+    let tried = false;
+    try { tried = sessionStorage.getItem('babyfeed_healed') === '1'; } catch (e) { /* treat as not tried */ }
+    if (code && !tried) {
+      try { sessionStorage.setItem('babyfeed_healed', '1'); } catch (e) { /* the reload may repeat once more; harmless */ }
+      await joinHousehold(code);
+      location.reload();
+      return;
+    }
+    listenToastOnce('This phone cannot open the diary. Check the household code in Settings.');
+  } else if (reason === 'resource-exhausted') {
+    listenToastOnce('The service is very busy right now. Please try again in a little while.');
+  } else {
+    listenToastOnce('Sync error. Check your connection');
+  }
+}
+
 function listenToFeeds(code) {
   feedCutoff = startOfToday() - FEED_WINDOW_DAYS * 86400000;
   onSnapshot(query(feedsCollection(code), where('timestamp', '>=', feedCutoff), orderBy('timestamp', 'desc')), (snapshot) => {
     windowFeeds = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     feedsLoaded = true;
     setFeeds();
-  }, (err) => {
-    console.error(err);
-    showToast('Sync error — check connection');
-  });
+  }, handleListenError);
   onSnapshot(query(feedsCollection(code), where('timestamp', '<', feedCutoff), orderBy('timestamp', 'desc'), limit(1)), (snapshot) => {
     if (olderAllLoaded) return;
     olderFeeds = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     setFeeds();
-  }, (err) => console.error(err));
+  }, handleListenError);
   lookupOldestFeed(code);
 }
 
@@ -494,9 +521,7 @@ function listenToProfile(code) {
     renderTrends();
     syncReminder(); // the reminder names the baby, so it follows the name as soon as it arrives
     if (calendarInitialized) renderCalendar();
-  }, (err) => {
-    console.error(err);
-  });
+  }, handleListenError);
 }
 
 // The profile picture is a drawn baby face. The saved value is still the old skin-tone marker, so nothing stored changes.
@@ -708,14 +733,11 @@ function listenToPoos(code) {
     windowPoos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     poosLoaded = true;
     setPoos();
-  }, (err) => {
-    console.error(err);
-    showToast('Sync error — check connection');
-  });
+  }, handleListenError);
   onSnapshot(query(poosCollection(code), where('timestamp', '<', cutoff), orderBy('timestamp', 'desc'), limit(1)), (snapshot) => {
     olderPoo = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     setPoos();
-  }, (err) => console.error(err));
+  }, handleListenError);
 }
 
 function renderSinceLastPoo() {
@@ -1079,9 +1101,7 @@ function listenToBottle(code) {
     bottleMadeAt = data.madeAt || null;
     bottleFeedStartedAt = data.feedStartedAt || null;
     renderBottleStatus();
-  }, (err) => {
-    console.error(err);
-  });
+  }, handleListenError);
 }
 
 // What the bottle row should show right now.
@@ -2061,10 +2081,7 @@ function loadMonth(year, month) {
   currentMonthUnsub = onSnapshot(q, (snapshot) => {
     currentMonthMilestones = new Map(snapshot.docs.map(d => [d.id, d.data()]));
     renderCalendar();
-  }, (err) => {
-    console.error(err);
-    showToast('Sync error — check connection');
-  });
+  }, handleListenError);
 }
 
 function renderCalendar() {
@@ -3222,7 +3239,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=146').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=148').catch(() => {});
   });
 }
 
