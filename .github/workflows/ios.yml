@@ -69,7 +69,9 @@ jobs:
           APP="$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app"
           plutil -p "$APP/Info.plist" | grep -E "CFBundleDisplayName|CFBundleIdentifier|NSCameraUsageDescription|NSPhotoLibraryUsageDescription|ITSAppUsesNonExemptEncryption|UIDeviceFamily|UISupportedInterfaceOrientations" -A 2
           MIN=$(plutil -extract MinimumOSVersion raw "$APP/Info.plist"); echo "lowest iOS: $MIN"
-          case "$MIN" in 1[5-9]*|[2-9][0-9]*) ;; *) echo "deployment target is below iOS 15"; exit 1 ;; esac
+          case "$MIN" in 16.[2-9]*|1[7-9]*|[2-9][0-9]*) ;; *) echo "deployment target is below iOS 16.2"; exit 1 ;; esac
+          plutil -extract NSSupportsLiveActivities raw "$APP/Info.plist" | grep -q true && echo "lock screen timer: enabled"
+          test -d "$APP/PlugIns/LiveActivity.appex" && echo "lock screen timer extension: present" || { echo "lock screen timer extension is missing"; exit 1; }
           test -f "$APP/PrivacyInfo.xcprivacy" && echo "privacy file: present" || { echo "privacy file: MISSING"; exit 1; }
           plutil -p "$APP/Info.plist" | grep -q NSCameraUsageDescription || { echo "camera reason: MISSING"; exit 1; }
           test -f "$APP/public/index.html" && echo "web files: present" || { echo "web files: MISSING"; exit 1; }

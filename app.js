@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=158';
+import { analyse } from './patterns.js?v=159';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -444,6 +444,7 @@ function setFeeds() {
   renderHistory();
   renderTrends();
   renderFirstRunHints();
+  syncLiveFeed();
 }
 
 // A live listener that is refused stops for good, so every listener reports to one place. The common cause once the
@@ -550,6 +551,7 @@ function listenToProfile(code) {
     renderSinceLastFeed();
     renderTrends();
     syncReminder(); // the reminder names the baby, so it follows the name as soon as it arrives
+    syncLiveFeed(); // so does the lock screen timer
     if (calendarInitialized) renderCalendar();
   }, handleListenError);
 }
@@ -2858,7 +2860,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 158`);
+  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 159`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3231,6 +3233,36 @@ if (remindersAvailable) {
   });
 }
 
+// --- Lock screen timer ---
+// Only inside the iPhone app. While a feed is running the lock screen (and the Dynamic Island) show a timer counting up
+// from when it started; it goes away when the feed is finished or removed. The timer counts by itself on the phone, and it
+// starts only when this phone is open, so a feed started on another phone shows here once the app is opened.
+const liveFeed = (() => {
+  try {
+    return window.Capacitor?.isNativePlatform?.() ? window.Capacitor.registerPlugin('LiveFeed') : null;
+  } catch (e) {
+    return null;
+  }
+})();
+let liveFeedKey = null; // null until the first check, so a timer left from an earlier launch is always cleared or renewed
+async function syncLiveFeed() {
+  if (!liveFeed) return;
+  const last = latestFeeds[0];
+  // A feed with no amount is a running one. One started over an hour ago is almost surely an entry whose amount was never
+  // added, so it gets no timer.
+  const running = !!last && last.amountMl == null && Date.now() - last.timestamp < 3600000;
+  const key = running ? `${last.id}|${last.timestamp}|${profileFirstName}` : '';
+  if (key === liveFeedKey) return;
+  liveFeedKey = key;
+  try {
+    if (running) await liveFeed.start({ name: profileFirstName, startedAt: last.timestamp });
+    else await liveFeed.end();
+  } catch (e) {
+    diag(`lock screen timer: ${e.message || e}`);
+    liveFeedKey = null;
+  }
+}
+
 // --- Units ---
 function drawUnitChoice() {
   document.querySelectorAll('#unit-choice .segment').forEach(b => b.classList.toggle('active', b.dataset.unit === unit));
@@ -3412,7 +3444,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=158').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=159').catch(() => {});
   });
 }
 

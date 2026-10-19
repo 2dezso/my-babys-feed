@@ -13,12 +13,13 @@ bash scripts/build-www.sh
 # 2. The Xcode project (made fresh each time, so nothing generated needs committing).
 rm -rf ios
 npx cap add ios
-# Apple requires apps to target iOS 15 or later from April 2027 (warning ITMS-90068); Capacitor's template says 14.
-sed -i.bak "s/'14.0'/'15.0'/g" ios/App/Podfile
-sed -i.bak 's/IPHONEOS_DEPLOYMENT_TARGET = 14.0;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' ios/App/App.xcodeproj/project.pbxproj
+# Apple requires apps to target iOS 15 or later from April 2027 (warning ITMS-90068); Capacitor's template says 14. The lock
+# screen timer needs 16.2 (its current calls), so the whole app targets 16.2.
+sed -i.bak "s/'14.0'/'16.2'/g" ios/App/Podfile
+sed -i.bak 's/IPHONEOS_DEPLOYMENT_TARGET = 14.0;/IPHONEOS_DEPLOYMENT_TARGET = 16.2;/g' ios/App/App.xcodeproj/project.pbxproj
 rm -f ios/App/Podfile.bak ios/App/App.xcodeproj/project.pbxproj.bak
-grep -q "platform :ios, '15.0'" ios/App/Podfile || { echo "could not raise the Podfile to iOS 15"; grep -n platform ios/App/Podfile; exit 1; }
-grep -q 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;' ios/App/App.xcodeproj/project.pbxproj || { echo "could not raise the project to iOS 15"; exit 1; }
+grep -q "platform :ios, '16.2'" ios/App/Podfile || { echo "could not raise the Podfile to iOS 16.2"; grep -n platform ios/App/Podfile; exit 1; }
+grep -q 'IPHONEOS_DEPLOYMENT_TARGET = 16.2;' ios/App/App.xcodeproj/project.pbxproj || { echo "could not raise the project to iOS 16.2"; exit 1; }
 npx cap sync ios
 
 # 3. The app icon, from the same 1024px icon the website uses.
@@ -67,5 +68,15 @@ if ! grep -q "PrivacyInfo.xcprivacy" ios/App/App.xcodeproj/project.pbxproj; then
   '
 fi
 grep -q "PrivacyInfo.xcprivacy" ios/App/App.xcodeproj/project.pbxproj || { echo "privacy file not added to the project"; exit 1; }
+
+# 7. The lock screen timer for a running feed (a Live Activity): the app says it uses them, its screen registers the plugin
+#    the web app calls, and a small extension draws the timer. See scripts/ios-live-activity.rb.
+/usr/libexec/PlistBuddy -c "Add :NSSupportsLiveActivities bool true" "$PLIST" 2>/dev/null   || /usr/libexec/PlistBuddy -c "Set :NSSupportsLiveActivities true" "$PLIST"
+STORYBOARD=ios/App/App/Base.lproj/Main.storyboard
+sed -i.bak 's/customClass="CAPBridgeViewController" customModule="Capacitor"/customClass="MainViewController" customModule="App" customModuleProvider="target"/' "$STORYBOARD"
+rm -f "$STORYBOARD.bak"
+grep -q 'customClass="MainViewController"' "$STORYBOARD" || { echo "could not point the main screen at MainViewController"; grep -n customClass "$STORYBOARD"; exit 1; }
+ruby scripts/ios-live-activity.rb
+grep -q "LiveActivity.appex" ios/App/App.xcodeproj/project.pbxproj || { echo "lock screen timer extension not added to the project"; exit 1; }
 
 echo "iPhone project ready in ios/App"
