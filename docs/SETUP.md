@@ -70,7 +70,7 @@ To put whatever is in this folder onto it, committed or not:
 bash scripts/deploy-staging.sh
 ```
 
-It takes about a minute to show up. The script copies only the app's web files (never `CNAME`, so it can't claim the real domain), then patches the copy so it can't be mistaken for the real one: an orange "TEST VERSION" bar across the top, the app name "Charlie's Year (TEST)", an orange icon, and `noindex` plus `robots.txt` so search engines skip it. It refuses to publish if any of those patches fail to apply.
+It takes about a minute to show up. The script copies only the app's web files (never `CNAME`, so it can't claim the real domain), then patches the copy so it can't be mistaken for the real one: an orange "TEST VERSION" bar across the top, the app name "Little Sips (TEST)", an orange icon, and `noindex` plus `robots.txt` so search engines skip it. It refuses to publish if any of those patches fail to apply.
 
 **Data is separate because the household code is.** The test site shares Charlie's Firebase project, but a household is only ever the code you type, so a new code is a new empty household. On the phone, open the test URL, tap "Start a new household" and use that. Don't type the real household code into the test site: it would read and write Charlie's real feeds with code that hasn't been released yet.
 
@@ -228,7 +228,7 @@ The poo list follows the same 28 days, is read only when the Poos page is first 
 
 ## iPhone app: cloud build
 
-The iPhone app is built on a GitHub cloud Mac by `.github/workflows/ios.yml`, which runs only when started by hand (GitHub, Actions tab, "iPhone build", Run workflow). It makes the Xcode project fresh each time with `scripts/ios-prepare.sh` (website files, icon from `icon-1024.png`, home-screen name "Charlie's Year"), signs it using an App Store Connect API key, and sends it to App Store Connect, where it shows up in TestFlight after Apple's processing (usually 10 to 30 minutes).
+The iPhone app is built on a GitHub cloud Mac by `.github/workflows/ios.yml`, which runs only when started by hand (GitHub, Actions tab, "iPhone build", Run workflow). It makes the Xcode project fresh each time with `scripts/ios-prepare.sh` (website files, icon from `icon-1024.png`, home-screen name "Little Sips"), signs it using an App Store Connect API key, and sends it to App Store Connect, where it shows up in TestFlight after Apple's processing (usually 10 to 30 minutes).
 
 One-time setup, after the Apple Developer account is approved:
 

@@ -1,6 +1,6 @@
 {
-  "name": "Charlie's First Year",
-  "short_name": "Charlie's Year",
+  "name": "Little Sips",
+  "short_name": "Little Sips",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#fdf3ee",

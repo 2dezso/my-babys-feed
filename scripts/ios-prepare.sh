@@ -24,8 +24,8 @@ npx @capacitor/assets generate --ios
 #    - the name under the icon on the home screen (it has to be short)
 #    - "no special encryption", so App Store Connect does not ask the export question every upload
 PLIST=ios/App/App/Info.plist
-/usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName Charlie's Year" "$PLIST" 2>/dev/null \
-  || /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string Charlie's Year" "$PLIST"
+/usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName Little Sips" "$PLIST" 2>/dev/null \
+  || /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string Little Sips" "$PLIST"
 /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
   || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
 

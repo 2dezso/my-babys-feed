@@ -2,7 +2,7 @@
   "name": "charlies-first-year",
   "version": "1.0.0",
   "private": true,
-  "description": "iPhone app wrapper for Charlie's First Year. The website files in this folder are the app.",
+  "description": "iPhone app wrapper for Little Sips. The website files in this folder are the app.",
   "scripts": {
     "www": "bash scripts/build-www.sh",
     "sync": "bash scripts/build-www.sh && npx cap sync ios"

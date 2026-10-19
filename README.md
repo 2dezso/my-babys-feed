@@ -22,7 +22,7 @@ A shared feeding, poo and Moments log for new parents. Tap once on your phone an
 
 ## About
 
-Charlie's First Year is a calm, one-handed feed tracker for bottle-feeding families. Tap **Start feed** when a feed begins and **Finish feed** when it's done, and it shows how long it has been since the last feed and roughly when the next one is due, on every phone in the household, straight away.
+Little Sips is a calm, one-handed feed tracker for bottle-feeding families. Tap **Start feed** when a feed begins and **Finish feed** when it's done, and it shows how long it has been since the last feed and roughly when the next one is due, on every phone in the household, straight away.
 
 It is deliberately small. There is no account to create, no adverts and no tracking. It works without signal and catches up when you're back online. It never scolds you about a late feed. Everything else, from poos and photos to gentle trends and a first-year progress bar, sits one tap away from the thing you open it for at 3am.
 

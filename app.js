@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=150';
+import { analyse } from './patterns.js?v=151';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -3099,8 +3099,12 @@ drawUnitChoice();
 // Setting it switches on "Rate the app", a "Get the iPhone app" link on the welcome screen, and a one-time card on
 // Feeds for people using the website on an iPhone. Their diary carries over with the household code.
 // Adding ?preview-app-card to the address shows the card before then, for checking how it looks.
-const APP_STORE_ID = '';
-const APP_STORE_URL = APP_STORE_ID ? `https://apps.apple.com/app/id${APP_STORE_ID}` : '';
+const APP_STORE_ID = '6824503759';
+// The store page does not exist until Apple has approved and released the app, so everything that points to it stays
+// hidden until APP_IS_LIVE is true: the Rate button, the website's "Get the iPhone app" link and its one-time card.
+// Set it to true in the first update after release (the website can be updated at once; the app needs a new version).
+const APP_IS_LIVE = false;
+const APP_STORE_URL = APP_STORE_ID && APP_IS_LIVE ? `https://apps.apple.com/app/id${APP_STORE_ID}` : '';
 const APP_CARD_DONE_KEY = 'babyfeed_app_card_done';
 const isNativeApp = !!window.Capacitor?.isNativePlatform?.();
 const previewAppCard = new URLSearchParams(location.search).has('preview-app-card');
@@ -3141,7 +3145,7 @@ document.getElementById('share-card-go').addEventListener('click', async () => {
   const code = getHouseholdCode() || '';
   setFlag(SHARE_DONE_KEY);
   renderFirstRunHints();
-  const text = `Join our baby's feeds: open charliesfirstyear.com, tap "Join a household" and enter ${code}`;
+  const text = `Join our baby's feeds on Little Sips: open charliesfirstyear.com, tap "Join a household" and enter ${code}`;
   if (navigator.share) {
     try { await navigator.share({ text }); return; } catch (e) { if (e.name === 'AbortError') return; }
   }
@@ -3168,13 +3172,13 @@ function setBackupStatus(text) {
   backupStatus.hidden = !text;
 }
 async function prepareBackup(code) {
-  const data = { app: "Charlie's First Year", exportedAt: new Date().toISOString(), household: code, collections: {} };
+  const data = { app: "Little Sips", exportedAt: new Date().toISOString(), household: code, collections: {} };
   for (const name of ['feeds', 'poos', 'milestones', 'feedback', 'profile', 'bottle']) {
     const snap = await getDocs(collection(db, 'households', code, name));
     data.collections[name] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   }
   const day = new Date().toISOString().slice(0, 10);
-  const file = new File([JSON.stringify(data)], `charlies-first-year-backup-${day}.json`, { type: 'application/json' });
+  const file = new File([JSON.stringify(data)], `little-sips-backup-${day}.json`, { type: 'application/json' });
   const photos = data.collections.milestones.filter(m => m.photoDataUrl).length;
   return { file, summary: `${data.collections.feeds.length} feeds, ${data.collections.poos.length} poos, ${photos} photos` };
 }
@@ -3239,7 +3243,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=150').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=151').catch(() => {});
   });
 }
 
@@ -3289,7 +3293,11 @@ document.getElementById('plus-teaser').hidden = !SHOW_PLUS_TEASER;
 
 // "Rate the app" opens the App Store review page. The link is not known until the app is published, so until
 // APP_STORE_ID is set (see "First open") the button only says so.
-const APP_STORE_REVIEW_URL = APP_STORE_ID ? `itms-apps://itunes.apple.com/app/id${APP_STORE_ID}?action=write-review` : '';
+const APP_STORE_REVIEW_URL = APP_STORE_ID && APP_IS_LIVE ? `itms-apps://itunes.apple.com/app/id${APP_STORE_ID}?action=write-review` : '';
+// Only where the App Store can open: the iPhone app, or the website on an iPhone.
+const canRate = !!APP_STORE_REVIEW_URL && (!!window.Capacitor?.isNativePlatform?.() || isIosDevice());
+document.getElementById('rate-app').hidden = !canRate;
+document.getElementById('rate-line').hidden = !canRate;
 document.getElementById('rate-app').addEventListener('click', () => {
   if (APP_STORE_REVIEW_URL) window.location.href = APP_STORE_REVIEW_URL;
   else showToast('Thank you. Rating opens once the app is on the App Store');
@@ -3299,7 +3307,7 @@ document.getElementById('rate-app').addEventListener('click', () => {
 // menu (Notes, Messages, WhatsApp, Mail, Copy and so on); elsewhere it copies the code, or falls back to an email.
 async function emailCodeToSelf() {
   const code = getHouseholdCode() || '';
-  const text = `Our baby's feed diary code is ${code}\n\nTo get back to our feeds on a new phone, open charliesfirstyear.com, tap "Join a household" and enter the code.`;
+  const text = `Our baby's feed diary code is ${code}\n\nTo get back to our feeds on a new phone, open Little Sips (or charliesfirstyear.com), tap "Join a household" and enter the code.`;
   if (navigator.share) {
     try { await navigator.share({ title: "Our baby's feed diary code", text }); return; }
     catch (e) { if (e.name === 'AbortError') return; }
