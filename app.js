@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=154';
+import { analyse } from './patterns.js?v=155';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2858,7 +2858,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 154`);
+  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 155`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3079,6 +3079,9 @@ const REMINDER_KEY = 'babyfeed_reminder_lead';
 const reminderCard = document.getElementById('reminder-card');
 const reminderChoice = document.getElementById('reminder-choice');
 const reminderHint = document.getElementById('reminder-hint');
+// The test site (or ?preview-reminders) shows the settings so they can be tried, but nothing is scheduled: only the
+// iPhone app can send a notification. The live website does not show the card at all.
+const previewReminders = !nativeNotifications && (location.pathname.includes('my-babys-feed-staging') || new URLSearchParams(location.search).has('preview-reminders'));
 function readReminderLead() {
   const raw = localStorage.getItem(REMINDER_KEY);
   return raw === null || raw === 'off' ? null : Number(raw);
@@ -3120,14 +3123,20 @@ function drawReminderChoice() {
   const value = reminderLead === null ? 'off' : String(reminderLead);
   reminderChoice.querySelectorAll('.segment').forEach(b => b.classList.toggle('active', b.dataset.lead === value));
 }
-if (nativeNotifications) {
+if (nativeNotifications || previewReminders) {
   reminderCard.hidden = false;
+  if (previewReminders) {
+    reminderHint.textContent = 'Preview only: reminders arrive in the iPhone app. Nothing is scheduled from the website.';
+    reminderHint.hidden = false;
+  }
   drawReminderChoice();
   reminderChoice.querySelectorAll('.segment').forEach(btn => {
     btn.addEventListener('click', async () => {
-      reminderHint.hidden = true;
+      reminderHint.hidden = previewReminders ? false : true;
       if (btn.dataset.lead === 'off') {
         reminderLead = null;
+      } else if (previewReminders) {
+        reminderLead = Number(btn.dataset.lead);
       } else {
         try {
           const asked = await nativeNotifications.requestPermissions();
@@ -3322,7 +3331,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=154').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=155').catch(() => {});
   });
 }
 
