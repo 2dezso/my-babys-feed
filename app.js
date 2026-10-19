@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=155';
+import { analyse } from './patterns.js?v=156';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2858,7 +2858,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 155`);
+  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 156`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3233,7 +3233,7 @@ document.getElementById('share-card-go').addEventListener('click', async () => {
   const code = getHouseholdCode() || '';
   setFlag(SHARE_DONE_KEY);
   renderFirstRunHints();
-  const text = `Join our baby's feeds on Little Sips: open charliesfirstyear.com, tap "Join a household" and enter ${code}`;
+  const text = `Join our baby's feeds on Little Sips: open littlesips.co.uk, tap "Join a household" and enter ${code}`;
   if (navigator.share) {
     try { await navigator.share({ text }); return; } catch (e) { if (e.name === 'AbortError') return; }
   }
@@ -3331,7 +3331,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=155').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=156').catch(() => {});
   });
 }
 
@@ -3395,7 +3395,7 @@ document.getElementById('rate-app').addEventListener('click', () => {
 // menu (Notes, Messages, WhatsApp, Mail, Copy and so on); elsewhere it copies the code, or falls back to an email.
 async function emailCodeToSelf() {
   const code = getHouseholdCode() || '';
-  const text = `Our baby's feed diary code is ${code}\n\nTo get back to our feeds on a new phone, open Little Sips (or charliesfirstyear.com), tap "Join a household" and enter the code.`;
+  const text = `Our baby's feed diary code is ${code}\n\nTo get back to our feeds on a new phone, open Little Sips (or littlesips.co.uk), tap "Join a household" and enter the code.`;
   if (navigator.share) {
     try { await navigator.share({ title: "Our baby's feed diary code", text }); return; }
     catch (e) { if (e.name === 'AbortError') return; }

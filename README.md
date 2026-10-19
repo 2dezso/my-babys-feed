@@ -12,7 +12,7 @@ A shared feeding, poo and Moments log for new parents. Tap once on your phone an
 ![No build step](https://img.shields.io/badge/build%20step-none-555?style=flat-square)
 ![Firebase](https://img.shields.io/badge/Firebase-Firestore-FFCA28?style=flat-square&logo=firebase&logoColor=black)
 
-**[Open the live app](https://charliesfirstyear.com)**
+**[Open the live app](https://littlesips.co.uk)**
 
 <!-- Add 2 or 3 phone screenshots side by side here -->
 
@@ -26,7 +26,7 @@ Little Sips is a calm, one-handed feed tracker for bottle-feeding families. Tap 
 
 It is deliberately small. There is no account to create, no adverts and no tracking. It works without signal and catches up when you're back online. It never scolds you about a late feed. Everything else, from poos and photos to gentle trends and a first-year progress bar, sits one tap away from the thing you open it for at 3am.
 
-It was built by Lewis Dezso for Charlie's first year, and it is still used and shaped by that household. It is a diary, not medical advice.
+It was built for one family's first year, and it is still used and shaped by that household. It is a diary, not medical advice.
 
 ## The problem
 

@@ -53,6 +53,15 @@ What this does and does not do: strangers can no longer read or write a househol
 ## Local testing
 Just open `index.html` in a browser — it's a static site, no build step, no server required (though some browsers restrict ES module imports over `file://`; if that happens, run any static file server, e.g. `npx serve` or use the deployed GitHub Pages URL).
 
+## Domain and email
+
+The website lives at **littlesips.co.uk** (the `CNAME` file in the repo root names it; GitHub Pages serves it). DNS and email routing are on Cloudflare:
+
+- Four `A` records for `@` to GitHub Pages (185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153), set to DNS only (grey cloud) so GitHub can issue the certificate, and a `CNAME` for `www` to `2dezso.github.io`.
+- `hello@littlesips.co.uk` is an Email Routing address that forwards to a private mailbox, so no personal address appears on the site.
+- The old domain, charliesfirstyear.com, redirects to the new one with a Cloudflare redirect rule. The browser keeps its saved household code per web address, so anyone who used the old address joins again once with the code; nothing is lost on the server.
+- The iPhone app does not use the web address at all (it carries its own copy of the files), so a domain change never affects it.
+
 ## Deploy
 1. Bump the `?v=N` query string on any changed asset in `index.html` and `sw.js` (GitHub Pages caches aggressively).
 2. `git add -A && git commit -m "..."`
