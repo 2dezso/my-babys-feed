@@ -13,6 +13,12 @@ bash scripts/build-www.sh
 # 2. The Xcode project (made fresh each time, so nothing generated needs committing).
 rm -rf ios
 npx cap add ios
+# Apple requires apps to target iOS 15 or later from April 2027 (warning ITMS-90068); Capacitor's template says 14.
+sed -i.bak "s/'14.0'/'15.0'/g" ios/App/Podfile
+sed -i.bak 's/IPHONEOS_DEPLOYMENT_TARGET = 14.0;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' ios/App/App.xcodeproj/project.pbxproj
+rm -f ios/App/Podfile.bak ios/App/App.xcodeproj/project.pbxproj.bak
+grep -q "platform :ios, '15.0'" ios/App/Podfile || { echo "could not raise the Podfile to iOS 15"; grep -n platform ios/App/Podfile; exit 1; }
+grep -q 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;' ios/App/App.xcodeproj/project.pbxproj || { echo "could not raise the project to iOS 15"; exit 1; }
 npx cap sync ios
 
 # 3. The app icon, from the same 1024px icon the website uses.
