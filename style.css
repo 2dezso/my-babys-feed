@@ -709,6 +709,9 @@ a.text-link-btn { color: var(--muted); }
 .seg button::after, .mini::after, .close::after, .history-delete::after, .add-amount-btn::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
 .close::after, .history-delete::after { left: 50%; right: auto; width: 44px; transform: translate(-50%, -50%); }
 .history-delete { width: 32px; height: 32px; }
+/* The made-a-bottle button is 40px tall; it keeps its look and gets a 44px tap area like the other small controls. */
+.bottle-main { position: relative; }
+.bottle-main::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
 .seg button { min-height: 36px; }
 
 /* Undo sits inside the message. */
