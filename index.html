@@ -6,11 +6,20 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Little Sips</title>
-<link rel="manifest" href="manifest.json?v=153">
-<link rel="stylesheet" href="fonts/nunito.css?v=153">
-<link rel="stylesheet" href="style.css?v=153">
-<link rel="icon" type="image/png" href="icon-192.png?v=153">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=153">
+<link rel="manifest" href="manifest.json?v=154">
+<link rel="stylesheet" href="fonts/nunito.css?v=154">
+<link rel="stylesheet" href="style.css?v=154">
+<link rel="icon" type="image/png" href="icon-192.png?v=154">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=154">
+<script>
+  // iPhone app only. The phone's browser database (IndexedDB) can stop answering, and Firebase then waits on it forever
+  // (its sign-in, offline copy and usage counter all open it with no time limit), so nothing loads or saves. Hiding it
+  // before Firebase starts makes Firebase use memory and local storage instead. The connection check still tests it.
+  if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && window.indexedDB) {
+    window.realIndexedDB = window.indexedDB;
+    try { Object.defineProperty(window, 'indexedDB', { value: undefined, configurable: true }); } catch (e) { /* left as it is */ }
+  }
+</script>
 </head>
 <body>
 
@@ -49,7 +58,7 @@
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card welcome">
-    <img class="welcome-logo" src="logo-192.png?v=153" alt="" width="64" height="64">
+    <img class="welcome-logo" src="logo-192.png?v=154" alt="" width="64" height="64">
     <h1>Track feeds together</h1>
     <p class="muted">Log a feed in one tap. Everyone looking after your baby sees it straight away. No account needed.</p>
     <p id="setup-notice" class="setup-notice" hidden>This household was deleted from another phone. Start a new household, or join a different one with its code.</p>
@@ -79,7 +88,7 @@
     </div>
     <p id="setup-error" class="error" hidden></p>
     <p class="welcome-consent">By starting or joining, you agree to the <a href="terms.html">Terms of use</a> and the <a href="privacy.html">Privacy policy</a>.</p>
-    <p class="welcome-links"><a href="help.html">Help</a><span id="welcome-app-link" hidden> · <a href="#">Get the iPhone app</a></span></p>
+    <p class="welcome-links"><a href="help.html">Help</a> · <button type="button" id="welcome-check" class="text-link-btn">Connection check</button><span id="welcome-app-link" hidden> · <a href="#">Get the iPhone app</a></span></p>
   </div>
 </div>
 
@@ -390,6 +399,7 @@
       <button type="button" id="btn-share" class="srow"><span>Share code</span><span class="sv" id="share-code-row"></span></button>
       <button type="button" class="srow email-code"><span>Save a copy of the code</span></button>
       <button type="button" id="btn-switch-code" class="srow"><span>Use a different code</span></button>
+      <button type="button" id="btn-check" class="srow"><span>Connection check</span></button>
       <button type="button" id="btn-install-app" class="srow" hidden><span>Add to Home Screen</span></button>
     </div>
     <p class="snote">Give the code to anyone else who feeds the baby. Keep a copy somewhere safe too: if you change or lose your phone, the code is the only way back to your feeds.</p>
@@ -561,6 +571,19 @@
     <div id="share-code" class="share-code"></div>
     <div class="modal-actions">
       <button id="share-close" class="btn btn-primary">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="check-modal" class="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="check-title">
+    <span class="grab"></span>
+    <h2 id="check-title">Connection check</h2>
+    <p class="muted">If something is not working, take a screenshot of this and send it with your feedback.</p>
+    <pre id="check-out" class="check-out"></pre>
+    <div class="modal-actions">
+      <button id="check-again" class="btn btn-secondary">Check again</button>
+      <button id="check-close" class="btn btn-primary">Done</button>
     </div>
   </div>
 </div>
@@ -745,6 +768,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=153"></script>
+<script type="module" src="app.js?v=154"></script>
 </body>
 </html>

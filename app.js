@@ -1,28 +1,52 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=153';
+import { analyse } from './patterns.js?v=154';
 import { initializeApp } from './vendor/firebase-app.js';
-import { getAuth, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
+import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
-  getFirestore, initializeFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
+  getFirestore, initializeFirestore, memoryLocalCache, getDocFromServer, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
   query, where, orderBy, limit, documentId, onSnapshot, getDoc, writeBatch, enableIndexedDbPersistence, getDocs, getCountFromServer, getAggregateFromServer, count, sum,
 } from './vendor/firebase-firestore.js';
 
 const app = initializeApp(firebaseConfig);
-// Inside the iPhone app the page is served from capacitor://localhost. There the ordinary setup waits forever on a sign-in
-// helper page that is not allowed for that address, so the app sets up sign-in without it and lets Firestore fall back to
-// long polling if its streaming connection is refused.
+// Inside the iPhone app the phone's browser database (IndexedDB) cannot be trusted: after the app has been in the
+// background it can stop answering, and Firebase then waits on it forever, so nothing loads or saves. The app therefore
+// keeps its sign-in in plain local storage and its copy of the diary in memory, and talks to the server for the rest.
+// The website keeps the offline copy on the phone as before.
 const inNativeApp = !!window.Capacitor?.isNativePlatform?.();
-const db = inNativeApp ? initializeFirestore(app, { experimentalAutoDetectLongPolling: true }) : getFirestore(app);
-try { enableIndexedDbPersistence(db); } catch (e) { /* multiple tabs open, fine */ }
+const db = inNativeApp
+  ? initializeFirestore(app, { localCache: memoryLocalCache(), experimentalAutoDetectLongPolling: true })
+  : getFirestore(app);
+if (!inNativeApp) {
+  try { enableIndexedDbPersistence(db); } catch (e) { /* multiple tabs open, fine */ }
+}
+
+// A short log of what went wrong, kept on this phone only, shown by the connection check so a problem can be reported.
+const DIAG_KEY = 'babyfeed_diag';
+function diag(msg) {
+  try {
+    const list = JSON.parse(localStorage.getItem(DIAG_KEY) || '[]');
+    list.push(`${new Date().toISOString().slice(5, 19).replace('T', ' ')} ${msg}`);
+    localStorage.setItem(DIAG_KEY, JSON.stringify(list.slice(-40)));
+  } catch (e) { /* no log */ }
+}
+diag(`opened (${inNativeApp ? 'iPhone app' : 'website'})`);
 
 // Every device signs in quietly (no email or password) and registers itself as a member of the household. The
 // security rules (firestore.rules) only let registered members read or write that household's data.
-const auth = inNativeApp ? initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence] }) : getAuth(app);
+const auth = inNativeApp ? initializeAuth(app, { persistence: browserLocalPersistence }) : getAuth(app);
+// Sign-in never holds the app up for long: the data can still be reached without it under the current rules, and if it
+// cannot, the diary shows an error instead of waiting forever.
+async function signedIn() {
+  try { await withTimeout(auth.authStateReady(), 4000); } catch (e) { diag('sign-in: saved sign-in did not load'); }
+  if (!auth.currentUser) {
+    try { await withTimeout(signInAnonymously(auth), 8000); } catch (e) { diag(`sign-in failed: ${e.code || e.message}`); }
+  }
+  return auth.currentUser;
+}
 const MEMBER_KEY = 'babyfeed_member_of';
 async function joinHousehold(code) {
   try {
-    await auth.authStateReady();
-    if (!auth.currentUser) await signInAnonymously(auth);
+    if (!(await signedIn())) return;
     const member = setDoc(doc(db, 'households', code, 'members', auth.currentUser.uid), { lastSeen: Date.now() }, { merge: true })
       .then(() => localStorage.setItem(MEMBER_KEY, `${code}:${auth.currentUser.uid}`));
     // Offline, the write waits for the connection, so never hold the app up for it.
@@ -30,6 +54,7 @@ async function joinHousehold(code) {
   } catch (e) {
     // Sign-in not switched on yet, or no connection: carry on, the older rules still allow the app to work.
     console.warn('Could not register this device', e);
+    diag(`register failed: ${e.code || e.message}`);
   }
 }
 
@@ -392,7 +417,7 @@ async function enterApp(code) {
   // A device that has registered before starts straight away; only the very first open waits for it.
   const joining = joinUnlessDeleted(code);
   let known = false;
-  try { await auth.authStateReady(); known = !!auth.currentUser && localStorage.getItem(MEMBER_KEY) === `${code}:${auth.currentUser.uid}`; } catch (e) { /* treat as a first open */ }
+  try { await withTimeout(auth.authStateReady(), 4000); known = !!auth.currentUser && localStorage.getItem(MEMBER_KEY) === `${code}:${auth.currentUser.uid}`; } catch (e) { /* treat as a first open */ }
   if (!known) await joining;
   listenToFeeds(code);
   listenToProfile(code);
@@ -432,6 +457,7 @@ function listenToastOnce(msg) {
 }
 async function handleListenError(err) {
   console.error(err);
+  diag(`live update stopped: ${(err && (err.code || err.message)) || 'unknown'}`);
   const reason = err && err.code;
   if (reason === 'permission-denied') {
     const code = getHouseholdCode();
@@ -1515,6 +1541,7 @@ historyRange.querySelectorAll('.segment').forEach(seg => {
 function inBackground(write, failMessage) {
   Promise.resolve(write).catch((e) => {
     console.error(e);
+    diag(`save failed: ${e.code || e.message}`);
     if (failMessage) showToast(failMessage);
   });
 }
@@ -2778,8 +2805,7 @@ document.getElementById('delete-done').addEventListener('click', () => { locatio
 // It looks for the marker before registering, so a deleted household is never quietly recreated.
 async function isHouseholdDeleted(code) {
   try {
-    await auth.authStateReady();
-    if (!auth.currentUser) await signInAnonymously(auth);
+    await signedIn();
     const snap = await withTimeout(getDoc(doc(db, 'households', code, 'tombstone', 'info')), 3000);
     return snap.exists();
   } catch (e) {
@@ -2807,6 +2833,55 @@ function showSetupNotice() {
     }
   } catch (e) { /* no notice */ }
 }
+// --- Connection check ---
+// Runs each step the diary depends on, with a time limit, and lists the result with the recent log, for a screenshot.
+const checkModal = document.getElementById('check-modal');
+const checkOut = document.getElementById('check-out');
+function indexedDbAnswers(ms) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve('no answer'), ms);
+    try {
+      const req = (window.realIndexedDB || window.indexedDB).open('little-sips-check');
+      req.onsuccess = () => { clearTimeout(timer); try { req.result.close(); } catch (e) { /* fine */ } resolve('ok'); };
+      req.onerror = () => { clearTimeout(timer); resolve(`error ${req.error && req.error.name}`); };
+    } catch (e) { clearTimeout(timer); resolve(`error ${e.name || e.message}`); }
+  });
+}
+async function runConnectionCheck() {
+  const lines = [];
+  const show = () => { checkOut.textContent = lines.join('\n'); };
+  const step = async (label, fn) => {
+    lines.push(`${label}: …`); show();
+    const t = Date.now();
+    let result;
+    try { result = await fn(); } catch (e) { result = `failed: ${e.code || e.message}`; }
+    lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
+  };
+  const code = getHouseholdCode();
+  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 154`);
+  lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
+  await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
+  await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
+  await step('Sign-in', async () => { const u = await signedIn(); return u ? `ok (${u.uid.slice(0, 4)}…)` : 'not signed in'; });
+  await step('Server', async () => {
+    const snap = await withTimeout(getDocFromServer(doc(db, 'households', code || '5Q34K2ZQ', 'profile', 'info')), 8000);
+    return snap.exists() ? 'ok' : 'ok (no profile)';
+  });
+  let log = [];
+  try { log = JSON.parse(localStorage.getItem(DIAG_KEY) || '[]'); } catch (e) { /* none */ }
+  lines.push('', 'Recent:', ...log.slice(-15));
+  show();
+}
+function openConnectionCheck() {
+  checkOut.textContent = '';
+  checkModal.hidden = false;
+  runConnectionCheck();
+}
+document.getElementById('btn-check').addEventListener('click', openConnectionCheck);
+document.getElementById('welcome-check').addEventListener('click', openConnectionCheck);
+document.getElementById('check-again').addEventListener('click', runConnectionCheck);
+document.getElementById('check-close').addEventListener('click', () => { checkModal.hidden = true; });
+
 shareCodeEl.addEventListener('click', () => {
   navigator.clipboard?.writeText(getHouseholdCode()).then(() => showToast('Code copied'));
 });
@@ -3247,7 +3322,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=153').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=154').catch(() => {});
   });
 }
 
