@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=164';
+import { analyse } from './patterns.js?v=165';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2384,16 +2384,6 @@ feedDayChips.addEventListener('click', (e) => {
   drawSheet();
 });
 
-// For a feed logged afterwards: one tap puts the time on "just now" or a few minutes back. The wheels stay for fine tuning.
-const feedAgoChips = document.getElementById('feed-ago-chips');
-feedAgoChips.addEventListener('click', (e) => {
-  const btn = e.target.closest('button');
-  if (!btn) return;
-  const then = new Date(Date.now() - Number(btn.dataset.min) * 60000);
-  setFeedDay(`${then.getFullYear()}-${String(then.getMonth() + 1).padStart(2, '0')}-${String(then.getDate()).padStart(2, '0')}`);
-  setTimeWheel(then.getHours(), then.getMinutes(), true);
-  drawSheet();
-});
 
 function pickedTimeTs() {
   if (!feedDateInput.value || !feedTimeInput.value) return null;
@@ -2555,7 +2545,6 @@ function openLogModal(feed) {
   logModalTitle.textContent = sheetMode === 'log' ? 'Log a feed' : (isPending ? 'Finish feed' : 'Edit feed');
   feedWhenLabel.textContent = isPending ? 'Started' : 'When';
   sheetDel.hidden = sheetMode !== 'edit';
-  feedAgoChips.hidden = sheetMode !== 'log';
   gapShown = null;
   logModal.hidden = false;
   // The wheel can only be positioned once the sheet is on screen.
@@ -2890,7 +2879,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 164`);
+  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 165`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3518,7 +3507,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=164').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=165').catch(() => {});
   });
 }
 

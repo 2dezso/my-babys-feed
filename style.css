@@ -314,9 +314,6 @@ textarea.field-input { padding: 12px 14px; }
 .datetime-row input { min-width: 0; min-height: 48px; padding: 0 8px; border-radius: 14px; border: 2px solid var(--line); font-size: 1.0625rem; font-weight: 700; font-family: inherit; background: var(--card); color: var(--ink); text-align: center; font-variant-numeric: tabular-nums; }
 .check-out { margin: 0; font: 600 .75rem/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; word-break: break-word; background: var(--fill); border-radius: 12px; padding: 12px; max-height: 50vh; overflow: auto; }
 .welcome-links .text-link-btn { display: inline; width: auto; padding: 0; font: inherit; color: inherit; }
-.ago-chips { display: flex; gap: 2px; margin: 4px 0 8px; }
-.ago-chips[hidden] { display: none; }
-.ago-chips .segment { flex: 1 1 0; min-height: 40px; padding-inline: 2px; font-size: .8125rem; white-space: nowrap; }
 .offline-note { position: fixed; top: calc(8px + env(safe-area-inset-top, 0px)); left: 12px; right: 12px; z-index: 60; background: var(--ink); color: var(--bg); border-radius: 14px; padding: 10px 14px; font-size: .8125rem; font-weight: 700; line-height: 1.35; text-align: center; box-shadow: var(--shadow); }
 .offline-note[hidden] { display: none; }
 /* An iPhone-style switch inside a settings row, and a list of options with a tick beside the chosen ones. */
