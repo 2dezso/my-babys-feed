@@ -6,5 +6,6 @@ The app's own code, drawings and icons are Little Sips's own. It also includes:
 |---|---|---|---|
 | Firebase JavaScript SDK (app, auth, firestore), Google LLC | 10.14.1 | Apache License 2.0 | `vendor/`, licence text in `vendor/LICENSE-firebase.txt` |
 | Nunito font, The Nunito Project Authors | Google Fonts v32 | SIL Open Font License 1.1 | `fonts/`, licence text in `fonts/OFL.txt` |
+| Capacitor (core, iOS, local notifications), Drifty Co. | 7.x | MIT | the iPhone app only, installed by `npm install` when the app is built |
 
 Both licences allow use in free and paid apps. Keep the licence files next to the files they cover, and keep this list up to date if anything else is added (for example Capacitor, MIT licence, when the iPhone app is built).

@@ -2,18 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Little Sips</title>
-<link rel="manifest" href="manifest.json?v=161">
-<link rel="stylesheet" href="fonts/nunito.css?v=161">
-<link rel="stylesheet" href="style.css?v=161">
-<link rel="icon" type="image/png" href="icon-192.png?v=161">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=161">
+<link rel="manifest" href="manifest.json?v=162">
+<link rel="modulepreload" href="vendor/firebase-app.js">
+<link rel="modulepreload" href="vendor/firebase-auth.js">
+<link rel="modulepreload" href="vendor/firebase-firestore.js">
+<link rel="stylesheet" href="fonts/nunito.css?v=162">
+<link rel="stylesheet" href="style.css?v=162">
+<link rel="icon" type="image/png" href="icon-192.png?v=162">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=162">
 <script>
   // iPhone app only: a class that styles it as an app (no text selection or press-and-hold menus).
   if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) document.documentElement.classList.add('native');
+  // The app is not zoomable; the website is, for people who need it.
+  if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) document.querySelector('meta[name=viewport]').setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
 </script>
 <script>
   // iPhone app only. The phone's browser database (IndexedDB) can stop answering, and Firebase then waits on it forever
@@ -62,7 +67,7 @@
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card welcome">
-    <img class="welcome-logo" src="logo-192.png?v=161" alt="" width="64" height="64">
+    <img class="welcome-logo" src="logo-192.png?v=162" alt="" width="64" height="64">
     <h1>Track feeds together</h1>
     <p class="muted">Log a feed in one tap. Everyone looking after your baby sees it straight away. No account needed.</p>
     <p id="setup-notice" class="setup-notice" hidden>This household was deleted from another phone. Start a new household, or join a different one with its code.</p>
@@ -390,13 +395,6 @@
       <p id="reminder-hint" class="profile-card-hint" hidden></p>
     </section>
 
-    <section id="plus-teaser" class="plus-card" aria-label="Plus, coming soon">
-      <span class="plus-tag">Plus · coming soon</span>
-      <div class="plus-price">£2.99 <small>one-off</small></div>
-      <p>Notifications and alarms, so you never miss the next feed.</p>
-      <p class="plus-free">Logging feeds and poos, sharing with a partner and your backup stay free.</p>
-    </section>
-
     <h2 class="sh">Feeding</h2>
     <div class="slist">
       <div class="srow static"><span>Milk shown in</span>
@@ -411,7 +409,7 @@
     <div class="slist">
       <button type="button" id="btn-share" class="srow"><span>Share code</span><span class="sv" id="share-code-row"></span></button>
       <button type="button" class="srow email-code"><span>Save a copy of the code</span></button>
-      <button type="button" id="btn-switch-code" class="srow"><span>Use a different code</span></button>
+      <button type="button" id="btn-switch-code" class="srow"><span>Switch to another household</span></button>
       <button type="button" id="btn-install-app" class="srow" hidden><span>Add to Home Screen</span></button>
     </div>
     <p class="snote">Give the code to anyone else who feeds the baby. Keep a copy somewhere safe too: if you change or lose your phone, the code is the only way back to your feeds.</p>
@@ -544,8 +542,16 @@
         <span class="flabel" id="feed-when-label">When</span>
         <div class="seg" id="feed-day-chips" role="group" aria-label="Which day">
           <button type="button" class="segment" data-offset="0">Today</button>
-          <button type="button" class="segment" data-offset="other">Other day</button>
+          <button type="button" class="segment" data-offset="1">Yesterday</button>
+          <button type="button" class="segment" data-offset="other">Other</button>
         </div>
+      </div>
+      <div class="seg ago-chips" id="feed-ago-chips" role="group" aria-label="How long ago" hidden>
+        <button type="button" class="segment" data-min="0">Just now</button>
+        <button type="button" class="segment" data-min="10">10 min ago</button>
+        <button type="button" class="segment" data-min="20">20 min ago</button>
+        <button type="button" class="segment" data-min="30">30 min ago</button>
+        <button type="button" class="segment" data-min="60">1 h ago</button>
       </div>
       <div class="when-fields">
         <input id="feed-date" type="date" class="fsel" aria-label="Date" hidden>
@@ -570,7 +576,7 @@
     <div id="gap-chips" class="gapchips" role="group" aria-labelledby="gap-label"></div>
 
     <button id="log-confirm" class="go">Log feed</button>
-    <button id="log-time-only" type="button" class="timeonly" hidden>Just save the time, add the amount later</button>
+    <button id="log-time-only" type="button" class="timeonly" hidden>Save without an amount</button>
     <button id="sheet-del" class="dellink" hidden>Delete this feed</button>
   </div>
 </div>
@@ -579,7 +585,7 @@
   <div class="modal-card">
     <span class="grab"></span>
     <h2>Your share code</h2>
-    <p class="muted">Give this to anyone else who feeds the baby. On a new phone they choose "Join with this code" and type it in.</p>
+    <p class="muted">Give this to anyone else who feeds the baby. On a new phone they tap "Join a household" and type it in.</p>
     <div id="share-code" class="share-code"></div>
     <div class="modal-actions">
       <button id="share-close" class="btn btn-primary">Done</button>
@@ -796,8 +802,9 @@
   </form>
 </div>
 
-<div id="toast" class="toast" hidden></div>
+<div id="offline-note" class="offline-note" role="status" hidden>No connection. New entries are kept and sent when it returns, as long as the app stays open.</div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script type="module" src="app.js?v=161"></script>
+<script type="module" src="app.js?v=162"></script>
 </body>
 </html>

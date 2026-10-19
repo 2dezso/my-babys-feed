@@ -27,6 +27,7 @@
      text selection or press-and-hold menus. */
   .native { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
   .native body { padding-top: 0; }
+  .native .web-only { display: none; }
   .native .back { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; min-height: 52px; margin: 0 -20px 8px; padding: env(safe-area-inset-top, 0px) 20px 0; background: var(--bg); border-bottom: 1px solid var(--line); }
 </style>
 </head>
@@ -52,7 +53,7 @@
   <h2 id="feeds">Logging feeds</h2>
   <ul>
     <li><b>A feed happening now:</b> tap <b>Start feed</b> when it begins. When it is done, tap <b>Finish feed</b> and choose how much.</li>
-    <li><b>A feed you forgot:</b> tap <b>Log past</b> and scroll to the time. If you do not know the amount yet, tap <b>Just save the time, add the amount later</b>.</li>
+    <li><b>A feed you forgot:</b> tap <b>Log past</b> and scroll to the time. If you do not know the amount yet, tap <b>Save without an amount</b>. A few quick buttons, such as <b>10 min ago</b>, set the time for you.</li>
     <li><b>Changing or deleting a feed:</b> tap it in the list. Everything can be changed, and <b>Delete this feed</b> is at the bottom.</li>
     <li><b>Next feed:</b> when you finish a feed you can choose roughly when the next one is due. If it runs late, the app just shows how long ago it was expected. Every baby is different, so nothing is ever marked overdue.</li>
   </ul>
@@ -70,7 +71,7 @@
   <p>Your diary is not stored only on your phone, so nothing is lost when you change phones, as long as you have the code. On the new phone, open the app, tap <b>Join a household</b> and enter it. Everything comes back.</p>
   <p>To keep a copy of the code, go to <b>Settings</b> and tap <b>Save a copy of the code</b>. You can send it to yourself, or save it in Notes. If someone else uses the diary, their phone also shows the code in Settings.</p>
   <p>If every phone is lost and nobody kept the code, I cannot get the diary back for you. There are no accounts to reset.</p>
-  <p><b>Typed the wrong code, or want a different diary?</b> Go to <b>Settings</b>, then <b>Sharing</b>, and tap <b>Use a different code</b>. It only changes this phone and nothing is deleted. When you enter a code the app looks it up first, and says so if there is nothing under it, which usually means a typo.</p>
+  <p><b>Typed the wrong code, or want a different diary?</b> Go to <b>Settings</b>, then <b>Sharing</b>, and tap <b>Switch to another household</b>. It only changes this phone and nothing is deleted. When you enter a code the app looks it up first, and says so if there is nothing under it, which usually means a typo.</p>
 
   <h2 id="reminders">Reminders and the lock screen timer</h2>
   <p>In the iPhone app, go to <b>Settings</b> and choose <b>Next feed reminders</b>. You can have a notification 30 minutes before, 15 minutes before and when the next feed is due, in any combination. The first time, your phone asks if Little Sips may send notifications. Say yes, or turn them on later in the iPhone Settings app.</p>
@@ -78,7 +79,7 @@
   <p>While a feed is running, the lock screen and the Dynamic Island show a timer counting up from when you pressed <b>Start feed</b>. It disappears when you finish the feed. If you do not see it, check that Live Activities are on for Little Sips in the iPhone Settings app. A feed started on another phone shows its timer here once you open the app.</p>
 
   <h2 id="offline">Using it without signal</h2>
-  <p>Little Sips needs an internet connection to show your feeds and to save new ones, so it is not for rooms with no reception. If the signal drops for a moment, anything you log is kept and sent as soon as it returns, as long as the app stays open. Other phones will not see it until then. On the website, the last screen you opened can show again without a connection, but it will not save anything new.</p>
+  <p>Little Sips needs an internet connection to show your feeds and to save new ones, so it is not for rooms with no reception. If the signal drops for a moment, anything you log is kept and sent as soon as it returns, as long as the app stays open. Other phones will not see it until then.<span class="web-only"> On the website, the last screen you opened can show again without a connection, but it will not save anything new.</span></p>
 
   <h2 id="backup">Backups</h2>
   <p>In <b>Settings</b>, tap <b>Download a backup</b>. Your phone saves a file with every feed, poo and moment. It includes your photos, so keep it somewhere private. It is worth doing now and then.</p>
@@ -88,8 +89,8 @@
     <li><b>ml or oz:</b> in Settings, under Feeding. Amounts are always saved in ml, so switching never changes your history, and each phone can show its own unit.</li>
     <li><b>Colour:</b> choose green, baby blue or rose in Settings.</li>
     <li><b>Dark mode:</b> the app follows your phone. Turn on Dark Mode in your phone's settings and the app switches with it.</li>
-    <li><b>On the home screen:</b> in Safari on iPhone, tap the Share button, then <b>Add to Home Screen</b>. The app then opens full screen like any other app.</li>
-    <li><b>Next feed reminders:</b> these are only in the iPhone app from the App Store, because a website cannot send reliable notifications. They are set separately on each phone.</li>
+    <li class="web-only"><b>On the home screen:</b> in Safari on iPhone, tap the Share button, then <b>Add to Home Screen</b>. The app then opens full screen like any other app.</li>
+    <li class="web-only"><b>Next feed reminders:</b> these are only in the iPhone app from the App Store, because a website cannot send reliable notifications. They are set separately on each phone.</li>
   </ul>
 
   <h2>Is it medical advice?</h2>

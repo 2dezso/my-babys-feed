@@ -3,7 +3,7 @@
 :root {
   --bg: #fbf2ed; --card: #fffdfb; --ink: #2b201c; --muted: #7a655d; --line: #efe1d8; --fill: #f4e8e0; --wash-a: #fdf3ee; --wash-b: #f9e3d9;
   --danger: #c2453d;
-  --feed: #1f8a4c;   --feed-ink: #1b7a43; --feed-tint: #e3f4e9;  --feed-soft: #b9e6c9;
+  --feed: #1e874a;   --feed-ink: #1b7a43; --feed-tint: #e3f4e9;  --feed-soft: #b9e6c9;
   --nappy: #a65a12;  --nappy-ink: #9a5210; --nappy-tint: #fbefdf; --nappy-soft: #f5d3a6;
   --mile: #6e56cf;   --mile-ink: #6049c4; --mile-tint: #eeeafb;  --mile-soft: #d3c9f5;
   --trend: #c2453d;  --trend-ink: #b23c35; --trend-tint: #fbe9e7; --trend-soft: #f5c4bf;
@@ -240,7 +240,7 @@ h1, h2, h3 { margin: 0; }
 .cal-day.has-entry { background-color: var(--sec-tint); color: var(--sec-ink); }
 .cal-day.has-photo { color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
 .cal-day.today-marker { box-shadow: 0 0 0 2px var(--sec) inset; }
-.cal-day.birthday::after { content: '🎂'; position: absolute; top: -5px; right: -3px; font-size: .85rem; line-height: 1; }
+.cal-day.birthday::after { content: ''; position: absolute; top: -2px; right: -2px; width: 9px; height: 9px; border-radius: 50%; background: var(--feed); box-shadow: 0 0 0 2px var(--card); }
 .milestone-photo-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .milestone-photo-preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 16px; }
 .milestone-textarea { resize: vertical; font-family: inherit; }
@@ -314,6 +314,11 @@ textarea.field-input { padding: 12px 14px; }
 .datetime-row input { min-width: 0; min-height: 48px; padding: 0 8px; border-radius: 14px; border: 2px solid var(--line); font-size: 1.0625rem; font-weight: 700; font-family: inherit; background: var(--card); color: var(--ink); text-align: center; font-variant-numeric: tabular-nums; }
 .check-out { margin: 0; font: 600 .75rem/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; word-break: break-word; background: var(--fill); border-radius: 12px; padding: 12px; max-height: 50vh; overflow: auto; }
 .welcome-links .text-link-btn { display: inline; width: auto; padding: 0; font: inherit; color: inherit; }
+.ago-chips { display: flex; gap: 2px; margin: 4px 0 8px; }
+.ago-chips[hidden] { display: none; }
+.ago-chips .segment { flex: 1 1 0; min-height: 40px; padding-inline: 2px; font-size: .8125rem; white-space: nowrap; }
+.offline-note { position: fixed; top: calc(8px + env(safe-area-inset-top, 0px)); left: 12px; right: 12px; z-index: 60; background: var(--ink); color: var(--bg); border-radius: 14px; padding: 10px 14px; font-size: .8125rem; font-weight: 700; line-height: 1.35; text-align: center; box-shadow: var(--shadow); }
+.offline-note[hidden] { display: none; }
 .reminder-sub { margin: 0 0 2px; font-weight: 800; font-size: 1rem; }
 .reminder-seg { display: flex; flex-wrap: wrap; gap: 2px; }
 .reminder-seg .segment { flex: 1 1 auto; min-height: 44px; }

@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=161';
+import { analyse } from './patterns.js?v=162';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -258,6 +258,7 @@ let selectedGender = '';
 let profileOnboarding = false;
 let profileDob = '';
 let profileFirstName = '';
+let profileIsDemo = false; // the example household given to App Review; it cannot be deleted from the app
 let profileLastName = '';
 let selectedPooSize = '';
 let bottleMadeAt = null;
@@ -304,15 +305,18 @@ function showToast(msg, action) {
   }
   toast.classList.toggle('has-act', !!action);
   toast.hidden = false;
-  toastTimer = setTimeout(() => { toast.hidden = true; }, action ? 7000 : 2000);
+  const isProblem = /^(could not|sync error|this phone cannot|the service is)/i.test(msg);
+  toastTimer = setTimeout(() => { toast.hidden = true; }, action ? 7000 : isProblem ? 6000 : 2000);
 }
 
 // Puts a just-deleted feed or poo back exactly as it was, under the same id.
 
 function generateHouseholdCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
+  // 32 characters, so a random byte can be reduced with & 31 without favouring any of them.
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
   let code = '';
-  for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 8; i++) code += chars[bytes[i] & 31];
   return code;
 }
 
@@ -528,6 +532,7 @@ function listenToProfile(code) {
       profileDobInput.value = data.dob || '';
     }
     profileLastName = data.lastName || '';
+    profileIsDemo = !!data.demo;
     profileDob = data.dob || '';
     selectedAvatarTone = data.avatarTone || '';
     selectedGender = data.gender || '';
@@ -1628,9 +1633,9 @@ async function finishFeed(id, timestamp, amountMl, intervalHours, completing = f
   }
 }
 
+// No question first: the Undo message puts the feed back exactly as it was, the same as for poos.
 function openConfirmDeleteModal(feedId) {
-  pendingDeleteFeedId = feedId;
-  confirmDeleteModal.hidden = false;
+  deleteFeed(feedId);
 }
 
 confirmDeleteCancel.addEventListener('click', () => {
@@ -2366,7 +2371,7 @@ function dateStringForOffset(daysAgo) {
 // beside the time.
 function setFeedDay(dateStr, forceOther = false) {
   feedDateInput.value = dateStr;
-  const which = forceOther || dateStr !== dateStringForOffset(0) ? 'other' : '0';
+  const which = forceOther ? 'other' : dateStr === dateStringForOffset(0) ? '0' : dateStr === dateStringForOffset(1) ? '1' : 'other';
   feedDayChips.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.offset === which));
   feedDateInput.hidden = which !== 'other';
 }
@@ -2375,7 +2380,18 @@ feedDayChips.addEventListener('click', (e) => {
   const btn = e.target.closest('button');
   if (!btn) return;
   if (btn.dataset.offset === 'other') setFeedDay(feedDateInput.value || dateStringForOffset(0), true);
-  else setFeedDay(dateStringForOffset(0));
+  else setFeedDay(dateStringForOffset(Number(btn.dataset.offset)));
+  drawSheet();
+});
+
+// For a feed logged afterwards: one tap puts the time on "just now" or a few minutes back. The wheels stay for fine tuning.
+const feedAgoChips = document.getElementById('feed-ago-chips');
+feedAgoChips.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const then = new Date(Date.now() - Number(btn.dataset.min) * 60000);
+  setFeedDay(`${then.getFullYear()}-${String(then.getMonth() + 1).padStart(2, '0')}-${String(then.getDate()).padStart(2, '0')}`);
+  setTimeWheel(then.getHours(), then.getMinutes(), true);
   drawSheet();
 });
 
@@ -2539,6 +2555,7 @@ function openLogModal(feed) {
   logModalTitle.textContent = sheetMode === 'log' ? 'Log a feed' : (isPending ? 'Finish feed' : 'Edit feed');
   feedWhenLabel.textContent = isPending ? 'Started' : 'When';
   sheetDel.hidden = sheetMode !== 'edit';
+  feedAgoChips.hidden = sheetMode !== 'log';
   gapShown = null;
   logModal.hidden = false;
   // The wheel can only be positioned once the sheet is on screen.
@@ -2576,10 +2593,14 @@ function combineDateTimeToTimestamp(dateStr, timeStr) {
   return new Date(y, mo - 1, d, h, mi, 0, 0).getTime();
 }
 
+let startFeedLockedUntil = 0;
 btnStartFeedNow.addEventListener('click', () => {
   if (latestFeeds.length && latestFeeds[0].amountMl == null) {
     openLogModal(latestFeeds[0]);
   } else {
+    // A second tap before the first feed has come back from the list would start another one.
+    if (Date.now() < startFeedLockedUntil) return;
+    startFeedLockedUntil = Date.now() + 2000;
     startFeed(Date.now(), computeAutoIntervalHours(DEFAULT_ML));
   }
 });
@@ -2686,6 +2707,7 @@ function closeDelete() {
 document.getElementById('btn-delete-household').addEventListener('click', async () => {
   const code = getHouseholdCode();
   if (!code) return;
+  if (profileIsDemo) { showToast('This is an example household, so it cannot be deleted.'); return; }
   deleteCountEls.forEach((el) => { el.textContent = '…'; });
   document.getElementById('delete-n-profile').textContent = `${profileFirstName || 'Your baby'}’s profile and bottle`;
   deleteWarn.textContent = 'Everyone with the code loses access. This cannot be undone.';
@@ -2835,6 +2857,14 @@ function showSetupNotice() {
     }
   } catch (e) { /* no notice */ }
 }
+// --- No connection ---
+// New entries are kept and sent when the connection returns, but only while the app stays open, so the screen says so.
+const offlineNote = document.getElementById('offline-note');
+function drawOfflineNote() { offlineNote.hidden = navigator.onLine !== false; }
+window.addEventListener('online', drawOfflineNote);
+window.addEventListener('offline', drawOfflineNote);
+drawOfflineNote();
+
 // --- Connection check ---
 // Runs each step the diary depends on, with a time limit, and lists the result with the recent log, for a screenshot.
 const checkModal = document.getElementById('check-modal');
@@ -2860,7 +2890,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 161`);
+  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 162`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3455,7 +3485,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=161').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=162').catch(() => {});
   });
 }
 
@@ -3491,17 +3521,17 @@ window.addEventListener('focus', checkForNewVersion);
 // Pinching in is blocked so the page can't be zoomed by accident, but pinching out is left alone so the browser's
 // own gesture (such as the tab overview on iPad) still works. iOS Safari ignores user-scalable=no, so this is done
 // here: any gesture that would enlarge the page (scale above 1) is cancelled; one that shrinks it is not.
-['gesturechange', 'gestureend'].forEach(evt => {
-  document.addEventListener(evt, (e) => { if (e.scale > 1) e.preventDefault(); });
-});
-document.addEventListener('touchmove', (e) => {
-  if (e.touches.length > 1 && e.scale && e.scale > 1) e.preventDefault();
-}, { passive: false });
+if (inNativeApp) {
+  ['gesturechange', 'gestureend'].forEach(evt => {
+    document.addEventListener(evt, (e) => { if (e.scale > 1) e.preventDefault(); });
+  });
+  document.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 1 && e.scale && e.scale > 1) e.preventDefault();
+  }, { passive: false });
+}
 
 // A note in Settings that a paid upgrade is coming. Set to false to hide it (for example, if App Review objects to a
 // "coming soon" notice in the iPhone app).
-const SHOW_PLUS_TEASER = false;
-document.getElementById('plus-teaser').hidden = !SHOW_PLUS_TEASER;
 
 // "Rate the app" opens the App Store review page. The link is not known until the app is published, so until
 // APP_STORE_ID is set (see "First open") the button only says so.
