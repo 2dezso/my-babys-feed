@@ -24,6 +24,9 @@ npx cap sync ios
 # 3. The app icon, from the same 1024px icon the website uses.
 mkdir -p assets
 cp icon-1024.png assets/icon-only.png
+# The launch screen: the app's own background with its icon, light and dark, in place of Capacitor's blank one.
+cp scripts/ios-files/splash.png assets/splash.png
+cp scripts/ios-files/splash-dark.png assets/splash-dark.png
 npx @capacitor/assets generate --ios
 
 # 4. Settings Apple asks about:

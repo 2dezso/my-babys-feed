@@ -6,6 +6,7 @@
 <title>Help · Little Sips</title>
 <meta name="description" content="How to use Little Sips: logging feeds, sharing with a partner, moving to a new phone, backups and contact.">
 <link rel="stylesheet" href="fonts/nunito.css">
+<script>if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) document.documentElement.classList.add('native');</script>
 <style>
   :root { --bg: #fbf2ed; --ink: #2b201c; --muted: #7a655d; --line: #efe1d8; --link: #1b7a43; }
   @media (prefers-color-scheme: dark) { :root { --bg: #1b1513; --ink: #f6ebe5; --muted: #b9a49b; --line: #3a2d29; --link: #6fd69b; } }
@@ -22,6 +23,11 @@
   .box { border: 2px solid var(--line); border-radius: 14px; padding: 12px 16px; }
   nav ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
   nav li { margin: 0; }
+  /* Inside the iPhone app these pages are screens, not web pages: a bar with a back arrow under the status bar, and no
+     text selection or press-and-hold menus. */
+  .native { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .native body { padding-top: 0; }
+  .native .back { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; min-height: 52px; margin: 0 -20px 8px; padding: env(safe-area-inset-top, 0px) 20px 0; background: var(--bg); border-bottom: 1px solid var(--line); }
 </style>
 </head>
 <body>
@@ -66,7 +72,7 @@
   <p><b>Typed the wrong code, or want a different diary?</b> Go to <b>Settings</b>, then <b>Sharing</b>, and tap <b>Use a different code</b>. It only changes this phone and nothing is deleted. When you enter a code the app looks it up first, and says so if there is nothing under it, which usually means a typo.</p>
 
   <h2 id="offline">Using it without signal</h2>
-  <p>The app opens and works without signal, so night feeds in a room with no reception are fine. Anything you log is sent automatically when your phone is back online. Until then, other phones will not see it.</p>
+  <p>Little Sips needs an internet connection to show your feeds and to save new ones, so it is not for rooms with no reception. If the signal drops for a moment, anything you log is kept and sent as soon as it returns, as long as the app stays open. Other phones will not see it until then. On the website, the last screen you opened can show again without a connection, but it will not save anything new.</p>
 
   <h2 id="backup">Backups</h2>
   <p>In <b>Settings</b>, tap <b>Download a backup</b>. Your phone saves a file with every feed, poo and moment. It includes your photos, so keep it somewhere private. It is worth doing now and then.</p>
@@ -90,5 +96,12 @@
     <li>How your information is handled: <a href="privacy.html">Privacy</a>. The rules for using the app: <a href="terms.html">Terms of use</a>.</li>
   </ul>
 </main>
+<script>
+  if (document.documentElement.classList.contains('native')) {
+    var back = document.querySelector('.back');
+    back.textContent = '‹ Back';
+    back.addEventListener('click', function (e) { if (history.length > 1) { e.preventDefault(); history.back(); } });
+  }
+</script>
 </body>
 </html>

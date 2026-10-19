@@ -35,6 +35,8 @@ body.gender-pink {
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html.native, html.native body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; overscroll-behavior-y: none; }
+html.native input, html.native textarea { -webkit-user-select: text; user-select: text; }
 html { background: var(--wash-a); touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; min-height: 100vh;
@@ -312,6 +314,9 @@ textarea.field-input { padding: 12px 14px; }
 .datetime-row input { min-width: 0; min-height: 48px; padding: 0 8px; border-radius: 14px; border: 2px solid var(--line); font-size: 1.0625rem; font-weight: 700; font-family: inherit; background: var(--card); color: var(--ink); text-align: center; font-variant-numeric: tabular-nums; }
 .check-out { margin: 0; font: 600 .75rem/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; word-break: break-word; background: var(--fill); border-radius: 12px; padding: 12px; max-height: 50vh; overflow: auto; }
 .welcome-links .text-link-btn { display: inline; width: auto; padding: 0; font: inherit; color: inherit; }
+.reminder-seg { display: flex; flex-wrap: wrap; gap: 2px; }
+.reminder-seg .segment { flex: 1 1 auto; min-height: 44px; }
+.reminder-seg .segment.active::before { content: "¹3 a0"; }
 .share-code { font-size: 2rem; font-weight: 800; letter-spacing: .15em; text-align: center; background: var(--fill); border-radius: 16px; padding: 18px; }
 
 /* Log a feed sheet */

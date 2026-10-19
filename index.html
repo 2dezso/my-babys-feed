@@ -6,11 +6,15 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Little Sips</title>
-<link rel="manifest" href="manifest.json?v=157">
-<link rel="stylesheet" href="fonts/nunito.css?v=157">
-<link rel="stylesheet" href="style.css?v=157">
-<link rel="icon" type="image/png" href="icon-192.png?v=157">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=157">
+<link rel="manifest" href="manifest.json?v=158">
+<link rel="stylesheet" href="fonts/nunito.css?v=158">
+<link rel="stylesheet" href="style.css?v=158">
+<link rel="icon" type="image/png" href="icon-192.png?v=158">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=158">
+<script>
+  // iPhone app only: a class that styles it as an app (no text selection or press-and-hold menus).
+  if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) document.documentElement.classList.add('native');
+</script>
 <script>
   // iPhone app only. The phone's browser database (IndexedDB) can stop answering, and Firebase then waits on it forever
   // (its sign-in, offline copy and usage counter all open it with no time limit), so nothing loads or saves. Hiding it
@@ -58,7 +62,7 @@
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card welcome">
-    <img class="welcome-logo" src="logo-192.png?v=157" alt="" width="64" height="64">
+    <img class="welcome-logo" src="logo-192.png?v=158" alt="" width="64" height="64">
     <h1>Track feeds together</h1>
     <p class="muted">Log a feed in one tap. Everyone looking after your baby sees it straight away. No account needed.</p>
     <p id="setup-notice" class="setup-notice" hidden>This household was deleted from another phone. Start a new household, or join a different one with its code.</p>
@@ -136,6 +140,15 @@
         <button type="button" id="share-card-later" class="btn btn-secondary">Not now</button>
       </div>
       <button type="button" class="text-link-btn email-code">Save a copy of the code</button>
+    </div>
+
+    <div id="reminder-offer" class="share-card" hidden>
+      <b>Want a nudge before the next feed?</b>
+      <p>Little Sips can send a notification a little before the next feed is due. You can change it any time in Settings.</p>
+      <div class="share-card-btns">
+        <button type="button" id="reminder-offer-go" class="btn btn-primary">Set up</button>
+        <button type="button" id="reminder-offer-later" class="btn btn-secondary">Not now</button>
+      </div>
     </div>
 
     <div id="app-card" class="share-card" hidden>
@@ -383,13 +396,12 @@
     <p class="snote">Amounts are always saved in ml, so switching never changes your history. This is set for this phone only.</p>
 
     <section id="reminder-card" class="profile-card" hidden>
-      <h2 class="profile-card-title">Next feed reminder</h2>
-      <p class="profile-card-hint">A notification before the next feed is due, counted from the last feed this phone has seen. It is set on this phone only.</p>
-      <div class="seg" id="reminder-choice" role="group" aria-label="Reminder">
-        <button type="button" class="segment" data-lead="off">Off</button>
-        <button type="button" class="segment" data-lead="0">On time</button>
-        <button type="button" class="segment" data-lead="10">10 min before</button>
-        <button type="button" class="segment" data-lead="30">30 min before</button>
+      <h2 class="profile-card-title">Next feed reminders</h2>
+      <p class="profile-card-hint">A notification before the next feed is due. Pick as many as you like. They are set on this phone only, counted from the last feed it has seen.</p>
+      <div class="seg reminder-seg" id="reminder-choice" role="group" aria-label="Reminders">
+        <button type="button" class="segment" data-lead="30" aria-pressed="false">30 min before</button>
+        <button type="button" class="segment" data-lead="15" aria-pressed="false">15 min before</button>
+        <button type="button" class="segment" data-lead="0" aria-pressed="false">On time</button>
       </div>
       <p id="reminder-hint" class="profile-card-hint" hidden></p>
     </section>
@@ -571,6 +583,24 @@
     <div id="share-code" class="share-code"></div>
     <div class="modal-actions">
       <button id="share-close" class="btn btn-primary">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="reminder-modal" class="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="reminder-modal-title">
+    <span class="grab"></span>
+    <h2 id="reminder-modal-title">Remind you before the next feed?</h2>
+    <p class="muted">Little Sips can send a notification before the next feed is due, even when the app is closed. It is set on this phone, uses no data, and you can turn it off any time in Settings. Next, your phone will ask if Little Sips may send notifications.</p>
+    <div class="seg reminder-seg" id="reminder-modal-choice" role="group" aria-label="When to remind you">
+      <button type="button" class="segment" data-lead="30" aria-pressed="false">30 min before</button>
+      <button type="button" class="segment" data-lead="15" aria-pressed="false">15 min before</button>
+      <button type="button" class="segment" data-lead="0" aria-pressed="false">On time</button>
+    </div>
+    <p id="reminder-modal-preview" class="muted" hidden>Preview only: reminders arrive in the iPhone app.</p>
+    <div class="modal-actions">
+      <button id="reminder-modal-cancel" class="btn btn-secondary">Not now</button>
+      <button id="reminder-modal-go" class="btn btn-primary">Turn on</button>
     </div>
   </div>
 </div>
@@ -768,6 +798,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=157"></script>
+<script type="module" src="app.js?v=158"></script>
 </body>
 </html>

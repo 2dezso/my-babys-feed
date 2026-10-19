@@ -7,7 +7,6 @@
 A shared feeding, poo and Moments log for new parents. Tap once on your phone and the other parent sees it straight away.
 
 ![Installable web app](https://img.shields.io/badge/web%20app-installable-5A0FC8?style=flat-square)
-![Works offline](https://img.shields.io/badge/works-offline-2EA043?style=flat-square)
 ![No accounts](https://img.shields.io/badge/accounts-none-E8590C?style=flat-square)
 ![No build step](https://img.shields.io/badge/build%20step-none-555?style=flat-square)
 ![Firebase](https://img.shields.io/badge/Firebase-Firestore-FFCA28?style=flat-square&logo=firebase&logoColor=black)
@@ -24,7 +23,7 @@ A shared feeding, poo and Moments log for new parents. Tap once on your phone an
 
 Little Sips is a calm, one-handed feed tracker for bottle-feeding families. Tap **Start feed** when a feed begins and **Finish feed** when it's done, and it shows how long it has been since the last feed and roughly when the next one is due, on every phone in the household, straight away.
 
-It is deliberately small. There is no account to create, no adverts and no tracking. It works without signal and catches up when you're back online. It never scolds you about a late feed. Everything else, from poos and photos to gentle trends and a first-year progress bar, sits one tap away from the thing you open it for at 3am.
+It is deliberately small. There is no account to create, no adverts and no tracking. It needs an internet connection, and keeps entries made in a brief drop in signal until it returns. It never scolds you about a late feed. Everything else, from poos and photos to gentle trends and a first-year progress bar, sits one tap away from the thing you open it for at 3am.
 
 It was built for one family's first year, and it is still used and shaped by that household. It is a diary, not medical advice.
 
@@ -42,7 +41,7 @@ At 3am you need two answers fast: **when was the last feed, and how much did the
 | 📈 **Trends** | Longest overnight stretch, usual feed times, milk per day and daytime gaps, all read from what you log. No targets and no comparison with other babies. |
 | ⏱️ **Bottle timer** | Counts down the 2 hour "good for" window and flags when it's time to bin it. |
 | 👪 **Sharing** | Join with a short household code. No accounts, no sign-up. Entered the wrong code? Switch it in Settings. |
-| 📴 **Offline** | Installs to the home screen and works with no signal. Entries sync when you're back online. |
+| 📴 **Signal drops** | The website installs to the home screen and keeps what you last saw. The iPhone app needs a connection; entries made in a brief drop are sent when it returns. |
 | ⚙️ **Your way** | ml or oz, light or dark, green, baby blue or rose, and a backup you can download at any time. |
 
 ## How it fits together
@@ -65,7 +64,7 @@ The interesting part of this project is what I chose to leave out or do differen
 | **It never says "overdue"** | A late feed isn't a failure. | The app shows an amber "Expected 12m ago" instead of a red warning. |
 | **Read less, pay less** | Every document read costs money. | Live view follows the last 28 days. Older feeds, and poos, load only when you open them. |
 | **Photos stored inside Firestore, not Firebase Storage** | Storage now needs Google's pay-as-you-go plan, with a card on file, even to stay within its free allowance. | Compressed images only. If quality ever matters, swapping the source is a small change. |
-| **Offline first** | Hospital wards and nurseries have bad signal. | Firebase and fonts are bundled with the app, so updates mean replacing those files. |
+| **Firebase and fonts bundled** | Fewer outside dependencies, and the web copy opens without signal. | Updates mean replacing those files. |
 | **A staging site with a loud "TEST VERSION" bar** | I wanted to try changes on a real phone without touching the live data. | A small deploy script to maintain. |
 
 ## Under the hood

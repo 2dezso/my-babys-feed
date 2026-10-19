@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=157';
+import { analyse } from './patterns.js?v=158';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2858,7 +2858,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 157`);
+  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 158`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3064,9 +3064,10 @@ document.getElementById('join-check-no').addEventListener('click', () => {
 });
 
 
-// --- Next feed reminder ---
-// Only inside the iPhone app. The reminder is a notification set on the phone itself, so it fires when the app is
-// closed and with no signal. The setting stays on this device and is never saved to the household's data.
+// --- Next feed reminders ---
+// Only inside the iPhone app. Each reminder is a notification set on the phone itself, so it fires when the app is
+// closed. The choice stays on this device and is never saved to the household's data. The test site (or
+// ?preview-reminders) shows the same screens so they can be tried, but nothing is scheduled outside the app.
 const nativeNotifications = (() => {
   try {
     return window.Capacitor?.isNativePlatform?.() ? window.Capacitor.registerPlugin('LocalNotifications') : null;
@@ -3074,85 +3075,159 @@ const nativeNotifications = (() => {
     return null;
   }
 })();
-const REMINDER_ID = 1;
-const REMINDER_KEY = 'babyfeed_reminder_lead';
+const previewReminders = !nativeNotifications && (location.pathname.includes('my-babys-feed-staging') || new URLSearchParams(location.search).has('preview-reminders'));
+const remindersAvailable = !!nativeNotifications || previewReminders;
+const REMINDER_LEADS = [30, 15, 0]; // minutes before the feed is due
+const REMINDER_ID = { 0: 1, 15: 2, 30: 3 };
+const REMINDER_KEY = 'babyfeed_reminders'; // a list of the minutes chosen; the key exists once a choice has been made
+const REMINDER_OLD_KEY = 'babyfeed_reminder_lead';
+const REMINDER_OFFER_KEY = 'babyfeed_reminder_offer_done';
+const PREVIEW_PERMISSION_KEY = 'babyfeed_preview_notifications';
+const PREVIEW_TEXT = 'Preview only: reminders arrive in the iPhone app. Nothing is scheduled from the website.';
 const reminderCard = document.getElementById('reminder-card');
 const reminderChoice = document.getElementById('reminder-choice');
 const reminderHint = document.getElementById('reminder-hint');
-// The test site (or ?preview-reminders) shows the settings so they can be tried, but nothing is scheduled: only the
-// iPhone app can send a notification. The live website does not show the card at all.
-const previewReminders = !nativeNotifications && (location.pathname.includes('my-babys-feed-staging') || new URLSearchParams(location.search).has('preview-reminders'));
-function readReminderLead() {
-  const raw = localStorage.getItem(REMINDER_KEY);
-  return raw === null || raw === 'off' ? null : Number(raw);
-}
-let reminderLead = readReminderLead();
-let reminderScheduled = '';
+const reminderModal = document.getElementById('reminder-modal');
+const reminderModalChoice = document.getElementById('reminder-modal-choice');
+const reminderOfferCard = document.getElementById('reminder-offer');
 
+function readReminders() {
+  try {
+    const raw = localStorage.getItem(REMINDER_KEY);
+    if (raw !== null) return JSON.parse(raw).filter(n => REMINDER_LEADS.includes(n));
+    const old = localStorage.getItem(REMINDER_OLD_KEY); // the first iPhone builds kept one choice
+    if (old !== null && old !== 'off') return [Number(old) === 10 ? 15 : Number(old)].filter(n => REMINDER_LEADS.includes(n));
+  } catch (e) { /* none chosen */ }
+  return [];
+}
+let reminders = readReminders();
+let reminderScheduled = null; // null until the first sync, so notifications left from an earlier launch are always checked
+function hasReminderChoice() {
+  try { return localStorage.getItem(REMINDER_KEY) !== null || localStorage.getItem(REMINDER_OLD_KEY) !== null; } catch (e) { return false; }
+}
+function saveReminders() {
+  try { localStorage.setItem(REMINDER_KEY, JSON.stringify(reminders)); } catch (e) { /* the choice just will not be remembered */ }
+}
+function setReminderHint(msg) {
+  const text = msg || (previewReminders ? PREVIEW_TEXT : '');
+  reminderHint.textContent = text;
+  reminderHint.hidden = !text;
+}
+
+function reminderTitle(lead) {
+  const who = profileFirstName ? `${profileFirstName}’s next feed` : 'Next feed';
+  return lead === 0 ? `${who} is due` : `${who} in ${lead} minutes`;
+}
 async function syncReminder() {
   if (!nativeNotifications) return;
   const last = latestFeeds[0];
   // Nothing to remind about while a feed is running or before there is a finished feed to count from.
-  const due = reminderLead !== null && last && last.amountMl != null
+  const due = reminders.length && last && last.amountMl != null
     ? last.timestamp + (last.intervalHours || 3) * 3600000
     : null;
-  const at = due === null ? null : due - reminderLead * 60000;
+  const items = due === null ? [] : reminders
+    .map(lead => ({ lead, at: due - lead * 60000 }))
+    .filter(r => r.at > Date.now());
   // Only a name that was entered is used: a household with no name must not be reminded about someone else's baby.
-  const signature = at !== null && at > Date.now() ? `${at}|${profileFirstName}|${due}` : '';
+  const signature = items.length ? `${items.map(r => r.at).join(',')}|${profileFirstName}|${due}|${last.timestamp}` : '';
   if (signature === reminderScheduled) return;
   reminderScheduled = signature;
   try {
-    await nativeNotifications.cancel({ notifications: [{ id: REMINDER_ID }] });
-    if (signature) {
+    await nativeNotifications.cancel({ notifications: REMINDER_LEADS.map(l => ({ id: REMINDER_ID[l] })) });
+    if (items.length) {
       await nativeNotifications.schedule({
-        notifications: [{
-          id: REMINDER_ID,
-          title: profileFirstName ? `${profileFirstName}’s next feed` : 'Next feed',
-          body: reminderLead === 0 ? 'Feed time is about now.' : `Due around ${formatClock(due)}.`,
-          schedule: { at: new Date(at) },
-        }],
+        notifications: items.map(r => ({
+          id: REMINDER_ID[r.lead],
+          title: reminderTitle(r.lead),
+          body: `Due around ${formatClock(due)}. The last feed was at ${formatClock(last.timestamp)}.`,
+          schedule: { at: new Date(r.at) },
+        })),
       });
     }
   } catch (e) {
-    console.warn('Could not set the reminder', e);
-    reminderScheduled = '';
+    console.warn('Could not set the reminders', e);
+    diag(`reminders failed: ${e.message || e}`);
+    reminderScheduled = null;
   }
 }
 
-function drawReminderChoice() {
-  const value = reminderLead === null ? 'off' : String(reminderLead);
-  reminderChoice.querySelectorAll('.segment').forEach(b => b.classList.toggle('active', b.dataset.lead === value));
+function drawChoice(container, leads) {
+  container.querySelectorAll('.segment').forEach(b => {
+    const on = leads.includes(Number(b.dataset.lead));
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
 }
-if (nativeNotifications || previewReminders) {
-  reminderCard.hidden = false;
-  if (previewReminders) {
-    reminderHint.textContent = 'Preview only: reminders arrive in the iPhone app. Nothing is scheduled from the website.';
-    reminderHint.hidden = false;
+function drawReminderChoice() { drawChoice(reminderChoice, reminders); }
+
+async function notificationPermission() {
+  if (!nativeNotifications) {
+    try { return localStorage.getItem(PREVIEW_PERMISSION_KEY) || 'prompt'; } catch (e) { return 'prompt'; }
   }
+  try { return (await nativeNotifications.checkPermissions()).display; } catch (e) { return 'prompt'; }
+}
+async function askNotificationPermission() {
+  if (!nativeNotifications) {
+    try { localStorage.setItem(PREVIEW_PERMISSION_KEY, 'granted'); } catch (e) { /* preview only */ }
+    return true;
+  }
+  try { return (await nativeNotifications.requestPermissions()).display === 'granted'; } catch (e) { return false; }
+}
+function applyReminders(list) {
+  reminders = REMINDER_LEADS.filter(l => list.includes(l));
+  saveReminders();
   drawReminderChoice();
-  reminderChoice.querySelectorAll('.segment').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      reminderHint.hidden = previewReminders ? false : true;
-      if (btn.dataset.lead === 'off') {
-        reminderLead = null;
-      } else if (previewReminders) {
-        reminderLead = Number(btn.dataset.lead);
-      } else {
-        try {
-          const asked = await nativeNotifications.requestPermissions();
-          if (asked.display !== 'granted') throw new Error('not allowed');
-          reminderLead = Number(btn.dataset.lead);
-        } catch (e) {
-          reminderLead = null;
-          reminderHint.textContent = 'Notifications are switched off for this app. Turn them on in the iPhone Settings app, then try again.';
-          reminderHint.hidden = false;
-        }
-      }
-      localStorage.setItem(REMINDER_KEY, reminderLead === null ? 'off' : String(reminderLead));
-      drawReminderChoice();
-      reminderScheduled = '';
-      syncReminder();
-    });
+  reminderScheduled = null;
+  syncReminder();
+  renderFirstRunHints();
+}
+// A reminder can only be switched on once the phone has allowed notifications. The first time, a short explanation comes
+// before the system's own question, so the question is not a surprise.
+async function turnOnReminders(list) {
+  const state = await notificationPermission();
+  if (state === 'granted') { setReminderHint(''); applyReminders(list); return; }
+  if (state === 'denied') {
+    setReminderHint('Notifications are switched off for Little Sips. Turn them on in the iPhone Settings app, then try again.');
+    return;
+  }
+  openReminderModal(list);
+}
+
+let modalLeads = [];
+function openReminderModal(list) {
+  modalLeads = REMINDER_LEADS.filter(l => list.includes(l));
+  drawChoice(reminderModalChoice, modalLeads);
+  document.getElementById('reminder-modal-go').disabled = !modalLeads.length;
+  document.getElementById('reminder-modal-preview').hidden = !previewReminders;
+  reminderModal.hidden = false;
+}
+reminderModalChoice.querySelectorAll('.segment').forEach(btn => btn.addEventListener('click', () => {
+  const lead = Number(btn.dataset.lead);
+  modalLeads = modalLeads.includes(lead) ? modalLeads.filter(n => n !== lead) : [...modalLeads, lead];
+  drawChoice(reminderModalChoice, modalLeads);
+  document.getElementById('reminder-modal-go').disabled = !modalLeads.length;
+}));
+document.getElementById('reminder-modal-go').addEventListener('click', async () => {
+  const allowed = await askNotificationPermission();
+  reminderModal.hidden = true;
+  if (allowed) { setReminderHint(''); applyReminders(modalLeads); }
+  else setReminderHint('Notifications are switched off for Little Sips. Turn them on in the iPhone Settings app, then try again.');
+});
+document.getElementById('reminder-modal-cancel').addEventListener('click', () => { reminderModal.hidden = true; });
+
+if (remindersAvailable) {
+  reminderCard.hidden = false;
+  setReminderHint('');
+  drawReminderChoice();
+  reminderChoice.querySelectorAll('.segment').forEach(btn => btn.addEventListener('click', () => {
+    const lead = Number(btn.dataset.lead);
+    setReminderHint('');
+    if (reminders.includes(lead)) applyReminders(reminders.filter(n => n !== lead));
+    else turnOnReminders([...reminders, lead]);
+  }));
+  // Coming back to the app is the moment to make sure the reminders still match the latest feed.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') { reminderScheduled = null; syncReminder(); }
   });
 }
 
@@ -3223,6 +3298,10 @@ function renderFirstRunHints() {
   const showShare = readFlag(CREATED_KEY) && !readFlag(SHARE_DONE_KEY) && latestFeeds.some(f => f.amountMl != null);
   shareCard.hidden = !showShare;
   if (showShare) document.getElementById('share-card-code').textContent = getHouseholdCode() || '';
+  // The reminder offer waits for a finished feed, and for the share card to be dealt with first.
+  const showReminderOffer = remindersAvailable && !tip && !showShare && !hasReminderChoice() && !readFlag(REMINDER_OFFER_KEY)
+    && latestFeeds.some(f => f.amountMl != null);
+  reminderOfferCard.hidden = !showReminderOffer;
   // The iPhone app card waits until the first-run pointers and the share card are out of the way.
   const showApp = offerIphoneApp && !tip && !showShare && (previewAppCard || !readFlag(APP_CARD_DONE_KEY));
   appCard.hidden = !showApp;
@@ -3241,6 +3320,8 @@ document.getElementById('share-card-go').addEventListener('click', async () => {
   shareModal.hidden = false;
 });
 document.getElementById('share-card-later').addEventListener('click', () => { setFlag(SHARE_DONE_KEY); renderFirstRunHints(); });
+document.getElementById('reminder-offer-go').addEventListener('click', () => { setFlag(REMINDER_OFFER_KEY); renderFirstRunHints(); openReminderModal([15]); });
+document.getElementById('reminder-offer-later').addEventListener('click', () => { setFlag(REMINDER_OFFER_KEY); renderFirstRunHints(); });
 document.getElementById('app-card-later').addEventListener('click', () => { setFlag(APP_CARD_DONE_KEY); renderFirstRunHints(); });
 document.getElementById('app-card-go').addEventListener('click', (e) => {
   if (!APP_STORE_URL) { e.preventDefault(); showToast('The App Store link goes here once the app is published'); return; }
@@ -3331,7 +3412,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=157').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=158').catch(() => {});
   });
 }
 
