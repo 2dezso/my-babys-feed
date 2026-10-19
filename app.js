@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=162';
+import { analyse } from './patterns.js?v=163';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2890,7 +2890,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 162`);
+  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 163`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3123,10 +3123,13 @@ const REMINDER_ID = { 0: 1, 15: 2, 30: 3 };
 const REMINDER_KEY = 'babyfeed_reminders'; // a list of the minutes chosen; the key exists once a choice has been made
 const REMINDER_OLD_KEY = 'babyfeed_reminder_lead';
 const REMINDER_OFFER_KEY = 'babyfeed_reminder_offer_done';
+const REMINDER_LAST_KEY = 'babyfeed_reminders_last'; // what was on before the switch was turned off, so turning it on again restores it
 const PREVIEW_PERMISSION_KEY = 'babyfeed_preview_notifications';
 const PREVIEW_TEXT = 'Preview only: reminders arrive in the iPhone app. Nothing is scheduled from the website.';
 const reminderCard = document.getElementById('reminder-card');
-const reminderChoice = document.getElementById('reminder-choice');
+const reminderSwitch = document.getElementById('reminder-switch');
+const reminderWhen = document.getElementById('reminder-when');
+const reminderWhenValue = document.getElementById('reminder-when-value');
 const reminderHint = document.getElementById('reminder-hint');
 const reminderModal = document.getElementById('reminder-modal');
 const reminderModalChoice = document.getElementById('reminder-modal-choice');
@@ -3193,13 +3196,25 @@ async function syncReminder() {
 }
 
 function drawChoice(container, leads) {
-  container.querySelectorAll('.segment').forEach(b => {
-    const on = leads.includes(Number(b.dataset.lead));
-    b.classList.toggle('active', on);
-    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  container.querySelectorAll('.check-row').forEach(b => {
+    b.setAttribute('aria-pressed', leads.includes(Number(b.dataset.lead)) ? 'true' : 'false');
   });
 }
-function drawReminderChoice() { drawChoice(reminderChoice, reminders); }
+// "30 and 15 min before", "15 min before and on time", "On time"
+function reminderSummary() {
+  const before = REMINDER_LEADS.filter(l => l > 0 && reminders.includes(l));
+  const onTime = reminders.includes(0);
+  if (before.length === 2 && onTime) return '30, 15 and on time';
+  if (before.length && onTime) return `${before[0]} min and on time`;
+  if (before.length) return `${before.join(' and ')} min before`;
+  return onTime ? 'On time' : '';
+}
+function drawReminderChoice() {
+  const on = reminders.length > 0;
+  reminderSwitch.setAttribute('aria-checked', on ? 'true' : 'false');
+  reminderWhen.hidden = !on;
+  reminderWhenValue.textContent = reminderSummary();
+}
 
 async function notificationPermission() {
   if (!nativeNotifications) {
@@ -3217,6 +3232,7 @@ async function askNotificationPermission() {
 function applyReminders(list) {
   reminders = REMINDER_LEADS.filter(l => list.includes(l));
   saveReminders();
+  if (reminders.length) { try { localStorage.setItem(REMINDER_LAST_KEY, JSON.stringify(reminders)); } catch (e) { /* not remembered */ } }
   drawReminderChoice();
   reminderScheduled = null;
   syncReminder();
@@ -3234,21 +3250,36 @@ async function turnOnReminders(list) {
   openReminderModal(list);
 }
 
+// One sheet, two uses. "setup" is the first time: an explanation, then the system's question. "edit" is changing which
+// reminders are on once they already are: just the list and Done.
 let modalLeads = [];
-function openReminderModal(list) {
+let modalMode = 'setup';
+function openReminderModal(list, mode = 'setup') {
+  modalMode = mode;
   modalLeads = REMINDER_LEADS.filter(l => list.includes(l));
   drawChoice(reminderModalChoice, modalLeads);
-  document.getElementById('reminder-modal-go').disabled = !modalLeads.length;
-  document.getElementById('reminder-modal-preview').hidden = !previewReminders;
+  const setup = mode === 'setup';
+  document.getElementById('reminder-modal-title').textContent = setup ? 'Remind you before the next feed?' : 'Remind me';
+  document.getElementById('reminder-modal-text').hidden = !setup;
+  document.getElementById('reminder-modal-cancel').hidden = !setup;
+  document.getElementById('reminder-modal-go').textContent = setup ? 'Turn on' : 'Done';
+  document.getElementById('reminder-modal-go').disabled = setup && !modalLeads.length;
+  document.getElementById('reminder-modal-preview').hidden = !(previewReminders && setup);
   reminderModal.hidden = false;
 }
-reminderModalChoice.querySelectorAll('.segment').forEach(btn => btn.addEventListener('click', () => {
+reminderModalChoice.querySelectorAll('.check-row').forEach(btn => btn.addEventListener('click', () => {
   const lead = Number(btn.dataset.lead);
   modalLeads = modalLeads.includes(lead) ? modalLeads.filter(n => n !== lead) : [...modalLeads, lead];
   drawChoice(reminderModalChoice, modalLeads);
-  document.getElementById('reminder-modal-go').disabled = !modalLeads.length;
+  document.getElementById('reminder-modal-go').disabled = modalMode === 'setup' && !modalLeads.length;
 }));
 document.getElementById('reminder-modal-go').addEventListener('click', async () => {
+  if (modalMode === 'edit') {
+    // Already allowed. Choosing nothing turns the reminders off.
+    reminderModal.hidden = true;
+    applyReminders(modalLeads);
+    return;
+  }
   const allowed = await askNotificationPermission();
   reminderModal.hidden = true;
   if (allowed) { setReminderHint(''); applyReminders(modalLeads); }
@@ -3262,12 +3293,14 @@ if (remindersAvailable) {
   drawReminderChoice();
   diag(`reminders: ${nativeNotifications ? 'ready' : inIosWebView ? 'plugin missing' : 'preview'}`);
   if (!nativeNotifications && inIosWebView) setReminderHint('Reminders could not start on this phone. Please use Send feedback to tell us.');
-  reminderChoice.querySelectorAll('.segment').forEach(btn => btn.addEventListener('click', () => {
-    const lead = Number(btn.dataset.lead);
+  reminderSwitch.addEventListener('click', () => {
     setReminderHint('');
-    if (reminders.includes(lead)) applyReminders(reminders.filter(n => n !== lead));
-    else turnOnReminders([...reminders, lead]);
-  }));
+    if (reminders.length) { applyReminders([]); return; }
+    let again = [15];
+    try { const saved = JSON.parse(localStorage.getItem(REMINDER_LAST_KEY) || '[]'); if (saved.length) again = saved; } catch (e) { /* the default */ }
+    turnOnReminders(again);
+  });
+  reminderWhen.addEventListener('click', () => openReminderModal(reminders, 'edit'));
   // Coming back to the app is the moment to make sure the reminders still match the latest feed.
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') { reminderScheduled = null; syncReminder(); }
@@ -3485,7 +3518,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=162').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=163').catch(() => {});
   });
 }
 
