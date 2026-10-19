@@ -46,22 +46,12 @@ jobs:
           printf '%s' "$ASC_KEY_P8" > "$RUNNER_TEMP/AuthKey.p8"
           test -s "$RUNNER_TEMP/AuthKey.p8" || { echo "ASC_KEY_P8 secret is empty"; exit 1; }
 
-      - name: Practice build, no signing
-        if: ${{ inputs.check_only }}
-        run: |
-          if [ -d ios/App/App.xcworkspace ]; then SRC=(-workspace ios/App/App.xcworkspace); else SRC=(-project ios/App/App.xcodeproj); fi
-          xcodebuild "${SRC[@]}" -scheme App -configuration Release \
-            -destination 'generic/platform=iOS' \
-            -archivePath "$RUNNER_TEMP/App.xcarchive" \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            archive
-
-      - name: Build and sign
-        if: ${{ !inputs.check_only }}
+      # The archive is built unsigned. Signing happens when it is exported below, which needs no registered test device;
+      # an automatically signed archive fails on a team that has never registered one ("no devices from which to
+      # generate a provisioning profile").
+      - name: Build the archive
         env:
           TEAM: ${{ secrets.APPLE_TEAM_ID }}
-          KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ISSUER: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
           # Capacitor makes a workspace when it uses CocoaPods, or a plain project when it uses Swift packages.
@@ -69,12 +59,9 @@ jobs:
           xcodebuild "${SRC[@]}" -scheme App -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
-            -authenticationKeyID "$KEY_ID" \
-            -authenticationKeyIssuerID "$ISSUER" \
-            DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM="$TEAM" \
             MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             archive
 
       - name: Check the app holds what Apple needs
