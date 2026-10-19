@@ -1,19 +1,23 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=152';
+import { analyse } from './patterns.js?v=153';
 import { initializeApp } from './vendor/firebase-app.js';
-import { getAuth, signInAnonymously } from './vendor/firebase-auth.js';
+import { getAuth, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
-  getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
+  getFirestore, initializeFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, deleteField,
   query, where, orderBy, limit, documentId, onSnapshot, getDoc, writeBatch, enableIndexedDbPersistence, getDocs, getCountFromServer, getAggregateFromServer, count, sum,
 } from './vendor/firebase-firestore.js';
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// Inside the iPhone app the page is served from capacitor://localhost. There the ordinary setup waits forever on a sign-in
+// helper page that is not allowed for that address, so the app sets up sign-in without it and lets Firestore fall back to
+// long polling if its streaming connection is refused.
+const inNativeApp = !!window.Capacitor?.isNativePlatform?.();
+const db = inNativeApp ? initializeFirestore(app, { experimentalAutoDetectLongPolling: true }) : getFirestore(app);
 try { enableIndexedDbPersistence(db); } catch (e) { /* multiple tabs open, fine */ }
 
 // Every device signs in quietly (no email or password) and registers itself as a member of the household. The
 // security rules (firestore.rules) only let registered members read or write that household's data.
-const auth = getAuth(app);
+const auth = inNativeApp ? initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence] }) : getAuth(app);
 const MEMBER_KEY = 'babyfeed_member_of';
 async function joinHousehold(code) {
   try {
@@ -3243,7 +3247,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=152').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=153').catch(() => {});
   });
 }
 

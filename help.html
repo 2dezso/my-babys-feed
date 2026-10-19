@@ -10,7 +10,7 @@
   :root { --bg: #fbf2ed; --ink: #2b201c; --muted: #7a655d; --line: #efe1d8; --link: #1b7a43; }
   @media (prefers-color-scheme: dark) { :root { --bg: #1b1513; --ink: #f6ebe5; --muted: #b9a49b; --line: #3a2d29; --link: #6fd69b; } }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Nunito', system-ui, sans-serif; line-height: 1.6; font-size: 1.0625rem; padding: 24px 20px 56px; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Nunito', system-ui, sans-serif; line-height: 1.6; font-size: 1.0625rem; padding: calc(24px + env(safe-area-inset-top, 0px)) 20px 56px; }
   main { max-width: 40rem; margin: 0 auto; }
   h1 { font-size: 2rem; font-weight: 900; letter-spacing: -.02em; line-height: 1.15; margin: 8px 0 4px; }
   h2 { font-size: 1.25rem; font-weight: 800; margin: 32px 0 6px; }
@@ -18,7 +18,7 @@
   ul, ol { padding-left: 1.2rem; margin: 0 0 10px; }
   .muted { color: var(--muted); }
   a { color: var(--link); font-weight: 700; }
-  .back { display: inline-block; margin-bottom: 8px; text-decoration: none; }
+  .back { display: inline-block; margin-bottom: 8px; padding: 10px 14px 10px 0; text-decoration: none; }
   .box { border: 2px solid var(--line); border-radius: 14px; padding: 12px 16px; }
   nav ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
   nav li { margin: 0; }
