@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Little Sips</title>
-<link rel="manifest" href="manifest.json?v=160">
-<link rel="stylesheet" href="fonts/nunito.css?v=160">
-<link rel="stylesheet" href="style.css?v=160">
-<link rel="icon" type="image/png" href="icon-192.png?v=160">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=160">
+<link rel="manifest" href="manifest.json?v=161">
+<link rel="stylesheet" href="fonts/nunito.css?v=161">
+<link rel="stylesheet" href="style.css?v=161">
+<link rel="icon" type="image/png" href="icon-192.png?v=161">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=161">
 <script>
   // iPhone app only: a class that styles it as an app (no text selection or press-and-hold menus).
   if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) document.documentElement.classList.add('native');
@@ -62,7 +62,7 @@
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card welcome">
-    <img class="welcome-logo" src="logo-192.png?v=160" alt="" width="64" height="64">
+    <img class="welcome-logo" src="logo-192.png?v=161" alt="" width="64" height="64">
     <h1>Track feeds together</h1>
     <p class="muted">Log a feed in one tap. Everyone looking after your baby sees it straight away. No account needed.</p>
     <p id="setup-notice" class="setup-notice" hidden>This household was deleted from another phone. Start a new household, or join a different one with its code.</p>
@@ -92,7 +92,7 @@
     </div>
     <p id="setup-error" class="error" hidden></p>
     <p class="welcome-consent">By starting or joining, you agree to the <a href="terms.html">Terms of use</a> and the <a href="privacy.html">Privacy policy</a>.</p>
-    <p class="welcome-links"><a href="help.html">Help</a> · <button type="button" id="welcome-check" class="text-link-btn">Connection check</button><span id="welcome-app-link" hidden> · <a href="#">Get the iPhone app</a></span></p>
+    <p class="welcome-links"><a href="help.html">Help</a><span id="welcome-app-link" hidden> · <a href="#">Get the iPhone app</a></span></p>
   </div>
 </div>
 
@@ -378,6 +378,18 @@
       <button type="button" id="rate-app" class="rate-btn">Rate the app</button>
     </div>
 
+    <section id="reminder-card" class="profile-card" hidden>
+      <h2 class="profile-card-title">Notifications</h2>
+      <p class="reminder-sub">Next feed reminders</p>
+      <p class="profile-card-hint">A notification before the next feed is due. Pick as many as you like. They are set on this phone only, counted from the last feed it has seen.</p>
+      <div class="seg reminder-seg" id="reminder-choice" role="group" aria-label="Reminders">
+        <button type="button" class="segment" data-lead="30" aria-pressed="false">30 min before</button>
+        <button type="button" class="segment" data-lead="15" aria-pressed="false">15 min before</button>
+        <button type="button" class="segment" data-lead="0" aria-pressed="false">On time</button>
+      </div>
+      <p id="reminder-hint" class="profile-card-hint" hidden></p>
+    </section>
+
     <section id="plus-teaser" class="plus-card" aria-label="Plus, coming soon">
       <span class="plus-tag">Plus · coming soon</span>
       <div class="plus-price">£2.99 <small>one-off</small></div>
@@ -395,23 +407,11 @@
     </div>
     <p class="snote">Amounts are always saved in ml, so switching never changes your history. This is set for this phone only.</p>
 
-    <section id="reminder-card" class="profile-card" hidden>
-      <h2 class="profile-card-title">Next feed reminders</h2>
-      <p class="profile-card-hint">A notification before the next feed is due. Pick as many as you like. They are set on this phone only, counted from the last feed it has seen.</p>
-      <div class="seg reminder-seg" id="reminder-choice" role="group" aria-label="Reminders">
-        <button type="button" class="segment" data-lead="30" aria-pressed="false">30 min before</button>
-        <button type="button" class="segment" data-lead="15" aria-pressed="false">15 min before</button>
-        <button type="button" class="segment" data-lead="0" aria-pressed="false">On time</button>
-      </div>
-      <p id="reminder-hint" class="profile-card-hint" hidden></p>
-    </section>
-
     <h2 class="sh">Sharing</h2>
     <div class="slist">
       <button type="button" id="btn-share" class="srow"><span>Share code</span><span class="sv" id="share-code-row"></span></button>
       <button type="button" class="srow email-code"><span>Save a copy of the code</span></button>
       <button type="button" id="btn-switch-code" class="srow"><span>Use a different code</span></button>
-      <button type="button" id="btn-check" class="srow"><span>Connection check</span></button>
       <button type="button" id="btn-install-app" class="srow" hidden><span>Add to Home Screen</span></button>
     </div>
     <p class="snote">Give the code to anyone else who feeds the baby. Keep a copy somewhere safe too: if you change or lose your phone, the code is the only way back to your feeds.</p>
@@ -798,6 +798,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script type="module" src="app.js?v=160"></script>
+<script type="module" src="app.js?v=161"></script>
 </body>
 </html>

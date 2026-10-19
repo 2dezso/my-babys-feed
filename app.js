@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=160';
+import { analyse } from './patterns.js?v=161';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2860,7 +2860,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 160`);
+  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 161`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -2879,8 +2879,14 @@ function openConnectionCheck() {
   checkModal.hidden = false;
   runConnectionCheck();
 }
-document.getElementById('btn-check').addEventListener('click', openConnectionCheck);
-document.getElementById('welcome-check').addEventListener('click', openConnectionCheck);
+// Not shown anywhere: five quick taps on "Free to use" in Settings open it, for when something needs looking into.
+let checkTaps = 0; let checkTapTimer = 0;
+document.querySelector('.free-card b').addEventListener('click', () => {
+  checkTaps += 1;
+  clearTimeout(checkTapTimer);
+  checkTapTimer = setTimeout(() => { checkTaps = 0; }, 1500);
+  if (checkTaps >= 5) { checkTaps = 0; openConnectionCheck(); }
+});
 document.getElementById('check-again').addEventListener('click', runConnectionCheck);
 document.getElementById('check-close').addEventListener('click', () => { checkModal.hidden = true; });
 
@@ -3078,7 +3084,10 @@ const nativeNotifications = (() => {
   }
 })();
 const previewReminders = !nativeNotifications && (location.pathname.includes('my-babys-feed-staging') || new URLSearchParams(location.search).has('preview-reminders'));
-const remindersAvailable = !!nativeNotifications || previewReminders;
+// The iPhone app's web view has no "Safari" in its name. If it is that but the plugin cannot be found, the section still
+// shows, with a message, so a missing plugin is visible instead of silent.
+const inIosWebView = /iPhone|iPad/.test(navigator.userAgent) && !/Safari/.test(navigator.userAgent);
+const remindersAvailable = !!nativeNotifications || previewReminders || inIosWebView;
 const REMINDER_LEADS = [30, 15, 0]; // minutes before the feed is due
 const REMINDER_ID = { 0: 1, 15: 2, 30: 3 };
 const REMINDER_KEY = 'babyfeed_reminders'; // a list of the minutes chosen; the key exists once a choice has been made
@@ -3221,6 +3230,8 @@ if (remindersAvailable) {
   reminderCard.hidden = false;
   setReminderHint('');
   drawReminderChoice();
+  diag(`reminders: ${nativeNotifications ? 'ready' : inIosWebView ? 'plugin missing' : 'preview'}`);
+  if (!nativeNotifications && inIosWebView) setReminderHint('Reminders could not start on this phone. Please use Send feedback to tell us.');
   reminderChoice.querySelectorAll('.segment').forEach(btn => btn.addEventListener('click', () => {
     const lead = Number(btn.dataset.lead);
     setReminderHint('');
@@ -3444,7 +3455,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=160').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=161').catch(() => {});
   });
 }
 
