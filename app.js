@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=169';
+import { analyse } from './patterns.js?v=170';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2891,7 +2891,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 169`);
+  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 170`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3332,7 +3332,9 @@ async function syncLiveFeed() {
 // --- Siri ---
 // Only inside the iPhone app. "Hey Siri, start a feed in Little sips" opens the app and leaves a note; this picks it up
 // and does what a tap would do. The app's name has to be in the phrase, which is Apple's rule for app phrases.
-const siri = nativePlugin('SiriCommand');
+// Switched off for the first release. The code is kept so it can be turned back on later: see scripts/ios-files/later/siri/README.md.
+const SIRI_ENABLED = false;
+const siri = SIRI_ENABLED ? nativePlugin('SiriCommand') : null;
 async function runSiriCommand() {
   if (!siri || !getHouseholdCode() || !feedsLoaded) return;
   let got;
@@ -3537,7 +3539,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=169').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=170').catch(() => {});
   });
 }
 

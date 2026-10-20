@@ -75,7 +75,6 @@ jobs:
           case "$MIN" in 16.[2-9]*|1[7-9]*|[2-9][0-9]*) ;; *) echo "deployment target is below iOS 16.2"; exit 1 ;; esac
           plutil -extract NSSupportsLiveActivities raw "$APP/Info.plist" | grep -q true && echo "lock screen timer: enabled"
           test -d "$APP/PlugIns/LiveActivity.appex" && echo "lock screen timer extension: present" || { echo "lock screen timer extension is missing"; exit 1; }
-          test -d "$APP/Metadata.appintents" && echo "Siri phrases: present" || echo "Siri phrases: no Metadata.appintents folder found"
           test -f "$APP/PrivacyInfo.xcprivacy" && echo "privacy file: present" || { echo "privacy file: MISSING"; exit 1; }
           plutil -p "$APP/Info.plist" | grep -q NSCameraUsageDescription || { echo "camera reason: MISSING"; exit 1; }
           test -f "$APP/public/index.html" && echo "web files: present" || { echo "web files: MISSING"; exit 1; }
