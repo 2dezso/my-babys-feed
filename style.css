@@ -3,13 +3,13 @@
 :root {
   --bg: #fbf2ed; --card: #fffdfb; --ink: #2b201c; --muted: #7a655d; --line: #efe1d8; --fill: #f4e8e0; --wash-a: #fdf3ee; --wash-b: #f9e3d9;
   --danger: #c2453d;
-  --feed: #1e874a;   --feed-ink: #1b7a43; --feed-tint: #e3f4e9;  --feed-soft: #b9e6c9;
+  --feed: #86c9a0;   --feed-ink: #1b6a40; --feed-tint: #e3f4e9;  --feed-soft: #b9e6c9;
   --nappy: #a65a12;  --nappy-ink: #9a5210; --nappy-tint: #fbefdf; --nappy-soft: #f5d3a6;
   --mile: #6e56cf;   --mile-ink: #6049c4; --mile-tint: #eeeafb;  --mile-soft: #d3c9f5;
   --trend: #c2453d;  --trend-ink: #b23c35; --trend-tint: #fbe9e7; --trend-soft: #f5c4bf;
   --amber: #fff1d6; --amber-ink: #7a4a00;
-  /* Text and icons on a section colour. White, except where the feed colour is a pastel (baby blue, below). */
-  --on-feed: #fff; --glass-feed: rgba(255, 255, 255, .16); --track-feed: rgba(255, 255, 255, .25); --ring-feed: rgba(255, 255, 255, .24);
+  /* Text and icons on a section colour. White, except where the feed colour is a pastel: the sage green (the default) and baby blue use deep text. */
+  --on-feed: #123d26; --glass-feed: rgba(255, 255, 255, .45); --track-feed: rgba(255, 255, 255, .55); --ring-feed: rgba(18, 61, 38, .16); --pill-ink-feed: #1b5e38;
   --on-sec: #fff; --glass-sec: rgba(255, 255, 255, .16); --track-sec: rgba(255, 255, 255, .25); --ring-sec: rgba(255, 255, 255, .24);
   --shadow: 0 1px 2px rgba(60, 35, 25, .05), 0 6px 20px rgba(60, 35, 25, .06);
   --tabbar: rgba(255, 250, 247, .9);
@@ -19,6 +19,7 @@
     --bg: #171210; --card: #231a17; --ink: #f6ece7; --muted: #b8a59c; --line: #34271f; --fill: #2e231e; --wash-a: #1c1513; --wash-b: #241815;
     --danger: #ff9a90;
     --feed: #1a6e3d;   --feed-ink: #6fd69b; --feed-tint: #11281b;  --feed-soft: #1f5a37;
+    --on-feed: #fff; --glass-feed: rgba(255, 255, 255, .16); --track-feed: rgba(255, 255, 255, .25); --ring-feed: rgba(255, 255, 255, .24); --pill-ink-feed: #1a6e3d;
     --nappy: #8a4a0e;  --nappy-ink: #f2ad62; --nappy-tint: #2b1d0d; --nappy-soft: #6b4317;
     --mile: #5a43b8;   --mile-ink: #b3a4f5; --mile-tint: #1f1a35;  --mile-soft: #43378a;
     --trend: #a63a33;  --trend-ink: #ff9a90; --trend-tint: #2e1514; --trend-soft: #7a2c27;
@@ -29,6 +30,7 @@
 /* Girl: the Feeds section turns rose instead of green */
 body.gender-pink {
   --feed: #c2506a; --feed-ink: #b0405a; --feed-tint: #fbe6eb; --feed-soft: #f3c2cd;
+  --on-feed: #fff; --glass-feed: rgba(255, 255, 255, .16); --track-feed: rgba(255, 255, 255, .25); --ring-feed: rgba(255, 255, 255, .24); --pill-ink-feed: #c2506a;
 }
 @media (prefers-color-scheme: dark) {
   body.gender-pink { --feed: #a63e57; --feed-ink: #ff9fb3; --feed-tint: #2e1519; --feed-soft: #7a2c3c; }
@@ -262,7 +264,7 @@ h1, h2, h3 { margin: 0; }
 .gender-card.selected { border-color: var(--ink); }
 .gender-emoji { font-size: 2rem; }
 .gender-swatch { width: 28px; height: 6px; border-radius: 999px; margin-top: 4px; }
-.gender-swatch-green { background: #1f8a4c; }
+.gender-swatch-green { background: #86c9a0; }
 .gender-swatch-pink { background: #c2506a; }
 .tone-row { display: flex; justify-content: space-between; gap: 6px; }
 .tone-chip { background: var(--fill); border: 2px solid transparent; border-radius: 50%; flex: 1 1 0; max-width: 52px; aspect-ratio: 1; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; padding: 0; }
@@ -520,7 +522,7 @@ html.on-home .homea { padding-top: calc(env(safe-area-inset-top, 0px) + max(20px
   font: inherit; font-size: 1.25rem; font-weight: 800; text-align: center; text-align-last: center; padding: 0 16px;
   font-variant-numeric: tabular-nums; -webkit-appearance: none; appearance: none;
 }
-.fsel:focus { border-color: var(--feed); outline: none; }
+.fsel:focus { border-color: var(--feed-ink); outline: none; }
 select.fsel {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a655d' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 16px center; background-size: 20px;
@@ -811,8 +813,8 @@ a.srow { text-decoration: none; }
 @media (prefers-color-scheme: dark) { #setup-screen .card.welcome { box-shadow: 0 22px 44px -18px rgba(0, 0, 0, .5); } }
 .welcome-or { display: flex; align-items: center; gap: 12px; margin: 2px 0; color: var(--muted); font-size: .8125rem; font-weight: 700; }
 .welcome-or::before, .welcome-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-#setup-screen input { caret-color: var(--feed); }
-#setup-screen input:focus { outline: none; border-color: var(--feed); box-shadow: 0 0 0 3px var(--feed-tint); }
+#setup-screen input { caret-color: var(--feed-ink); }
+#setup-screen input:focus { outline: none; border-color: var(--feed-ink); box-shadow: 0 0 0 3px var(--feed-tint); }
 #join-form .join-code { min-height: 60px; font-size: 1.5rem; font-weight: 900; letter-spacing: .14em; text-align: center; }
 .welcome-code-note { margin: 6px 0 0; font-size: .875rem; font-weight: 700; line-height: 1.4; color: var(--feed-ink); overflow-wrap: anywhere; }
 .join-check { display: flex; flex-direction: column; gap: 8px; background: var(--fill); border-radius: 16px; padding: 14px 16px; }
