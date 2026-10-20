@@ -53,6 +53,16 @@ What this does and does not do: strangers can no longer read or write a househol
 ## Local testing
 Just open `index.html` in a browser — it's a static site, no build step, no server required (though some browsers restrict ES module imports over `file://`; if that happens, run any static file server, e.g. `npx serve` or use the deployed GitHub Pages URL).
 
+## Adding payments later
+
+Nothing in the app stops a purchase being added later. What is already in place, and what would be needed:
+
+- **App Store Connect (your steps, no code):** accept the Paid Applications agreement and add bank and tax details (Business). Then create the product (for example a one-off "Plus" unlock) under the app's In-App Purchases and submit it with the next version. Join the App Store Small Business Program to pay Apple 15% instead of 30%.
+- **The app:** it is a Capacitor app, so any StoreKit plugin works. Plugins are reached through `nativePlugin('Name')` in `app.js` (Capacitor's JavaScript package is not loaded, so `registerPlugin` does not exist), and a small Swift plugin can be added the same way the lock screen timer is (`scripts/ios-files/live/LiveFeedPlugin.swift`, registered in `MainViewController.swift`). The app already targets iOS 16.2, which is more than StoreKit 2 needs. In-app purchase needs no extra entitlement or capability setting for the build.
+- **Where "this household has paid" lives:** in `households/{code}/entitlement/info`. `firestore.rules` lets members read it and lets no phone write it, so it cannot be faked by editing the app. A server (a Cloud Function, which needs the Blaze plan) checks Apple's receipt, or listens to RevenueCat, and writes it with the Admin SDK, which is not subject to the rules. One flag per household covers both parents' phones and the website.
+- **Apple's rules to keep:** purchases of app features must use in-app purchase, there must be a "Restore purchases" button, and the app must not link to outside payment pages. The Terms already say paid extras may be offered in the future. Add the purchase data to the App Privacy answers and the privacy page when it is added.
+- **Keep the core free:** logging, sharing and backup stay free, as the app's wording promises. Gate extras only, behind one check of the entitlement.
+
 ## Domain and email
 
 The website lives at **littlesips.co.uk** (the `CNAME` file in the repo root names it; GitHub Pages serves it). DNS and email routing are on Cloudflare:

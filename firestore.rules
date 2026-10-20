@@ -22,9 +22,18 @@ service cloud.firestore {
       allow read: if request.auth != null;
     }
 
-    // Everything else in a household (feeds, poos, profile, bottle, milestones, feedback) is members only.
-    match /households/{code}/{document=**} {
-      allow read, write: if isMember(code);
+    // What a household has paid for (if payments are ever added). Members can read it so the app can unlock things, but
+    // no phone can write it: only the server, which checks Apple's receipt, writes it. Server code uses the Admin SDK,
+    // which is not subject to these rules. Keeping this out of the members-only list below is what makes it read-only.
+    match /households/{code}/entitlement/{doc} {
+      allow read: if isMember(code);
+    }
+
+    // The diary itself (feeds, poos, profile, bottle, milestones, feedback, and the deletion marker above) is members
+    // only. The collections are named, so a new one is closed to phones until it is added here on purpose.
+    match /households/{code}/{coll}/{document=**} {
+      allow read, write: if isMember(code)
+        && coll in ['feeds', 'poos', 'profile', 'bottle', 'milestones', 'feedback', 'tombstone'];
     }
   }
 }

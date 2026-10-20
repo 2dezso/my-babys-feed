@@ -118,6 +118,13 @@ def main():
     expect('a phone with no sign-in cannot read the marker', False, get(f'households/{h1}/tombstone/info'))
     expect('a stranger cannot write a marker in a household they are not in', False, put(f'households/{h2}/tombstone/info', tokB, {'deletedAt': 1}))
 
+    print('\nPayments later: what a household has paid for is read-only from phones')
+    expect('a member can read the entitlement (a missing one counts as allowed)', True, get(f'households/{h1}/entitlement/info', tokA))
+    expect('a member cannot write the entitlement', False, put(f'households/{h1}/entitlement/info', tokA, {'plus': True}))
+    expect('a member of another household cannot read the entitlement', False, get(f'households/{h1}/entitlement/info', tokC))
+    expect('a phone with no sign-in cannot read the entitlement', False, get(f'households/{h1}/entitlement/info'))
+    expect('a member cannot invent a new collection', False, put(f'households/{h1}/mystery/x', tokA, {'a': 1}))
+
     print('\nDeleting, in the order the app does it')
     expect('a member can delete the diary data', True, http('DELETE', f'{FS}/households/{h1}/feeds/f1', tokA)[0])
     expect('a member can delete the other phones\' registrations', True, http('DELETE', f'{FS}/households/{h1}/members/{uidB}', tokA)[0])
