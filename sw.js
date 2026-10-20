@@ -1,11 +1,11 @@
-const CACHE_NAME = 'baby-feed-v166';
+const CACHE_NAME = 'baby-feed-v167';
 const SHELL_FILES = [
   './index.html',
-  './style.css?v=166',
-  './app.js?v=166',
-  './patterns.js?v=166',
-  './manifest.json?v=166',
-  './fonts/nunito.css?v=166',
+  './style.css?v=167',
+  './app.js?v=167',
+  './patterns.js?v=167',
+  './manifest.json?v=167',
+  './fonts/nunito.css?v=167',
   './fonts/nunito-latin.woff2',
   './fonts/nunito-latin-ext.woff2',
   './fonts/nunito-vietnamese.woff2',

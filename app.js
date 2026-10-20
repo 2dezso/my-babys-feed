@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=166';
+import { analyse } from './patterns.js?v=167';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -18,6 +18,18 @@ const db = inNativeApp
   : getFirestore(app);
 if (!inNativeApp) {
   try { enableIndexedDbPersistence(db); } catch (e) { /* multiple tabs open, fine */ }
+}
+
+// The iPhone app's plugins (notifications, the lock screen timer). Capacitor's registerPlugin() comes from its JavaScript
+// package, which this app does not load (there is no build step), so calling it failed and both features stayed hidden.
+// The bridge Capacitor injects into the app has the call that registerPlugin() itself uses, so plugins are reached
+// through that. Outside the app (or if the bridge is missing) this gives null and the features stay off.
+function nativePlugin(name) {
+  const cap = window.Capacitor;
+  if (!cap?.isNativePlatform?.() || typeof cap.nativePromise !== 'function') return null;
+  return new Proxy({}, {
+    get: (_, method) => (method === 'then' ? undefined : (options) => cap.nativePromise(name, String(method), options || {})),
+  });
 }
 
 // A short log of what went wrong, kept on this phone only, shown by the connection check so a problem can be reported.
@@ -2879,7 +2891,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 166`);
+  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 167`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3095,13 +3107,7 @@ document.getElementById('join-check-no').addEventListener('click', () => {
 // Only inside the iPhone app. Each reminder is a notification set on the phone itself, so it fires when the app is
 // closed. The choice stays on this device and is never saved to the household's data. The test site (or
 // ?preview-reminders) shows the same screens so they can be tried, but nothing is scheduled outside the app.
-const nativeNotifications = (() => {
-  try {
-    return window.Capacitor?.isNativePlatform?.() ? window.Capacitor.registerPlugin('LocalNotifications') : null;
-  } catch (e) {
-    return null;
-  }
-})();
+const nativeNotifications = nativePlugin('LocalNotifications');
 const previewReminders = !nativeNotifications && (location.pathname.includes('my-babys-feed-staging') || new URLSearchParams(location.search).has('preview-reminders'));
 // The iPhone app's web view has no "Safari" in its name. If it is that but the plugin cannot be found, the section still
 // shows, with a message, so a missing plugin is visible instead of silent.
@@ -3300,13 +3306,7 @@ if (remindersAvailable) {
 // Only inside the iPhone app. While a feed is running the lock screen (and the Dynamic Island) show a timer counting up
 // from when it started; it goes away when the feed is finished or removed. The timer counts by itself on the phone, and it
 // starts only when this phone is open, so a feed started on another phone shows here once the app is opened.
-const liveFeed = (() => {
-  try {
-    return window.Capacitor?.isNativePlatform?.() ? window.Capacitor.registerPlugin('LiveFeed') : null;
-  } catch (e) {
-    return null;
-  }
-})();
+const liveFeed = nativePlugin('LiveFeed');
 let liveFeedKey = null; // null until the first check, so a timer left from an earlier launch is always cleared or renewed
 async function syncLiveFeed() {
   if (!liveFeed) return;
@@ -3510,7 +3510,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=166').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=167').catch(() => {});
   });
 }
 
