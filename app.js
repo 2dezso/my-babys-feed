@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=165';
+import { analyse } from './patterns.js?v=166';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2879,7 +2879,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 165`);
+  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 166`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3318,8 +3318,11 @@ async function syncLiveFeed() {
   if (key === liveFeedKey) return;
   liveFeedKey = key;
   try {
-    if (running) await liveFeed.start({ name: profileFirstName, startedAt: last.timestamp });
-    else await liveFeed.end();
+    if (running) {
+      const result = await liveFeed.start({ name: profileFirstName, startedAt: last.timestamp });
+      // The phone can say no (Live Activities switched off for the app); the connection check shows why.
+      diag(result && result.started ? 'lock screen timer: started' : `lock screen timer: not started (${(result && result.reason) || 'no answer'})`);
+    } else await liveFeed.end();
   } catch (e) {
     diag(`lock screen timer: ${e.message || e}`);
     liveFeedKey = null;
@@ -3507,7 +3510,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=165').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=166').catch(() => {});
   });
 }
 
