@@ -1,6 +1,6 @@
 # Third-party software in this app
 
-The app's own code, drawings and icons are Little Sips's own. It also includes:
+The app's own code, drawings and icons are Little sips's own. It also includes:
 
 | What | Version | Licence | Where |
 |---|---|---|---|

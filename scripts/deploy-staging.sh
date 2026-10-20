@@ -32,8 +32,8 @@ cp -r vendor fonts "$tmp/"
 cd "$tmp"
 
 # Orange name, icon and title so the test app is obvious next to the real one.
-sed -i "s/\"name\": \"Little Sips\"/\"name\": \"Little Sips (TEST)\"/" manifest.json
-sed -i "s/\"short_name\": \"Little Sips\"/\"short_name\": \"Sips TEST\"/" manifest.json
+sed -i "s/\"name\": \"Little sips\"/\"name\": \"Little sips (TEST)\"/" manifest.json
+sed -i "s/\"short_name\": \"Little sips\"/\"short_name\": \"Sips TEST\"/" manifest.json
 cp "$OLDPWD"/scripts/test-icons/*.png .
 sed -i 's|<title>\(.*\)</title>|<title>TEST - \1</title>\n<meta name="robots" content="noindex, nofollow">|' index.html
 sed -i 's|^<body>|<body>\n<div style="background:#e08a2b;color:#fff;font:700 12px/24px sans-serif;text-align:center;letter-spacing:.04em">TEST VERSION · use a test household, not the real code</div>|' index.html

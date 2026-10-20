@@ -1,6 +1,6 @@
 {
-  "name": "Little Sips",
-  "short_name": "Little Sips",
+  "name": "Little sips",
+  "short_name": "Little sips",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#fdf3ee",

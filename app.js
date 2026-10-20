@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=168';
+import { analyse } from './patterns.js?v=169';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2891,7 +2891,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 168`);
+  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 169`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3239,7 +3239,7 @@ async function turnOnReminders(list) {
   const state = await notificationPermission();
   if (state === 'granted') { setReminderHint(''); applyReminders(list); return; }
   if (state === 'denied') {
-    setReminderHint('Notifications are switched off for Little Sips. Turn them on in the iPhone Settings app, then try again.');
+    setReminderHint('Notifications are switched off for Little sips. Turn them on in the iPhone Settings app, then try again.');
     return;
   }
   openReminderModal(list);
@@ -3278,7 +3278,7 @@ document.getElementById('reminder-modal-go').addEventListener('click', async () 
   const allowed = await askNotificationPermission();
   reminderModal.hidden = true;
   if (allowed) { setReminderHint(''); applyReminders(modalLeads); }
-  else setReminderHint('Notifications are switched off for Little Sips. Turn them on in the iPhone Settings app, then try again.');
+  else setReminderHint('Notifications are switched off for Little sips. Turn them on in the iPhone Settings app, then try again.');
 });
 document.getElementById('reminder-modal-cancel').addEventListener('click', () => { reminderModal.hidden = true; });
 
@@ -3330,7 +3330,7 @@ async function syncLiveFeed() {
 }
 
 // --- Siri ---
-// Only inside the iPhone app. "Hey Siri, start a feed in Little Sips" opens the app and leaves a note; this picks it up
+// Only inside the iPhone app. "Hey Siri, start a feed in Little sips" opens the app and leaves a note; this picks it up
 // and does what a tap would do. The app's name has to be in the phrase, which is Apple's rule for app phrases.
 const siri = nativePlugin('SiriCommand');
 async function runSiriCommand() {
@@ -3437,7 +3437,7 @@ document.getElementById('share-card-go').addEventListener('click', async () => {
   const code = getHouseholdCode() || '';
   setFlag(SHARE_DONE_KEY);
   renderFirstRunHints();
-  const text = `Join our baby's feeds on Little Sips: open littlesips.co.uk, tap "Join a household" and enter ${code}`;
+  const text = `Join our baby's feeds on Little sips: open littlesips.co.uk, tap "Join a household" and enter ${code}`;
   if (navigator.share) {
     try { await navigator.share({ text }); return; } catch (e) { if (e.name === 'AbortError') return; }
   }
@@ -3466,7 +3466,7 @@ function setBackupStatus(text) {
   backupStatus.hidden = !text;
 }
 async function prepareBackup(code) {
-  const data = { app: "Little Sips", exportedAt: new Date().toISOString(), household: code, collections: {} };
+  const data = { app: "Little sips", exportedAt: new Date().toISOString(), household: code, collections: {} };
   for (const name of ['feeds', 'poos', 'milestones', 'feedback', 'profile', 'bottle']) {
     const snap = await getDocs(collection(db, 'households', code, name));
     data.collections[name] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -3537,7 +3537,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=168').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=169').catch(() => {});
   });
 }
 
@@ -3601,7 +3601,7 @@ document.getElementById('rate-app').addEventListener('click', () => {
 // menu (Notes, Messages, WhatsApp, Mail, Copy and so on); elsewhere it copies the code, or falls back to an email.
 async function emailCodeToSelf() {
   const code = getHouseholdCode() || '';
-  const text = `Our baby's feed diary code is ${code}\n\nTo get back to our feeds on a new phone, open Little Sips (or littlesips.co.uk), tap "Join a household" and enter the code.`;
+  const text = `Our baby's feed diary code is ${code}\n\nTo get back to our feeds on a new phone, open Little sips (or littlesips.co.uk), tap "Join a household" and enter the code.`;
   if (navigator.share) {
     try { await navigator.share({ title: "Our baby's feed diary code", text }); return; }
     catch (e) { if (e.name === 'AbortError') return; }

@@ -1,7 +1,7 @@
 import AppIntents
 import Foundation
 
-// "Hey Siri" and Shortcuts. Each phrase has to include the app's name, so people say "start a feed in Little Sips".
+// "Hey Siri" and Shortcuts. Each phrase has to include the app's name, so people say "start a feed in Little sips".
 // A phrase opens the app (the feed is saved by the web app, which has the sign-in and the household) and leaves a note
 // that the web app picks up as soon as it is open. See SiriCommandPlugin.swift.
 
@@ -16,7 +16,7 @@ func leavePendingCommand(_ command: String) {
 
 struct StartFeedIntent: AppIntent {
     static let title: LocalizedStringResource = "Start a feed"
-    static let description = IntentDescription("Starts a feed and its timer in Little Sips.")
+    static let description = IntentDescription("Starts a feed and its timer in Little sips.")
     static let openAppWhenRun: Bool = true
 
     func perform() async throws -> some IntentResult {
@@ -27,7 +27,7 @@ struct StartFeedIntent: AppIntent {
 
 struct FinishFeedIntent: AppIntent {
     static let title: LocalizedStringResource = "Finish a feed"
-    static let description = IntentDescription("Opens the running feed in Little Sips, ready to add how much was drunk.")
+    static let description = IntentDescription("Opens the running feed in Little sips, ready to add how much was drunk.")
     static let openAppWhenRun: Bool = true
 
     func perform() async throws -> some IntentResult {
@@ -38,7 +38,7 @@ struct FinishFeedIntent: AppIntent {
 
 struct BottleMadeIntent: AppIntent {
     static let title: LocalizedStringResource = "Bottle made"
-    static let description = IntentDescription("Starts the bottle timer in Little Sips.")
+    static let description = IntentDescription("Starts the bottle timer in Little sips.")
     static let openAppWhenRun: Bool = true
 
     func perform() async throws -> some IntentResult {

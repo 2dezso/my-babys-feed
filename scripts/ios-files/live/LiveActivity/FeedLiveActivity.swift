@@ -67,7 +67,7 @@ struct FeedLiveActivity: Widget {
                         .frame(width: 84, alignment: .trailing)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    Text("Open Little Sips to finish the feed")
+                    Text("Open Little sips to finish the feed")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -99,7 +99,7 @@ struct LockScreenFeedView: View {
                     .font(.headline)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
-                Text(context.isStale ? "Open Little Sips to check" : "Feeding now")
+                Text(context.isStale ? "Open Little sips to check" : "Feeding now")
                     .font(.subheadline)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
