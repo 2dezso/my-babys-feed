@@ -63,6 +63,16 @@ Nothing in the app stops a purchase being added later. What is already in place,
 - **Apple's rules to keep:** purchases of app features must use in-app purchase, there must be a "Restore purchases" button, and the app must not link to outside payment pages. The Terms already say paid extras may be offered in the future. Add the purchase data to the App Privacy answers and the privacy page when it is added.
 - **Keep the core free:** logging, sharing and backup stay free, as the app's wording promises. Gate extras only, behind one check of the entitlement.
 
+### The plan for Moments (decided 20 October 2026)
+
+Version 1.0 ships with Moments free, exactly as built. A one-off purchase for Moments (target price GBP 4.99, with the first few photos free as a taste) comes in a later version, about four to six weeks after launch. The core (logging, sharing, backup) stays free.
+
+When it is built:
+1. **Founders keep it free.** Before the paid version is released, run a one-off script with the Admin SDK that writes `households/{code}/entitlement/info` (`plus: true`, `reason: "founder"`) for every household that exists. A household's age is the creation time of its earliest `members` document.
+2. **Enforce it in one place.** The app reads `entitlement/info` and shows the Moments paywall when it is missing. The demo household (`profile.demo`) is always unlocked, so App Review can see Moments.
+3. **Apple side:** the in-app purchase, a Restore Purchases button, a server check of the receipt that writes the entitlement, and wording changes ("free while it grows" in Settings, the listing and the review notes, which must say Moments is a paid unlock).
+4. **Costs:** a Cloud Function needs the Blaze plan, which is already needed for launch.
+
 ## Domain and email
 
 The website lives at **littlesips.co.uk** (the `CNAME` file in the repo root names it; GitHub Pages serves it). DNS and email routing are on Cloudflare:
