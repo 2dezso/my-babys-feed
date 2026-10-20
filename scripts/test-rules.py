@@ -9,7 +9,10 @@ Then run:
   python scripts/test-rules.py --project YOUR-TEST-PROJECT-ID --key YOUR-TEST-API-KEY
 
 Each check says whether the request was allowed or refused and whether that is what the rules should do. It refuses
-to run against the project named in firebase-config.js (the live one). It writes only under made-up household codes.
+to run against the project named in firebase-config.js (the live one) unless --allow-live is added, which is reasonable
+only while the app has no real households. It writes only under made-up household codes; on the live project a handful
+of small leftover documents remain under those codes afterwards (nobody can delete them once the rules are on, so remove
+them from the Firebase console if you want it tidy).
 """
 import argparse, json, random, re, string, sys, urllib.error, urllib.request
 from pathlib import Path
@@ -38,11 +41,16 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--project', required=True)
     ap.add_argument('--key', required=True)
+    ap.add_argument('--allow-live', action='store_true', help='run against the live project anyway (see the note at the top)')
     a = ap.parse_args()
 
     live = re.search(r'projectId:\s*"([^"]+)"', (ROOT / 'firebase-config.js').read_text(encoding='utf-8'))
     if live and live.group(1) == a.project:
-        sys.exit('That is the live project. This script only runs against a throwaway project.')
+        if not a.allow_live:
+            sys.exit('That is the live project. Use a throwaway project, or add --allow-live to run here deliberately.')
+        print('Running against the LIVE project, as asked. It signs in a few new anonymous phones and writes only under')
+        print('made-up household codes. A few small leftover documents under those codes can be deleted in the console.')
+        print()
 
     FS = f'https://firestore.googleapis.com/v1/projects/{a.project}/databases/(default)/documents'
 
