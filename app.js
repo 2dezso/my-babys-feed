@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=167';
+import { analyse } from './patterns.js?v=168';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2891,7 +2891,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 167`);
+  lines.push(`Little Sips ${inNativeApp ? 'iPhone app' : 'website'}, version 168`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3329,6 +3329,33 @@ async function syncLiveFeed() {
   }
 }
 
+// --- Siri ---
+// Only inside the iPhone app. "Hey Siri, start a feed in Little Sips" opens the app and leaves a note; this picks it up
+// and does what a tap would do. The app's name has to be in the phrase, which is Apple's rule for app phrases.
+const siri = nativePlugin('SiriCommand');
+async function runSiriCommand() {
+  if (!siri || !getHouseholdCode() || !feedsLoaded) return;
+  let got;
+  try { got = await siri.takeCommand(); } catch (e) { return; }
+  if (!got || !got.command || Date.now() - got.at > 180000) return; // an old note is ignored
+  diag(`siri: ${got.command}`);
+  const running = !!latestFeeds.length && latestFeeds[0].amountMl == null;
+  if (got.command === 'start-feed') {
+    if (running) { showToast('A feed is already running'); return; }
+    startFeedLockedUntil = Date.now() + 2000;
+    startFeed(Date.now(), computeAutoIntervalHours(DEFAULT_ML));
+  } else if (got.command === 'finish-feed') {
+    if (running) openLogModal(latestFeeds[0]); else showToast('No feed is running');
+  } else if (got.command === 'bottle-made') {
+    startBottleTimer(0);
+  }
+}
+if (siri) {
+  setInterval(() => { if (document.visibilityState === 'visible') runSiriCommand(); }, 1500);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') runSiriCommand(); });
+  document.getElementById('siri-card').hidden = false;
+}
+
 // --- Units ---
 function drawUnitChoice() {
   document.querySelectorAll('#unit-choice .segment').forEach(b => b.classList.toggle('active', b.dataset.unit === unit));
@@ -3510,7 +3537,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=167').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=168').catch(() => {});
   });
 }
 

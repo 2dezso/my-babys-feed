@@ -1,5 +1,5 @@
-# Adds the lock screen timer to the generated iPhone project: the plugin the web app talks to, the screen that
-# registers it, and a small extension (a "widget extension" with no widgets) that draws the timer.
+# Adds the lock screen timer and the Siri phrases to the generated iPhone project: the plugins the web app talks to, the
+# screen that registers them, and a small extension (a "widget extension" with no widgets) that draws the timer.
 # Run from the repository root by scripts/ios-prepare.sh, after the project exists. Uses the xcodeproj tool that comes
 # with CocoaPods. It stops with a clear message if anything it expects is not there.
 require "fileutils"
@@ -16,7 +16,7 @@ abort "no bundle id" if bundle_id.to_s.empty? || bundle_id.include?("getcapacito
 
 # 1. The app's own new files.
 app_group = project.main_group["App"] or abort "no App group"
-%w[FeedActivityAttributes.swift LiveFeedPlugin.swift MainViewController.swift].each do |name|
+%w[FeedActivityAttributes.swift LiveFeedPlugin.swift MainViewController.swift SiriShortcuts.swift SiriCommandPlugin.swift].each do |name|
   FileUtils.cp("#{FILES}/#{name}", "#{ROOT}/App/#{name}")
   app.add_file_references([app_group.new_reference(name)])
 end

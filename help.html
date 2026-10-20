@@ -28,6 +28,8 @@
   .native { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
   .native body { padding-top: 0; }
   .native .web-only { display: none; }
+  .native-only { display: none; }
+  .native .native-only { display: block; }
   .native .back { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; min-height: 52px; margin: 0 -20px 8px; padding: env(safe-area-inset-top, 0px) 20px 0; background: var(--bg); border-bottom: 1px solid var(--line); }
 </style>
 </head>
@@ -77,6 +79,11 @@
   <p>In the iPhone app, go to <b>Settings</b> and choose <b>Next feed reminders</b>. You can have a notification 30 minutes before, 15 minutes before and when the next feed is due, in any combination. The first time, your phone asks if Little Sips may send notifications. Say yes, or turn them on later in the iPhone Settings app.</p>
   <p>Reminders are set on your phone, and they count from the last feed that phone has seen. If a partner logs a feed while your app is closed, open the app once so your reminders follow it.</p>
   <p>While a feed is running, the lock screen and the Dynamic Island show a timer counting up from when you pressed <b>Start feed</b>. It disappears when you finish the feed. If you do not see it, check that Live Activities are on for Little Sips in the iPhone Settings app. A feed started on another phone shows its timer here once you open the app.</p>
+
+  <div class="native-only">
+    <h2 id="siri">Siri</h2>
+    <p>In the iPhone app you can use your voice. Say <b>Hey Siri, start a feed in Little Sips</b>, <b>finish a feed in Little Sips</b> or <b>bottle made in Little Sips</b>. The app opens and does it. The name of the app has to be part of what you say, which is Apple&rsquo;s rule. The same actions are in the Shortcuts app, where you can put them on the Action button or a button on your Home Screen.</p>
+  </div>
 
   <h2 id="offline">Using it without signal</h2>
   <p>Little Sips needs an internet connection to show your feeds and to save new ones, so it is not for rooms with no reception. If the signal drops for a moment, anything you log is kept and sent as soon as it returns, as long as the app stays open. Other phones will not see it until then.<span class="web-only"> On the website, the last screen you opened can show again without a connection, but it will not save anything new.</span></p>
