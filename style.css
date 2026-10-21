@@ -221,6 +221,9 @@ h1, h2, h3 { margin: 0; }
 .fact { background: var(--card); border-radius: 18px; box-shadow: var(--shadow); padding: 14px 16px 16px; margin-top: 12px; }
 .fact h2 { font-size: 1.0625rem; font-weight: 800; }
 .fact p { margin: 6px 0 0; font-size: .9375rem; font-weight: 500; color: var(--muted); line-height: 1.45; }
+.welcome-calm { margin: -2px 0 0; font-size: .9375rem; font-weight: 700; color: var(--muted); }
+.hero-calm { margin: 10px 2px 0; font-size: .8125rem; font-weight: 700; color: var(--on-sec); opacity: .92; }
+.trends-calm { margin: -4px 4px 12px; font-size: .875rem; font-weight: 700; color: var(--muted); }
 .fineprint { margin: 18px 4px 0; font-size: .8125rem; font-weight: 500; color: var(--muted); line-height: 1.45; }
 
 /* Milestones calendar */

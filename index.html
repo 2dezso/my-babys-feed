@@ -6,14 +6,14 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Little sips</title>
-<link rel="manifest" href="manifest.json?v=172">
+<link rel="manifest" href="manifest.json?v=173">
 <link rel="modulepreload" href="vendor/firebase-app.js">
 <link rel="modulepreload" href="vendor/firebase-auth.js">
 <link rel="modulepreload" href="vendor/firebase-firestore.js">
-<link rel="stylesheet" href="fonts/nunito.css?v=172">
-<link rel="stylesheet" href="style.css?v=172">
-<link rel="icon" type="image/png" href="icon-192.png?v=172">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=172">
+<link rel="stylesheet" href="fonts/nunito.css?v=173">
+<link rel="stylesheet" href="style.css?v=173">
+<link rel="icon" type="image/png" href="icon-192.png?v=173">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=173">
 <script>
   // iPhone app only: a class that styles it as an app (no text selection or press-and-hold menus).
   if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) document.documentElement.classList.add('native');
@@ -67,9 +67,10 @@
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card welcome">
-    <img class="welcome-logo" src="logo-192.png?v=172" alt="" width="64" height="64">
+    <img class="welcome-logo" src="logo-192.png?v=173" alt="" width="64" height="64">
     <h1>Track feeds together</h1>
     <p class="muted">Log a feed in one tap. Everyone looking after your baby sees it straight away. No account needed.</p>
+    <p class="welcome-calm">There&rsquo;s no right amount or right time. This is just your diary.</p>
     <p id="setup-notice" class="setup-notice" hidden>This household was deleted from another phone. Start a new household, or join a different one with its code.</p>
 
     <div class="setup-choice" id="setup-new">
@@ -126,6 +127,7 @@
             <span id="next-feed-in" class="pill" hidden></span>
           </div>
           <div id="hero-line" class="bar" hidden><i></i></div>
+          <p id="late-calm" class="hero-calm" hidden>Babies don&rsquo;t keep to a clock.</p>
         </div>
       </div>
     </section>
@@ -292,9 +294,10 @@
       <div><small id="trends-sub">From the feed log</small><h1>Trends</h1></div>
       <button class="me" data-nav="home" aria-label="Home">C</button>
     </div>
+    <p class="trends-calm">These patterns are about your baby, not a target.</p>
     <div id="trends-patterns"></div>
     <div class="fact">
-      <h2>Fun fact of the week</h2>
+      <h2>A gentle reminder</h2>
       <p id="trends-fun-fact"></p>
     </div>
     <p class="fineprint">Patterns are read from the feeds you log and describe what has happened, nothing more. They are not medical advice. Every baby is different; check with your health visitor, midwife or doctor about what's right for yours.</p>
@@ -805,6 +808,6 @@
 <div id="offline-note" class="offline-note" role="status" hidden>No connection. New entries are kept and sent when it returns, as long as the app stays open.</div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script type="module" src="app.js?v=172"></script>
+<script type="module" src="app.js?v=173"></script>
 </body>
 </html>

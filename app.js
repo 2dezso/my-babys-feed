@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=172';
+import { analyse } from './patterns.js?v=173';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -127,6 +127,7 @@ const lastFeedLabelEl = document.getElementById('last-feed-label');
 const pendingDetailEl = document.getElementById('pending-detail');
 const nextFeedLabelEl = document.getElementById('next-feed-label');
 const heroLine = document.getElementById('hero-line');
+const lateCalmEl = document.getElementById('late-calm');
 const todayBottle = document.getElementById('today-bottle');
 const bottleBrandTrack = document.getElementById('bottle-brand-track');
 const tabbar = document.getElementById('tabbar');
@@ -1080,6 +1081,7 @@ function renderNextFeed() {
   nextFeedLabelEl.textContent = 'Next feed';
   nextFeedInEl.classList.remove('late');
   heroLine.classList.remove('late');
+  lateCalmEl.hidden = true;
   if (!last || last.amountMl == null) {
     heroLine.hidden = true;
     nextFeedTimeEl.textContent = '—';
@@ -1101,6 +1103,7 @@ function renderNextFeed() {
     heroLine.classList.add('late');
     nextFeedLabelEl.textContent = 'Expected';
     nextFeedInEl.textContent = `${durationString(diffMs)} ago`;
+    lateCalmEl.hidden = false;
   } else {
     nextFeedInEl.textContent = `in ${durationString(diffMs)}`;
   }
@@ -1608,6 +1611,19 @@ async function updatePoo(id, timestamp, size, note) {
   showToast('Poo updated');
 }
 
+// Between 23:00 and 05:00 the message after a feed is a warmer one. Daytime keeps the plain one.
+const NIGHT_FEED_MESSAGES = [
+  'Feed logged. Get some rest.',
+  'Feed logged. Back to sleep when you can.',
+  'Feed logged. You’re doing well.',
+  'Feed logged. Night feeds don’t last forever.',
+];
+function feedDoneMessage(plain) {
+  const h = new Date().getHours();
+  if (h >= 23 || h < 5) return NIGHT_FEED_MESSAGES[Math.floor(Math.random() * NIGHT_FEED_MESSAGES.length)];
+  return plain;
+}
+
 async function logFeed(timestamp, amountMl, intervalHours) {
   const code = getHouseholdCode();
   if (!code) return;
@@ -1617,7 +1633,7 @@ async function logFeed(timestamp, amountMl, intervalHours) {
     amountMl,
     intervalHours,
   }), 'Could not log feed. Check your connection');
-  showToast('Feed logged');
+  showToast(feedDoneMessage('Feed logged'));
 }
 
 async function startFeed(timestamp, intervalHours) {
@@ -1638,7 +1654,7 @@ async function finishFeed(id, timestamp, amountMl, intervalHours, completing = f
   const code = getHouseholdCode();
   if (!code) return;
   inBackground(updateDoc(doc(db, 'households', code, 'feeds', id), { timestamp, amountMl, intervalHours }), 'Could not save. Check your connection');
-  showToast('Feed updated');
+  showToast(completing ? feedDoneMessage('Feed logged') : 'Feed updated');
   // The feed is over, so the bottle that was being drunk from is done with. A fresh bottle made since is left alone.
   if (completing && bottleFeedStartedAt && (!bottleMadeAt || bottleMadeAt <= bottleFeedStartedAt)) {
     inBackground(setDoc(bottleDocRef(code), { madeAt: null, feedStartedAt: null }, { merge: true }));
@@ -1848,20 +1864,21 @@ profileSkipBtn.addEventListener('click', finishProfileOnboarding);
 
 // --- Trends & Facts ---
 
+// One calm line a week on Trends, where parents are most likely to compare. About perspective, never about amounts or
+// anything medical; the last one says where to turn if something feels wrong.
 const FUN_BABY_FACTS = [
-  "Babies are born with about 300 bones, but adults only have 206 — many fuse together as they grow.",
-  "A baby's sense of smell is so strong they can recognise their mother's scent within days of being born.",
-  "Newborns can't produce tears when they cry until they're about 1-3 months old.",
-  "Babies are born without kneecaps — they start as cartilage and harden into bone later.",
-  "Babies can recognise their mother's voice from inside the womb.",
-  "Newborns are naturally short-sighted — they focus best on things 8-12 inches away, about the distance to a parent's face while feeding.",
-  "Babies can't properly taste salt until they're about 4 months old.",
-  "A baby's brain reaches about 80% of its adult size by age 3.",
-  'Babies have more taste buds than adults, including some on the roof of the mouth and back of the throat.',
-  "A baby's skull has soft spots (fontanelles) that help them through the birth canal and allow rapid brain growth.",
-  "Babies can't feel embarrassment — that emotion doesn't develop until around age 2.",
-  "A baby's hearing is fully developed before birth — they can hear sounds from around 18 weeks in the womb.",
-  "A baby's eye colour can keep changing for up to a year after birth as pigment develops.",
+  'Every baby feeds differently, and that’s fine.',
+  'Some days are hungrier than others.',
+  'Your baby’s pattern is the only one that matters.',
+  'Feeds won’t always match the clock, and that’s okay.',
+  'Comparing with other babies rarely helps. Watch your own.',
+  'A messy day of feeds is still a day of feeding.',
+  'You know your baby better than any app does.',
+  'Taking turns at night helps everyone rest.',
+  'Early weeks can be unpredictable. That’s part of it.',
+  'Logging is for you, not a test. Missed one? Add it later, or let it go.',
+  'Small feeds and big feeds all count.',
+  'If something feels wrong, your health visitor is there to help.',
 ];
 
 function weeklyFunFact() {
@@ -2049,7 +2066,7 @@ function renderTrends() {
   const maybe = items.filter((i) => i.tier === 'maybe');
   let html = trendsHero(r);
   if (!items.length) {
-    html += `<div class="th"><h2>Patterns</h2><p>Log a few days of feeds and patterns will start to show up here.</p></div>`;
+    html += `<div class="th"><h2>Patterns</h2><p>The first weeks are unpredictable. Patterns show up later, as you keep logging.</p></div>`;
   }
   if (est.length) {
     html += `<div class="th"><h2>Established</h2><p>Seen two weeks running or more.</p></div>${est.map((i) => i.html).join('')}`;
@@ -2661,9 +2678,7 @@ document.getElementById('btn-switch-code').addEventListener('click', () => {
 });
 document.getElementById('switch-cancel').addEventListener('click', () => { switchModal.hidden = true; });
 document.getElementById('switch-confirm').addEventListener('click', async () => {
-  try {
-    if (nativeNotifications) await nativeNotifications.cancel({ notifications: [{ id: REMINDER_ID }] });
-  } catch (e) { /* the old reminder may fire once; harmless */ }
+  await clearPhoneExtras();
   try {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(CREATED_KEY);
@@ -2812,9 +2827,7 @@ async function runDelete() {
   }
   deleteRunning = false;
   deleteBar.style.transform = 'scaleX(1)';
-  try {
-    if (nativeNotifications) await nativeNotifications.cancel({ notifications: [{ id: REMINDER_ID }] });
-  } catch (e) { /* the old reminder may fire once; harmless */ }
+  await clearPhoneExtras();
   try {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(CREATED_KEY);
@@ -2891,7 +2904,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 172`);
+  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 173`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3151,6 +3164,17 @@ function setReminderHint(msg) {
   const text = msg || (previewReminders ? PREVIEW_TEXT : '');
   reminderHint.textContent = text;
   reminderHint.hidden = !text;
+}
+
+// When this phone leaves a household (deleted, or switched to another code), nothing from it should stay behind:
+// every reminder is cancelled and a lock screen timer for a running feed is ended.
+async function clearPhoneExtras() {
+  try {
+    if (nativeNotifications) await nativeNotifications.cancel({ notifications: REMINDER_LEADS.map(l => ({ id: REMINDER_ID[l] })) });
+  } catch (e) { /* a reminder may still fire once; harmless */ }
+  try {
+    if (liveFeed) await liveFeed.end();
+  } catch (e) { /* the timer goes stale on its own */ }
 }
 
 function reminderTitle(lead) {
@@ -3539,7 +3563,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=172').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=173').catch(() => {});
   });
 }
 
