@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=173';
+import { analyse } from './patterns.js?v=174';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2904,7 +2904,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 173`);
+  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 174`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3177,9 +3177,12 @@ async function clearPhoneExtras() {
   } catch (e) { /* the timer goes stale on its own */ }
 }
 
-function reminderTitle(lead) {
-  const who = profileFirstName ? `${profileFirstName}’s next feed` : 'Next feed';
-  return lead === 0 ? `${who} is due` : `${who} in ${lead} minutes`;
+// Soft wording on purpose: "may" and "around", never a deadline. The body repeats nothing the title already says.
+function reminderTitle(lead, dueClock) {
+  const name = profileFirstName || 'your baby';
+  if (lead === 0) return profileFirstName ? `Around feed time for ${profileFirstName}` : 'Around feed time';
+  if (lead === 15) return `${name[0].toUpperCase()}${name.slice(1)} may want a feed around ${dueClock}`;
+  return `A feed may be coming up around ${dueClock}`;
 }
 async function syncReminder() {
   if (!nativeNotifications) return;
@@ -3201,8 +3204,8 @@ async function syncReminder() {
       await nativeNotifications.schedule({
         notifications: items.map(r => ({
           id: REMINDER_ID[r.lead],
-          title: reminderTitle(r.lead),
-          body: `Due around ${formatClock(due)}. The last feed was at ${formatClock(last.timestamp)}.`,
+          title: reminderTitle(r.lead, formatClock(due)),
+          body: `Last feed was at ${formatClock(last.timestamp)}. No rush.`,
           schedule: { at: new Date(r.at) },
         })),
       });
@@ -3563,7 +3566,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=173').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=174').catch(() => {});
   });
 }
 
@@ -3640,3 +3643,23 @@ async function emailCodeToSelf() {
   window.location.href = `mailto:?subject=${encodeURIComponent("Our baby's feed diary code")}&body=${encodeURIComponent(text)}`;
 }
 document.querySelectorAll('.email-code').forEach(btn => btn.addEventListener('click', emailCodeToSelf));
+
+// While a sheet is open the page behind it must not move. overflow:hidden alone is ignored by iPhone browsers, so the
+// page is pinned in place and put back at the same scroll position when the last sheet closes.
+{
+  let pinnedAt = null;
+  const sync = () => {
+    const open = !!document.querySelector('.modal:not([hidden])');
+    if (open && pinnedAt === null) {
+      pinnedAt = window.scrollY;
+      document.body.style.cssText += `position:fixed;top:-${pinnedAt}px;left:0;right:0;width:100%;`;
+    } else if (!open && pinnedAt !== null) {
+      document.body.style.position = document.body.style.top = document.body.style.left = document.body.style.right = document.body.style.width = '';
+      window.scrollTo(0, pinnedAt);
+      pinnedAt = null;
+    }
+  };
+  new MutationObserver(sync).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['hidden'] });
+  // A swipe on the dimmed area outside the sheet does nothing.
+  document.addEventListener('touchmove', (e) => { if (e.target.classList?.contains('modal')) e.preventDefault(); }, { passive: false });
+}
