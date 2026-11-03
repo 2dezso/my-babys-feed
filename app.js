@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=181';
+import { analyse } from './patterns.js?v=182';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -3004,7 +3004,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 181`);
+  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 182`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3492,6 +3492,8 @@ if (siri) {
 // --- How you feed ---
 function drawFeedingChoice() {
   document.querySelectorAll('#feeding-choice .segment').forEach(b => b.classList.toggle('active', b.dataset.feeding === feedingMode));
+  // The middle column of Past feeds holds an amount, a side, or either.
+  document.getElementById('history-amount-head').textContent = { bottle: 'Amount', breast: 'Side', both: 'Feed' }[feedingMode];
 }
 document.querySelectorAll('#feeding-choice .segment').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -3692,7 +3694,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=181').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=182').catch(() => {});
   });
 }
 
