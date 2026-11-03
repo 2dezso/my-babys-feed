@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=174';
+import { analyse } from './patterns.js?v=175';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -84,6 +84,24 @@ let unit = (() => { try { return localStorage.getItem(UNIT_KEY) === 'oz' ? 'oz' 
 function ozString(ml) { return String(Math.round((ml / ML_PER_OZ) * 10) / 10); }
 function amountNumber(ml) { return unit === 'oz' ? ozString(ml) : String(ml); }
 function fmtAmount(ml) { return `${amountNumber(ml)}${unit}`; }
+
+// A breast feed is saved with amountMl 0, so older versions of the app still see it as finished (no amount means a feed
+// that is still running). Its type and side say what it was, and the minutes come from the timer when there was one.
+const isBreast = (f) => f?.type === 'breast';
+const SIDE_NAMES = { L: 'Left', R: 'Right', B: 'Both' };
+function feedAmountText(f) {
+  if (!isBreast(f)) return fmtAmount(f.amountMl);
+  return [SIDE_NAMES[f.side] || 'Breast', f.durationMin ? `${f.durationMin} min` : ''].filter(Boolean).join(' · ');
+}
+// The side to start on next is the other one from the last single-side breast feed ("Both" is skipped over).
+function lastSingleSide(excludeId) {
+  const f = latestFeeds.find(x => x.id !== excludeId && isBreast(x) && (x.side === 'L' || x.side === 'R'));
+  return f ? f.side : null;
+}
+function nextSide(excludeId) {
+  const s = lastSingleSide(excludeId);
+  return s ? (s === 'L' ? 'R' : 'L') : null;
+}
 const WHEEL_ITEM_HEIGHT = 40;
 const INTERVAL_MIN = 1;
 const INTERVAL_MAX = 8;
@@ -128,6 +146,7 @@ const pendingDetailEl = document.getElementById('pending-detail');
 const nextFeedLabelEl = document.getElementById('next-feed-label');
 const heroLine = document.getElementById('hero-line');
 const lateCalmEl = document.getElementById('late-calm');
+const nextSideEl = document.getElementById('next-side');
 const todayBottle = document.getElementById('today-bottle');
 const bottleBrandTrack = document.getElementById('bottle-brand-track');
 const tabbar = document.getElementById('tabbar');
@@ -271,6 +290,7 @@ let selectedGender = '';
 let profileOnboarding = false;
 let profileDob = '';
 let profileFirstName = '';
+let feedingMode = 'bottle'; // bottle, breast or both, shared by the household (profile.feeding)
 let profileIsDemo = false; // the example household given to App Review; it cannot be deleted from the app
 let profileLastName = '';
 let selectedPooSize = '';
@@ -550,6 +570,8 @@ function listenToProfile(code) {
     selectedAvatarTone = data.avatarTone || '';
     selectedGender = data.gender || '';
     selectedBottleBrand = data.bottleBrand || 'mam';
+    feedingMode = ['breast', 'both'].includes(data.feeding) ? data.feeding : 'bottle';
+    drawFeedingChoice();
     applyBottleBrand();
     if (!profileScreen.hidden) scrollBottleBrandWheelTo(selectedBottleBrand);
     profileTileLabel.textContent = firstName ? `${firstName}’s profile` : 'Profile';
@@ -567,6 +589,8 @@ function listenToProfile(code) {
     renderProfileAge();
     renderProfilePreview();
     renderSinceLastFeed();
+    renderTodayTotal();
+    renderHistory();
     renderTrends();
     syncReminder(); // the reminder names the baby, so it follows the name as soon as it arrives
     syncLiveFeed(); // so does the lock screen timer
@@ -1070,8 +1094,11 @@ function renderSinceLastFeed() {
     pendingDetailEl.textContent = `Started at ${formatClock(last.timestamp)}`;
   } else {
     sinceLastFeedEl.textContent = since;
-    lastFeedDetailEl.textContent = `ago · ${fmtAmount(last.amountMl)}`;
+    lastFeedDetailEl.textContent = `ago · ${feedAmountText(last)}`;
   }
+  const side = !isPending && feedingMode !== 'bottle' ? nextSide() : null;
+  nextSideEl.hidden = !side;
+  if (side) nextSideEl.textContent = `Next side: ${SIDE_NAMES[side]}`;
 }
 
 // The next feed is a guess, so a late feed is never "overdue": the pill and line turn amber and say how long ago it was expected.
@@ -1124,6 +1151,8 @@ function usualDailyMl() {
 
 // Today's total is shown at the top of the Past feeds list; here it only sets how full the hero bottle is.
 function renderTodayTotal() {
+  // The bottle picture means nothing to a family that only breastfeeds.
+  todayBottle.style.display = feedingMode === 'breast' ? 'none' : '';
   const today = startOfToday();
   const total = latestFeeds.filter(f => f.timestamp >= today).reduce((sum, f) => sum + (f.amountMl || 0), 0);
   // The bottle starts the day empty and fills a little with every finished feed.
@@ -1323,7 +1352,7 @@ function startOfWeekMs(ms) {
 function dailyFeedTotals() {
   const totals = new Map();
   for (const f of latestFeeds) {
-    if (f.amountMl == null) continue;
+    if (f.amountMl == null || isBreast(f)) continue;
     const key = dayKeyForTimestamp(f.timestamp);
     const entry = totals.get(key) || { total: 0, count: 0 };
     entry.total += f.amountMl;
@@ -1509,12 +1538,14 @@ function renderHistory() {
 
   for (const key of Array.from(groups.keys()).sort((a, b) => b - a)) {
     const dayFeeds = groups.get(key);
-    const dayTotal = dayFeeds.reduce((sum, f) => sum + (f.amountMl || 0), 0);
+    const dayTotal = dayFeeds.reduce((sum, f) => sum + (isBreast(f) ? 0 : f.amountMl || 0), 0);
+    // A day of breast feeds only has no milk total to show.
+    const totalText = feedingMode === 'breast' || (!dayTotal && dayFeeds.some(isBreast)) ? '' : fmtAmount(dayTotal);
 
     const headerLi = document.createElement('li');
     const isToday = key === startOfToday();
     headerLi.className = `day-group-header${isToday ? ' today' : ''}`;
-    headerLi.innerHTML = `<span class="day-group-label">${dayLabelForKey(key)}${isToday ? ` · ${dayFeeds.length} ${dayFeeds.length === 1 ? 'feed' : 'feeds'}` : ''}</span><span class="day-group-total">${fmtAmount(dayTotal)}</span>`;
+    headerLi.innerHTML = `<span class="day-group-label">${dayLabelForKey(key)}${isToday ? ` · ${dayFeeds.length} ${dayFeeds.length === 1 ? 'feed' : 'feeds'}` : ''}</span><span class="day-group-total">${totalText}</span>`;
     historyList.appendChild(headerLi);
 
     for (const feed of dayFeeds) {
@@ -1522,7 +1553,7 @@ function renderHistory() {
       const older = latestFeeds[fullIndex + 1];
       const gap = older ? durationString(feed.timestamp - older.timestamp) : '—';
       const amountHtml = feed.amountMl != null
-        ? `<span class="history-amount-val">${fmtAmount(feed.amountMl)}</span>`
+        ? `<span class="history-amount-val">${feedAmountText(feed)}</span>`
         : `<button class="add-amount-btn">Add amount</button>`;
 
       const li = document.createElement('li');
@@ -1624,7 +1655,7 @@ function feedDoneMessage(plain) {
   return plain;
 }
 
-async function logFeed(timestamp, amountMl, intervalHours) {
+async function logFeed(timestamp, amountMl, intervalHours, extra = {}) {
   const code = getHouseholdCode();
   if (!code) return;
   inBackground(addDoc(feedsCollection(code), {
@@ -1632,6 +1663,7 @@ async function logFeed(timestamp, amountMl, intervalHours) {
     timestamp,
     amountMl,
     intervalHours,
+    ...extra,
   }), 'Could not log feed. Check your connection');
   showToast(feedDoneMessage('Feed logged'));
 }
@@ -1646,14 +1678,14 @@ async function startFeed(timestamp, intervalHours) {
   }), 'Could not start feed. Check your connection');
   showToast('Feed started');
   // The bottle is now being drunk from: it is good for 1 hour from now, or until 2 hours after it was made if that
-  // comes first. The made time is kept so that limit can be worked out (see bottleState).
-  inBackground(setDoc(bottleDocRef(code), { feedStartedAt: timestamp }, { merge: true }));
+  // comes first. The made time is kept so that limit can be worked out (see bottleState). Not for breast-only families.
+  if (feedingMode !== 'breast') inBackground(setDoc(bottleDocRef(code), { feedStartedAt: timestamp }, { merge: true }));
 }
 
-async function finishFeed(id, timestamp, amountMl, intervalHours, completing = false) {
+async function finishFeed(id, timestamp, amountMl, intervalHours, completing = false, extra = {}) {
   const code = getHouseholdCode();
   if (!code) return;
-  inBackground(updateDoc(doc(db, 'households', code, 'feeds', id), { timestamp, amountMl, intervalHours }), 'Could not save. Check your connection');
+  inBackground(updateDoc(doc(db, 'households', code, 'feeds', id), { timestamp, amountMl, intervalHours, ...extra }), 'Could not save. Check your connection');
   showToast(completing ? feedDoneMessage('Feed logged') : 'Feed updated');
   // The feed is over, so the bottle that was being drunk from is done with. A fresh bottle made since is left alone.
   if (completing && bottleFeedStartedAt && (!bottleMadeAt || bottleMadeAt <= bottleFeedStartedAt)) {
@@ -2386,7 +2418,7 @@ amountTrack.addEventListener('keydown', (e) => {
 });
 
 function lastCompletedAmount(excludeId) {
-  const f = latestFeeds.find(x => x.amountMl != null && x.id !== excludeId);
+  const f = latestFeeds.find(x => x.amountMl != null && !isBreast(x) && x.id !== excludeId);
   return f ? f.amountMl : null;
 }
 
@@ -2419,14 +2451,70 @@ function pickedTimeTs() {
   return combineDateTimeToTimestamp(feedDateInput.value, feedTimeInput.value);
 }
 
+// --- Breast or bottle ---
+// The switch only shows for families who do both (or when a feed is not the household's usual kind). It starts on
+// whatever the last finished feed was, so most feeds need no extra tap. Breast swaps the amount for the side.
+const feedTypeSeg = document.getElementById('feed-type');
+const amtWheel = document.getElementById('amt-wheel');
+const feedAmountLabel = document.getElementById('feed-amount-label');
+const sideLabel = document.getElementById('side-label');
+const sideChoice = document.getElementById('side-choice');
+const breastTime = document.getElementById('breast-time');
+let sheetType = 'bottle';
+let selectedSide = 'L';
+let breastMinutes = null;
+
+function defaultFeedType() {
+  if (feedingMode !== 'both') return feedingMode;
+  return isBreast(latestFeeds.find(f => f.amountMl != null)) ? 'breast' : 'bottle';
+}
+function breastIntervalHours() {
+  const f = latestFeeds.find(x => isBreast(x) && x.intervalHours && x.id !== editingFeedId);
+  return f ? f.intervalHours : 3;
+}
+function drawSides() {
+  const next = nextSide(editingFeedId);
+  const last = lastSingleSide(editingFeedId);
+  sideChoice.querySelectorAll('button').forEach(b => {
+    const on = b.dataset.side === selectedSide;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', String(on));
+    b.querySelector('small').textContent = sheetMode === 'edit' ? '' : b.dataset.side === next ? 'next' : b.dataset.side === last ? 'last time' : '';
+  });
+}
+function applySheetType() {
+  const breast = sheetType === 'breast';
+  feedTypeSeg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.type === sheetType));
+  feedAmountLabel.hidden = amtWheel.hidden = sheetHint.hidden = breast;
+  sideLabel.hidden = sideChoice.hidden = !breast;
+  breastTime.hidden = !breast || !breastMinutes;
+  if (breastMinutes) breastTime.textContent = sheetMode === 'complete' ? `${breastMinutes} min, from the timer` : `${breastMinutes} min`;
+  drawSides();
+  if (!breast) scrollAmountTo(selectedMl);
+  if (!intervalOverridden) selectedIntervalHours = breast ? breastIntervalHours() : computeAutoIntervalHours(selectedMl);
+  drawSheet();
+}
+feedTypeSeg.addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b || b.dataset.type === sheetType) return;
+  sheetType = b.dataset.type;
+  applySheetType();
+});
+sideChoice.addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  selectedSide = b.dataset.side;
+  drawSides();
+});
+
 function drawSheet() {
   drawGapChips();
   const ts = pickedTimeTs();
   logConfirm.disabled = ts == null;
   if (sheetMode === 'log') logConfirm.textContent = ts == null ? 'Choose the time' : 'Log feed';
-  else logConfirm.textContent = sheetMode === 'complete' ? 'Save amount' : 'Save';
+  else logConfirm.textContent = sheetMode === 'complete' && sheetType !== 'breast' ? 'Save amount' : 'Save';
   // A past feed can also be saved with just its time. It then waits for its amount, like a feed that was started.
-  logTimeOnly.hidden = sheetMode !== 'log';
+  logTimeOnly.hidden = sheetMode !== 'log' || sheetType === 'breast';
   logTimeOnly.disabled = ts == null;
 }
 
@@ -2575,11 +2663,18 @@ function openLogModal(feed) {
   feedWhenLabel.textContent = isPending ? 'Started' : 'When';
   sheetDel.hidden = sheetMode !== 'edit';
   gapShown = null;
+  sheetType = feed && !isPending ? (isBreast(feed) ? 'breast' : 'bottle') : defaultFeedType();
+  feedTypeSeg.hidden = feedingMode !== 'both' && sheetType === (feedingMode === 'breast' ? 'breast' : 'bottle');
+  selectedSide = feed?.side || nextSide(feed?.id) || 'L';
+  // A running feed's length comes from the timer. Anything over two hours was probably left running, so it is not kept.
+  const ran = isPending ? Math.round((Date.now() - feed.timestamp) / 60000) : 0;
+  breastMinutes = isPending ? (ran >= 1 && ran <= 120 ? ran : null) : (feed?.durationMin || null);
   logModal.hidden = false;
   // The wheel can only be positioned once the sheet is on screen.
   scrollAmountTo(startMl);
   setTimeWheel(startTime[0], startTime[1], startTime[2]);
   onAmountChanged(startMl);
+  applySheetType();
 }
 
 function syncDayChips(input, chipsEl) {
@@ -2643,11 +2738,16 @@ logConfirm.addEventListener('click', () => {
   if (timestamp == null) return;
   showRangeContaining(timestamp, historyRange, ["1d", "7d", "14d"], (r) => { currentRange = r; chartSelectedStart = null; });
   logModal.hidden = true;
+  const breast = sheetType === 'breast';
+  const ml = breast ? 0 : selectedMl;
   if (editingFeedId) {
-    finishFeed(editingFeedId, timestamp, selectedMl, selectedIntervalHours, sheetMode === 'complete');
+    const extra = breast
+      ? { type: 'breast', side: selectedSide, durationMin: breastMinutes || deleteField() }
+      : { type: 'bottle', side: deleteField(), durationMin: deleteField() };
+    finishFeed(editingFeedId, timestamp, ml, selectedIntervalHours, sheetMode === 'complete', extra);
     editingFeedId = null;
   } else {
-    logFeed(timestamp, selectedMl, selectedIntervalHours);
+    logFeed(timestamp, ml, selectedIntervalHours, breast ? { type: 'breast', side: selectedSide, ...(breastMinutes ? { durationMin: breastMinutes } : {}) } : {});
   }
 });
 
@@ -2904,7 +3004,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 174`);
+  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 175`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -2988,8 +3088,12 @@ btnCreateHousehold.addEventListener('click', async () => {
   setFlag(CREATED_KEY);
   const name = document.getElementById('welcome-name').value.trim();
   history.replaceState(null, '', '#feed');
+  const feeding = document.querySelector('#welcome-feeding .segment.active')?.dataset.feeding || 'bottle';
   await enterApp(code);
-  if (name) saveProfileFields({ firstName: name });
+  const fields = {};
+  if (name) fields.firstName = name;
+  if (feeding !== 'bottle') fields.feeding = feeding;
+  if (Object.keys(fields).length) saveProfileFields(fields);
 });
 
 // Joining first looks the code up, so a mistyped code is caught before it is saved. A diary with a baby name or any
@@ -3385,6 +3489,28 @@ if (siri) {
   document.getElementById('siri-card').hidden = false;
 }
 
+// --- How you feed ---
+function drawFeedingChoice() {
+  document.querySelectorAll('#feeding-choice .segment').forEach(b => b.classList.toggle('active', b.dataset.feeding === feedingMode));
+}
+document.querySelectorAll('#feeding-choice .segment').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.feeding === feedingMode) return;
+    feedingMode = btn.dataset.feeding;
+    drawFeedingChoice();
+    renderSinceLastFeed();
+    renderTodayTotal();
+    renderHistory();
+    saveProfileFields({ feeding: feedingMode });
+  });
+});
+drawFeedingChoice();
+document.getElementById('welcome-feeding').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  document.querySelectorAll('#welcome-feeding .segment').forEach(x => x.classList.toggle('active', x === b));
+});
+
 // --- Units ---
 function drawUnitChoice() {
   document.querySelectorAll('#unit-choice .segment').forEach(b => b.classList.toggle('active', b.dataset.unit === unit));
@@ -3566,7 +3692,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=174').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=175').catch(() => {});
   });
 }
 

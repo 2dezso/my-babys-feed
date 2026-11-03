@@ -86,7 +86,8 @@ export function classify(series, { minDelta, minN = 5 }) {
 function sortedFeeds(feeds) {
   return feeds
     .filter((f) => typeof f.timestamp === 'number')
-    .map((f) => ({ ts: f.timestamp, ml: typeof f.amountMl === 'number' ? f.amountMl : null }))
+    // A breast feed counts as a feed for gaps and times, but has no amount for the milk totals.
+    .map((f) => ({ ts: f.timestamp, ml: f.type !== 'breast' && typeof f.amountMl === 'number' ? f.amountMl : null }))
     .sort((a, b) => a.ts - b.ts);
 }
 

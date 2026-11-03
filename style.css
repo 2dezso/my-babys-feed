@@ -807,6 +807,19 @@ a.srow { text-decoration: none; }
 .card.welcome .muted { margin: 0; line-height: 1.5; }
 .card.welcome .setup-choice { margin-top: 4px; display: flex; flex-direction: column; gap: 8px; }
 .welcome-go { background: var(--feed); color: var(--on-feed); margin-top: 4px; }
+.welcome-feeding-label { margin: 6px 0 0; }
+.welcome-feeding { display: flex; }
+.welcome-feeding button { flex: 1; min-height: 38px; font-size: .9375rem; }
+/* Breast or bottle, in the log sheet */
+.feed-type { display: flex; }
+.feed-type button { flex: 1; min-height: 38px; font-size: .9375rem; }
+.sides { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.side { min-height: 76px; border-radius: 18px; background: var(--fill); color: var(--ink); font-weight: 800; font-size: 1.125rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.side small { font-size: .75rem; font-weight: 700; color: var(--muted); min-height: 1.2em; }
+.side.active { background: var(--feed); color: var(--on-feed); }
+.side.active small { color: var(--on-feed); opacity: .85; }
+.breast-time { margin: -4px 0 0; text-align: center; font-size: .875rem; font-weight: 700; color: var(--muted); }
 #join-form { display: flex; flex-direction: column; gap: 0; }
 #join-form[hidden] { display: none; }
 .welcome-join { background: var(--fill); color: var(--ink); box-shadow: none; }
