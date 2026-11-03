@@ -441,12 +441,14 @@ textarea.field-input { padding: 12px 14px; }
 
 /* Feeds hero and Start feed keep one size and one place whatever state they are in, so nothing below them moves when a
    feed starts. Only the words and the colour inside change, with a short fade. */
-#hero-card { height: 242px; }
+/* The card grows with what it shows (a calm line under the bar adds a row), so nothing can overlap. */
+#hero-card { min-height: 242px; }
+#hero-card .hlayer.resting { position: relative; inset: auto; min-height: 204px; display: flex; flex-direction: column; }
 .hlayer { position: absolute; inset: 20px 20px 18px; transition: opacity .35s cubic-bezier(.22, 1, .36, 1), transform .35s cubic-bezier(.22, 1, .36, 1); }
 .hlayer.feeding { opacity: 0; transform: translateY(8px); pointer-events: none; }
 #hero-card.hero-pending .hlayer.resting { opacity: 0; transform: translateY(-8px); pointer-events: none; }
 #hero-card.hero-pending .hlayer.feeding { opacity: 1; transform: none; pointer-events: auto; }
-#hero-low { position: absolute; left: 0; right: 0; bottom: 0; }
+#hero-low { position: relative; margin-top: auto; padding-top: 14px; }
 #hero-low .hero-next { margin-top: 0; }
 .hero-l .dots { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
 .hero-l .dots i { width: 5px; height: 5px; border-radius: 50%; background: #fff; animation: breathe 1.6s ease-in-out infinite; }
