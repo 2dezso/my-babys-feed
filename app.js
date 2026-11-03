@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=176';
+import { analyse } from './patterns.js?v=178';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -1069,8 +1069,10 @@ function renderSinceLastFeed() {
     pendingTimeEl.classList.toggle('long', since.length > 4); // "1h 12m" has to fit inside the ring
     pendingDetailEl.textContent = `Started at ${formatClock(last.timestamp)}`;
   } else {
-    sinceLastFeedEl.textContent = since;
-    lastFeedDetailEl.textContent = `ago · ${fmtAmount(last.amountMl)}`;
+    // "0m" in big type read like "0 ml", so the first minute says "Just now".
+    const justNow = Date.now() - last.timestamp < 60000;
+    sinceLastFeedEl.textContent = justNow ? 'Just now' : since;
+    lastFeedDetailEl.textContent = `${justNow ? '' : 'ago · '}${fmtAmount(last.amountMl)}`;
   }
 }
 
@@ -2904,7 +2906,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 176`);
+  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 178`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3566,7 +3568,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=176').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=178').catch(() => {});
   });
 }
 
