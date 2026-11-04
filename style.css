@@ -832,6 +832,11 @@ a.srow { text-decoration: none; }
 /* A breast feed in Past feeds: its length on top, the side underneath, so nothing wraps on a small phone */
 .breast-val { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.15; }
 .breast-val small { font-size: .75rem; font-weight: 700; color: var(--muted); }
+/* Without the hours chips the breast sheet has room, so the side buttons and times grow to fill it. */
+.breast-sheet .side { min-height: 92px; border-radius: 22px; font-size: 1.3125rem; }
+.breast-sheet .tbox { padding: 14px 18px; border-radius: 20px; }
+.breast-sheet .tbox b { font-size: 2rem; }
+.breast-sheet .breast-time { font-size: 1rem; margin-top: 4px; }
 .hero-hearts { position: absolute; right: -8px; top: -6px; width: 128px; height: 128px; pointer-events: none; }
 #join-form { display: flex; flex-direction: column; gap: 0; }
 #join-form[hidden] { display: none; }

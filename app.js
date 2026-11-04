@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=184';
+import { analyse } from './patterns.js?v=185';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -1109,7 +1109,8 @@ function renderSinceLastFeed() {
 function renderNextFeed() {
   syncReminder();
   const last = latestFeeds[0];
-  nextFeedLabelEl.textContent = 'Next feed';
+  // A breast feed's next time is worked out from the pattern, so it is "usually", not a plan.
+  nextFeedLabelEl.textContent = isBreast(latestFeeds[0]) ? 'Usually around' : 'Next feed';
   nextFeedInEl.classList.remove('late');
   heroLine.classList.remove('late');
   lateCalmEl.hidden = true;
@@ -2528,9 +2529,20 @@ function defaultFeedType() {
   if (feedingMode !== 'both') return feedingMode;
   return isBreast(latestFeeds.find(f => f.amountMl != null)) ? 'breast' : 'bottle';
 }
+// Breastfed babies feed when they are hungry, so a breast feed is not asked for hours until the next one. The Feeds
+// card and reminders still need a rough time, so it is the usual start-to-start gap of the last few feeds, to the
+// nearest half hour (2 hours 30 minutes until there are enough feeds to go on).
 function breastIntervalHours() {
-  const f = latestFeeds.find(x => isBreast(x) && x.intervalHours && x.id !== editingFeedId);
-  return f ? f.intervalHours : 3;
+  const starts = latestFeeds.filter(f => f.amountMl != null && f.id !== editingFeedId).slice(0, 7).map(f => f.timestamp);
+  const gaps = [];
+  for (let i = 0; i < starts.length - 1; i++) {
+    const g = (starts[i] - starts[i + 1]) / 3600000;
+    if (g >= 0.5 && g <= 6) gaps.push(g);
+  }
+  if (gaps.length < 3) return 2.5;
+  gaps.sort((a, b) => a - b);
+  const mid = gaps[Math.floor(gaps.length / 2)];
+  return Math.min(4, Math.max(1, Math.round(mid * 2) / 2));
 }
 // The next side is already picked when the sheet opens; the buttons just show which one is chosen.
 function drawSides() {
@@ -2549,6 +2561,8 @@ function applySheetType() {
   // Finishing a running feed already knows its day, so the day row goes too.
   timeWheel.hidden = breast && !wheelOpen;
   document.getElementById('when-head').hidden = breast && sheetMode === 'complete';
+  document.getElementById('gap-head').hidden = gapChips.hidden = breast;
+  logModal.querySelector('.modal-card').classList.toggle('breast-sheet', breast);
   // The boxes already say Started and Finished, so the label above them only names the day.
   feedWhenLabel.textContent = breast || sheetMode !== 'complete' ? 'When' : 'Started';
   if (!breast) pointWheelAt('start');
@@ -3087,7 +3101,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 184`);
+  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 185`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3781,7 +3795,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=184').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=185').catch(() => {});
   });
 }
 
