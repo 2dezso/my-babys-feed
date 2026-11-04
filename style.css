@@ -820,7 +820,19 @@ a.srow { text-decoration: none; }
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
 .side { line-height: 1.2; text-align: center; padding: 0 6px; }
 .side.active { background: var(--feed); color: var(--on-feed); }
-.breast-time { margin: -4px 0 0; text-align: center; font-size: .875rem; font-weight: 700; color: var(--muted); }
+.breast-time { margin: 8px 0 0; text-align: center; font-size: .875rem; font-weight: 700; color: var(--muted); }
+.breast-time b { color: var(--ink); font-weight: 800; }
+/* Started and Finished: tap one, and the wheel below changes that time */
+.timepair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tbox { background: var(--fill); border-radius: 16px; padding: 8px 14px; display: grid; text-align: left; color: var(--ink); }
+.tbox small { font-size: .75rem; font-weight: 800; color: var(--muted); }
+.tbox b { font-size: 1.5rem; font-weight: 900; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.tbox.active { background: var(--feed-tint); box-shadow: inset 0 0 0 2px var(--feed); }
+.tbox.active b { color: var(--feed-ink); }
+/* A breast feed in Past feeds: its length on top, the side underneath, so nothing wraps on a small phone */
+.breast-val { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.15; }
+.breast-val small { font-size: .75rem; font-weight: 700; color: var(--muted); }
+.hero-hearts { position: absolute; right: -8px; top: -6px; width: 128px; height: 128px; pointer-events: none; }
 #join-form { display: flex; flex-direction: column; gap: 0; }
 #join-form[hidden] { display: none; }
 .welcome-join { background: var(--fill); color: var(--ink); box-shadow: none; }

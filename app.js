@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=182';
+import { analyse } from './patterns.js?v=183';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -91,7 +91,7 @@ const isBreast = (f) => f?.type === 'breast';
 const SIDE_NAMES = { L: 'Left', R: 'Right', B: 'Both' };
 function feedAmountText(f) {
   if (!isBreast(f)) return fmtAmount(f.amountMl);
-  return [SIDE_NAMES[f.side] || 'Breast', f.durationMin ? `${f.durationMin} min` : ''].filter(Boolean).join(' · ');
+  return [f.durationMin ? `${f.durationMin} min` : '', SIDE_NAMES[f.side] || 'Breast'].filter(Boolean).join(' · ');
 }
 // The side to start on next is the other one from the last single-side breast feed ("Both" is skipped over).
 function lastSingleSide(excludeId) {
@@ -1064,7 +1064,7 @@ function updateFeedActionButtons(isPending) {
   // Both buttons stay where they are: Log past is only dimmed and switched off while a feed is running.
   btnLogFeed.disabled = isPending;
   btnStartFeedNow.classList.toggle('pending', isPending);
-  btnStartFeedSub.textContent = isPending ? 'Add the amount' : '';
+  btnStartFeedSub.textContent = isPending ? { bottle: 'Add the amount', breast: 'Add the side', both: 'Add the details' }[feedingMode] : '';
 }
 
 function renderSinceLastFeed() {
@@ -1085,16 +1085,18 @@ function renderSinceLastFeed() {
     lastFeedDetailEl.textContent = '';
     return;
   }
-  lastFeedLabelEl.textContent = 'Last feed';
+  // For a breast feed with a length, the parent watches the time since it finished. Next feed still counts from the start.
+  const endedAt = isBreast(last) && last.durationMin ? last.timestamp + last.durationMin * 60000 : last.timestamp;
+  lastFeedLabelEl.textContent = endedAt > last.timestamp && endedAt <= Date.now() ? 'Last feed finished' : 'Last feed';
   sinceLastFeedEl.classList.remove('is-empty');
-  const since = durationString(Date.now() - last.timestamp);
+  const since = durationString(Date.now() - (endedAt <= Date.now() ? endedAt : last.timestamp));
   if (isPending) {
     pendingTimeEl.textContent = since;
     pendingTimeEl.classList.toggle('long', since.length > 4); // "1h 12m" has to fit inside the ring
     pendingDetailEl.textContent = `Started at ${formatClock(last.timestamp)}`;
   } else {
     // "0m" in big type read like "0 ml", so the first minute says "Just now".
-    const justNow = Date.now() - last.timestamp < 60000;
+    const justNow = Date.now() - (endedAt <= Date.now() ? endedAt : last.timestamp) < 60000;
     sinceLastFeedEl.textContent = justNow ? 'Just now' : since;
     lastFeedDetailEl.textContent = `${justNow ? '' : 'ago · '}${feedAmountText(last)}`;
   }
@@ -1155,6 +1157,7 @@ function usualDailyMl() {
 function renderTodayTotal() {
   // The bottle picture means nothing to a family that only breastfeeds.
   todayBottle.style.display = feedingMode === 'breast' ? 'none' : '';
+  document.getElementById('hero-hearts').style.display = feedingMode === 'breast' ? '' : 'none';
   const today = startOfToday();
   const total = latestFeeds.filter(f => f.timestamp >= today).reduce((sum, f) => sum + (f.amountMl || 0), 0);
   // The bottle starts the day empty and fills a little with every finished feed.
@@ -1555,7 +1558,9 @@ function renderHistory() {
       const older = latestFeeds[fullIndex + 1];
       const gap = older ? durationString(feed.timestamp - older.timestamp) : '—';
       const amountHtml = feed.amountMl != null
-        ? `<span class="history-amount-val">${feedAmountText(feed)}</span>`
+        ? (isBreast(feed) && feed.durationMin
+          ? `<span class="history-amount-val breast-val"><b>${feed.durationMin} min</b><small>${SIDE_NAMES[feed.side] || 'Breast'}</small></span>`
+          : `<span class="history-amount-val">${feedAmountText(feed)}</span>`)
         : `<button class="add-amount-btn">Add amount</button>`;
 
       const li = document.createElement('li');
@@ -2465,6 +2470,51 @@ const breastTime = document.getElementById('breast-time');
 let sheetType = 'bottle';
 let selectedSide = 'L';
 let breastMinutes = null;
+// Breast feeds have a start and a finish. One wheel edits both: wheelTarget says which one it is showing.
+let wheelTarget = 'start';
+let endHM = null;          // the finish as "HH:MM", or null when it is not known
+let startTouched = false;  // the start's "has been chosen" state, kept while the wheel shows the finish
+const breastTimes = document.getElementById('breast-times');
+const btStart = document.getElementById('bt-start');
+const btEnd = document.getElementById('bt-end');
+const hmToMin = (hm) => { const [h, m] = hm.split(':').map(Number); return h * 60 + m; };
+const minToHM = (n) => `${String(Math.floor(((n % 1440) + 1440) % 1440 / 60)).padStart(2, '0')}:${String(((n % 60) + 60) % 60).padStart(2, '0')}`;
+
+// The length is always worked out from the two times, so they can never disagree. A finish before the start is the next day.
+function drawBreastTimes() {
+  const start = feedTimeInput.value;
+  breastMinutes = start && endHM ? (hmToMin(endHM) - hmToMin(start) + 1440) % 1440 || null : null;
+  document.getElementById('bt-start-v').textContent = start || '—';
+  document.getElementById('bt-end-v').textContent = endHM || 'Add';
+  [btStart, btEnd].forEach(b => {
+    const on = (b === btEnd) === (wheelTarget === 'end');
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  const breast = sheetType === 'breast';
+  breastTime.hidden = !breast || !breastMinutes;
+  if (breastMinutes) breastTime.innerHTML = `That is <b>${durationString(breastMinutes * 60000)}</b>`;
+}
+function pointWheelAt(target) {
+  if (target === wheelTarget) return;
+  if (target === 'end') {
+    startTouched = timeTouched;
+    // An unknown finish starts from the start plus the last feed's length (or 20 minutes), as a place to scroll from.
+    if (!endHM) {
+      const last = latestFeeds.find(f => isBreast(f) && f.durationMin && f.id !== editingFeedId);
+      endHM = minToHM(hmToMin(feedTimeInput.value || minToHM(new Date().getHours() * 60 + new Date().getMinutes())) + (last ? last.durationMin : 20));
+    }
+    wheelTarget = 'end';
+    const [h, m] = endHM.split(':').map(Number);
+    setTimeWheel(h, m, timeTouched);
+  } else {
+    wheelTarget = 'start';
+    const [h, m] = (feedTimeInput.value || minToHM(new Date().getHours() * 60 + new Date().getMinutes())).split(':').map(Number);
+    setTimeWheel(h, m, startTouched);
+  }
+}
+btStart.addEventListener('click', () => pointWheelAt('start'));
+btEnd.addEventListener('click', () => pointWheelAt('end'));
 
 function defaultFeedType() {
   if (feedingMode !== 'both') return feedingMode;
@@ -2486,9 +2536,11 @@ function applySheetType() {
   const breast = sheetType === 'breast';
   feedTypeSeg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.type === sheetType));
   feedAmountLabel.hidden = amtWheel.hidden = sheetHint.hidden = breast;
-  sideLabel.hidden = sideChoice.hidden = !breast;
-  breastTime.hidden = !breast || !breastMinutes;
-  if (breastMinutes) breastTime.textContent = sheetMode === 'complete' ? `${breastMinutes} min, from the timer` : `${breastMinutes} min`;
+  sideLabel.hidden = sideChoice.hidden = breastTimes.hidden = !breast;
+  // The boxes already say Started and Finished, so the label above them only names the day.
+  feedWhenLabel.textContent = breast || sheetMode !== 'complete' ? 'When' : 'Started';
+  if (!breast) pointWheelAt('start');
+  drawBreastTimes();
   drawSides();
   if (!breast) scrollAmountTo(selectedMl);
   if (!intervalOverridden) selectedIntervalHours = breast ? breastIntervalHours() : computeAutoIntervalHours(selectedMl);
@@ -2602,10 +2654,17 @@ function highlightTimeColumn(el) {
 function readTimeWheel() {
   highlightTimeColumn(timeHours);
   highlightTimeColumn(timeMins);
+  if (wheelTarget === 'end') {
+    endHM = `${String(timeColumnIndex(timeHours)).padStart(2, '0')}:${String(timeColumnIndex(timeMins)).padStart(2, '0')}`;
+    timeWheel.classList.remove('unset');
+    drawBreastTimes();
+    return;
+  }
   timeWheel.classList.toggle('unset', !timeTouched);
   feedTimeInput.value = timeTouched
     ? `${String(timeColumnIndex(timeHours)).padStart(2, '0')}:${String(timeColumnIndex(timeMins)).padStart(2, '0')}`
     : '';
+  drawBreastTimes();
   drawSheet();
 }
 
@@ -2666,9 +2725,13 @@ function openLogModal(feed) {
   sheetType = feed && !isPending ? (isBreast(feed) ? 'breast' : 'bottle') : defaultFeedType();
   feedTypeSeg.hidden = feedingMode !== 'both' && sheetType === (feedingMode === 'breast' ? 'breast' : 'bottle');
   selectedSide = feed?.side || nextSide(feed?.id) || 'L';
-  // A running feed's length comes from the timer. Anything over two hours was probably left running, so it is not kept.
+  // A running feed finishes now. One left running for over three hours probably was not, so its finish is left for you
+  // to add. An edited feed shows the finish worked out from its length.
+  wheelTarget = 'start';
   const ran = isPending ? Math.round((Date.now() - feed.timestamp) / 60000) : 0;
-  breastMinutes = isPending ? (ran >= 1 && ran <= 120 ? ran : null) : (feed?.durationMin || null);
+  const startMin = startTime[0] * 60 + startTime[1];
+  endHM = isPending ? (ran <= 180 ? minToHM(startMin + Math.max(1, ran)) : null)
+    : feed?.durationMin ? minToHM(startMin + feed.durationMin) : null;
   logModal.hidden = false;
   // The wheel can only be positioned once the sheet is on screen.
   scrollAmountTo(startMl);
@@ -3004,7 +3067,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 182`);
+  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 183`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3492,8 +3555,12 @@ if (siri) {
 // --- How you feed ---
 function drawFeedingChoice() {
   document.querySelectorAll('#feeding-choice .segment').forEach(b => b.classList.toggle('active', b.dataset.feeding === feedingMode));
-  // The middle column of Past feeds holds an amount, a side, or either.
-  document.getElementById('history-amount-head').textContent = { bottle: 'Amount', breast: 'Side', both: 'Feed' }[feedingMode];
+  // The middle column of Past feeds holds an amount, a length and side, or either.
+  document.getElementById('history-time-head').textContent = feedingMode === 'breast' ? 'Start' : 'Time';
+  document.getElementById('history-amount-head').textContent = { bottle: 'Amount', breast: 'Length', both: 'Feed' }[feedingMode];
+  document.getElementById('btn-start-feed-idle-sub').textContent = { bottle: 'Add the amount after', breast: 'Add the side after', both: 'Add the details after' }[feedingMode];
+  // No bottles in a breastfeeding-only family, so no bottle timer either.
+  bottlePill.hidden = feedingMode === 'breast';
 }
 document.querySelectorAll('#feeding-choice .segment').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -3694,7 +3761,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=182').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=183').catch(() => {});
   });
 }
 

@@ -6,14 +6,14 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Little sips</title>
-<link rel="manifest" href="manifest.json?v=182">
+<link rel="manifest" href="manifest.json?v=183">
 <link rel="modulepreload" href="vendor/firebase-app.js">
 <link rel="modulepreload" href="vendor/firebase-auth.js">
 <link rel="modulepreload" href="vendor/firebase-firestore.js">
-<link rel="stylesheet" href="fonts/nunito.css?v=182">
-<link rel="stylesheet" href="style.css?v=182">
-<link rel="icon" type="image/png" href="icon-192.png?v=182">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=182">
+<link rel="stylesheet" href="fonts/nunito.css?v=183">
+<link rel="stylesheet" href="style.css?v=183">
+<link rel="icon" type="image/png" href="icon-192.png?v=183">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=183">
 <script>
   // iPhone app only: a class that styles it as an app (no text selection or press-and-hold menus).
   if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) document.documentElement.classList.add('native');
@@ -67,7 +67,7 @@
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card welcome">
-    <img class="welcome-logo" src="logo-192.png?v=182" alt="" width="64" height="64">
+    <img class="welcome-logo" src="logo-192.png?v=183" alt="" width="64" height="64">
     <h1>Track feeds together</h1>
     <p class="muted">Log a feed in one tap. Everyone looking after your baby sees it straight away. No account needed.</p>
     <p class="welcome-calm">There&rsquo;s no right amount or right time. This is just your diary.</p>
@@ -118,6 +118,7 @@
 
     <section id="hero-card" class="hero">
       <svg id="today-bottle" class="sigbottle" role="img" aria-label="Today's milk so far"></svg>
+      <svg id="hero-hearts" class="hero-hearts" viewBox="0 0 24 24" aria-hidden="true" style="display:none"><path transform="translate(-2.4 -1.4) rotate(-8 12 12) scale(.92)" fill="#fffaf2" opacity=".9" d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"/><path transform="translate(3 2.4) rotate(7 12 12) scale(.82)" fill="#ffc9b3" d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"/></svg>
       <div id="hero-pending-view" class="hlayer feeding">
         <div class="hero-l">Feeding now<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
         <div id="pending-time" class="hero-n">—</div>
@@ -140,7 +141,7 @@
     </section>
 
     <div class="acts">
-      <button id="btn-start-feed-now" class="btn startbtn"><svg class="ico sb-ico" aria-hidden="true"><use href="#i-heart"/></svg><span class="sb-t sb-idle"><b>Start feed</b><small>Add the amount after</small></span><span class="sb-t sb-busy"><b id="btn-start-feed-label">Finish feed</b><small id="btn-start-feed-sub"></small></span><span class="sb-dot" aria-hidden="true"></span></button>
+      <button id="btn-start-feed-now" class="btn startbtn"><svg class="ico sb-ico" aria-hidden="true"><use href="#i-heart"/></svg><span class="sb-t sb-idle"><b>Start feed</b><small id="btn-start-feed-idle-sub">Add the amount after</small></span><span class="sb-t sb-busy"><b id="btn-start-feed-label">Finish feed</b><small id="btn-start-feed-sub"></small></span><span class="sb-dot" aria-hidden="true"></span></button>
       <button id="btn-log-feed" class="btn btn-s"><svg class="ico" aria-hidden="true"><use href="#i-pencil"/></svg>Log past</button>
     </div>
 
@@ -217,7 +218,7 @@
       </div>
     </div>
     <div class="history-table-wrap">
-      <div class="history-table-head"><span>Time</span><span id="history-amount-head">Amount</span><span>Gap</span><span></span></div>
+      <div class="history-table-head"><span id="history-time-head">Time</span><span id="history-amount-head">Amount</span><span>Gap</span><span></span></div>
       <ul id="history-list" class="history-list"></ul>
       <p id="history-empty" class="empty" hidden>No feeds in this range.</p>
     </div>
@@ -576,6 +577,10 @@
       <div class="when-fields">
         <input id="feed-date" type="date" class="fsel" aria-label="Date" hidden>
       </div>
+      <div class="timepair" id="breast-times" role="group" aria-label="Start and finish" hidden>
+        <button type="button" class="tbox active" id="bt-start" aria-pressed="true"><small>Started</small><b id="bt-start-v">—</b></button>
+        <button type="button" class="tbox" id="bt-end" aria-pressed="false"><small>Finished</small><b id="bt-end-v">Add</b></button>
+      </div>
       <div class="time-wheel" id="time-wheel">
         <div class="tw-band" aria-hidden="true"></div>
         <div class="tw-col" id="time-hours" role="listbox" tabindex="0" aria-label="Hour"></div>
@@ -583,6 +588,7 @@
         <div class="tw-col" id="time-mins" role="listbox" tabindex="0" aria-label="Minutes"></div>
         <input id="feed-time" type="hidden">
       </div>
+      <p id="breast-time" class="breast-time" hidden></p>
     </div>
 
     <span class="flabel" id="feed-amount-label">How much</span>
@@ -597,7 +603,6 @@
       <button type="button" class="side" data-side="R" aria-pressed="false">Right</button>
       <button type="button" class="side" data-side="B" aria-pressed="false">Both</button>
     </div>
-    <p id="breast-time" class="breast-time" hidden></p>
 
     <div class="gaphead"><span class="flabel" id="gap-label">Hours until next feed</span><span class="gapat" id="gap-at"></span></div>
     <div id="gap-chips" class="gapchips" role="group" aria-labelledby="gap-label"></div>
@@ -832,6 +837,6 @@
 <div id="offline-note" class="offline-note" role="status" hidden>No connection. New entries are kept and sent when it returns, as long as the app stays open.</div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script type="module" src="app.js?v=182"></script>
+<script type="module" src="app.js?v=183"></script>
 </body>
 </html>
