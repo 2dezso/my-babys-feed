@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=183';
+import { analyse } from './patterns.js?v=184';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -2472,6 +2472,7 @@ let selectedSide = 'L';
 let breastMinutes = null;
 // Breast feeds have a start and a finish. One wheel edits both: wheelTarget says which one it is showing.
 let wheelTarget = 'start';
+let wheelOpen = false;     // for breast feeds the wheel stays closed until a time is tapped
 let endHM = null;          // the finish as "HH:MM", or null when it is not known
 let startTouched = false;  // the start's "has been chosen" state, kept while the wheel shows the finish
 const breastTimes = document.getElementById('breast-times');
@@ -2487,7 +2488,7 @@ function drawBreastTimes() {
   document.getElementById('bt-start-v').textContent = start || '—';
   document.getElementById('bt-end-v').textContent = endHM || 'Add';
   [btStart, btEnd].forEach(b => {
-    const on = (b === btEnd) === (wheelTarget === 'end');
+    const on = wheelOpen && (b === btEnd) === (wheelTarget === 'end');
     b.classList.toggle('active', on);
     b.setAttribute('aria-pressed', String(on));
   });
@@ -2513,8 +2514,15 @@ function pointWheelAt(target) {
     setTimeWheel(h, m, startTouched);
   }
 }
-btStart.addEventListener('click', () => pointWheelAt('start'));
-btEnd.addEventListener('click', () => pointWheelAt('end'));
+// Tapping a time opens the wheel on it; tapping the same time again closes the wheel.
+function tapTimeBox(target) {
+  wheelOpen = !(wheelOpen && wheelTarget === target);
+  timeWheel.hidden = !wheelOpen;
+  pointWheelAt(target);
+  drawBreastTimes();
+}
+btStart.addEventListener('click', () => tapTimeBox('start'));
+btEnd.addEventListener('click', () => tapTimeBox('end'));
 
 function defaultFeedType() {
   if (feedingMode !== 'both') return feedingMode;
@@ -2537,6 +2545,10 @@ function applySheetType() {
   feedTypeSeg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.type === sheetType));
   feedAmountLabel.hidden = amtWheel.hidden = sheetHint.hidden = breast;
   sideLabel.hidden = sideChoice.hidden = breastTimes.hidden = !breast;
+  // A breast feed leads with the side; the times sit in two small boxes and the wheel opens only to change one.
+  // Finishing a running feed already knows its day, so the day row goes too.
+  timeWheel.hidden = breast && !wheelOpen;
+  document.getElementById('when-head').hidden = breast && sheetMode === 'complete';
   // The boxes already say Started and Finished, so the label above them only names the day.
   feedWhenLabel.textContent = breast || sheetMode !== 'complete' ? 'When' : 'Started';
   if (!breast) pointWheelAt('start');
@@ -2600,7 +2612,11 @@ for (let h = INTERVAL_MIN; h <= INTERVAL_MAX; h += INTERVAL_STEP) {
 // The time the wheels are showing, whether or not it has been chosen yet, so the next feed can be previewed straight away.
 function shownTimeTs() {
   if (!feedDateInput.value) return null;
-  const hhmm = `${String(timeColumnIndex(timeHours)).padStart(2, '0')}:${String(timeColumnIndex(timeMins)).padStart(2, '0')}`;
+  // The chosen start wins. The wheel is only read for a start not yet chosen, and never while it is closed or showing
+  // a breast feed's finish.
+  const fromWheel = !timeWheel.hidden && wheelTarget === 'start';
+  if (!feedTimeInput.value && !fromWheel) return null;
+  const hhmm = feedTimeInput.value || `${String(timeColumnIndex(timeHours)).padStart(2, '0')}:${String(timeColumnIndex(timeMins)).padStart(2, '0')}`;
   return combineDateTimeToTimestamp(feedDateInput.value, hhmm);
 }
 function drawGapChips() {
@@ -2652,6 +2668,8 @@ function highlightTimeColumn(el) {
 }
 
 function readTimeWheel() {
+  // A hidden wheel reads as 00:00, so it never overwrites a time while it is closed.
+  if (timeWheel.hidden) return;
   highlightTimeColumn(timeHours);
   highlightTimeColumn(timeMins);
   if (wheelTarget === 'end') {
@@ -2728,12 +2746,14 @@ function openLogModal(feed) {
   // A running feed finishes now. One left running for over three hours probably was not, so its finish is left for you
   // to add. An edited feed shows the finish worked out from its length.
   wheelTarget = 'start';
+  wheelOpen = sheetMode === 'log'; // a past feed has no timer, so its start has to be chosen
   const ran = isPending ? Math.round((Date.now() - feed.timestamp) / 60000) : 0;
   const startMin = startTime[0] * 60 + startTime[1];
   endHM = isPending ? (ran <= 180 ? minToHM(startMin + Math.max(1, ran)) : null)
     : feed?.durationMin ? minToHM(startMin + feed.durationMin) : null;
   logModal.hidden = false;
-  // The wheel can only be positioned once the sheet is on screen.
+  // The wheels can only be positioned once the sheet (and the wheel) are on screen.
+  timeWheel.hidden = false;
   scrollAmountTo(startMl);
   setTimeWheel(startTime[0], startTime[1], startTime[2]);
   onAmountChanged(startMl);
@@ -3067,7 +3087,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 183`);
+  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 184`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3761,7 +3781,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=183').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=184').catch(() => {});
   });
 }
 

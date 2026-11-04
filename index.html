@@ -6,14 +6,14 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Little sips</title>
-<link rel="manifest" href="manifest.json?v=183">
+<link rel="manifest" href="manifest.json?v=184">
 <link rel="modulepreload" href="vendor/firebase-app.js">
 <link rel="modulepreload" href="vendor/firebase-auth.js">
 <link rel="modulepreload" href="vendor/firebase-firestore.js">
-<link rel="stylesheet" href="fonts/nunito.css?v=183">
-<link rel="stylesheet" href="style.css?v=183">
-<link rel="icon" type="image/png" href="icon-192.png?v=183">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=183">
+<link rel="stylesheet" href="fonts/nunito.css?v=184">
+<link rel="stylesheet" href="style.css?v=184">
+<link rel="icon" type="image/png" href="icon-192.png?v=184">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=184">
 <script>
   // iPhone app only: a class that styles it as an app (no text selection or press-and-hold menus).
   if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) document.documentElement.classList.add('native');
@@ -67,7 +67,7 @@
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card welcome">
-    <img class="welcome-logo" src="logo-192.png?v=183" alt="" width="64" height="64">
+    <img class="welcome-logo" src="logo-192.png?v=184" alt="" width="64" height="64">
     <h1>Track feeds together</h1>
     <p class="muted">Log a feed in one tap. Everyone looking after your baby sees it straight away. No account needed.</p>
     <p class="welcome-calm">There&rsquo;s no right amount or right time. This is just your diary.</p>
@@ -564,9 +564,15 @@
       <button type="button" class="segment" data-type="bottle">Bottle</button>
       <button type="button" class="segment" data-type="breast">Breast</button>
     </div>
+    <span class="flabel" id="side-label" hidden>Which side</span>
+    <div class="sides" id="side-choice" role="group" aria-labelledby="side-label" hidden>
+      <button type="button" class="side" data-side="L" aria-pressed="false">Left</button>
+      <button type="button" class="side" data-side="R" aria-pressed="false">Right</button>
+      <button type="button" class="side" data-side="B" aria-pressed="false">Both</button>
+    </div>
 
     <div class="frow">
-      <div class="when-head">
+      <div class="when-head" id="when-head">
         <span class="flabel" id="feed-when-label">When</span>
         <div class="seg" id="feed-day-chips" role="group" aria-label="Which day">
           <button type="button" class="segment" data-offset="0">Today</button>
@@ -597,12 +603,6 @@
       <div id="amount-track" class="amt-track" role="listbox" tabindex="0" aria-labelledby="feed-amount-label"></div>
     </div>
     <p id="sheet-hint" class="hint"></p>
-    <span class="flabel" id="side-label" hidden>Which side</span>
-    <div class="sides" id="side-choice" role="group" aria-labelledby="side-label" hidden>
-      <button type="button" class="side" data-side="L" aria-pressed="false">Left</button>
-      <button type="button" class="side" data-side="R" aria-pressed="false">Right</button>
-      <button type="button" class="side" data-side="B" aria-pressed="false">Both</button>
-    </div>
 
     <div class="gaphead"><span class="flabel" id="gap-label">Hours until next feed</span><span class="gapat" id="gap-at"></span></div>
     <div id="gap-chips" class="gapchips" role="group" aria-labelledby="gap-label"></div>
@@ -837,6 +837,6 @@
 <div id="offline-note" class="offline-note" role="status" hidden>No connection. New entries are kept and sent when it returns, as long as the app stays open.</div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script type="module" src="app.js?v=183"></script>
+<script type="module" src="app.js?v=184"></script>
 </body>
 </html>
