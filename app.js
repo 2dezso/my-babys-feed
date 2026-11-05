@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=185';
+import { analyse } from './patterns.js?v=186';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -3101,7 +3101,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 185`);
+  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 186`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3649,7 +3649,7 @@ const APP_STORE_ID = '6824503759';
 // The store page does not exist until Apple has approved and released the app, so everything that points to it stays
 // hidden until APP_IS_LIVE is true: the Rate button, the website's "Get the iPhone app" link and its one-time card.
 // Set it to true in the first update after release (the website can be updated at once; the app needs a new version).
-const APP_IS_LIVE = false;
+const APP_IS_LIVE = true;
 const APP_STORE_URL = APP_STORE_ID && APP_IS_LIVE ? `https://apps.apple.com/app/id${APP_STORE_ID}` : '';
 const APP_CARD_DONE_KEY = 'babyfeed_app_card_done';
 const isNativeApp = !!window.Capacitor?.isNativePlatform?.();
@@ -3795,7 +3795,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=185').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=186').catch(() => {});
   });
 }
 
