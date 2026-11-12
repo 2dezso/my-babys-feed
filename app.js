@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { analyse } from './patterns.js?v=186';
+import { analyse } from './patterns.js?v=187';
 import { initializeApp } from './vendor/firebase-app.js';
 import { getAuth, initializeAuth, browserLocalPersistence, signInAnonymously } from './vendor/firebase-auth.js';
 import {
@@ -92,6 +92,14 @@ const SIDE_NAMES = { L: 'Left', R: 'Right', B: 'Both' };
 function feedAmountText(f) {
   if (!isBreast(f)) return fmtAmount(f.amountMl);
   return [f.durationMin ? `${f.durationMin} min` : '', SIDE_NAMES[f.side] || 'Breast'].filter(Boolean).join(' · ');
+}
+// A breast feed with a length ends after it; any other feed has no length, so it ends when it starts.
+function feedEndTs(f) {
+  return isBreast(f) && f.durationMin ? f.timestamp + f.durationMin * 60000 : f.timestamp;
+}
+// What the gap is counted from, following the household's choice in Settings.
+function gapBaseTs(f) {
+  return gapFrom === 'end' ? feedEndTs(f) : f.timestamp;
 }
 // The side to start on next is the other one from the last single-side breast feed ("Both" is skipped over).
 function lastSingleSide(excludeId) {
@@ -290,6 +298,7 @@ let selectedGender = '';
 let profileOnboarding = false;
 let profileDob = '';
 let profileFirstName = '';
+let gapFrom = 'start'; // 'start' or 'end': whether the gap between feeds is counted from when a feed began or finished (profile.gapFrom)
 let feedingMode = 'bottle'; // bottle, breast or both, shared by the household (profile.feeding)
 let profileIsDemo = false; // the example household given to App Review; it cannot be deleted from the app
 let profileLastName = '';
@@ -572,6 +581,11 @@ function listenToProfile(code) {
     selectedBottleBrand = data.bottleBrand || 'mam';
     feedingMode = ['breast', 'both'].includes(data.feeding) ? data.feeding : 'bottle';
     drawFeedingChoice();
+    const newGapFrom = data.gapFrom === 'end' ? 'end' : 'start';
+    const gapChanged = newGapFrom !== gapFrom;
+    gapFrom = newGapFrom;
+    drawGapChoice();
+    if (gapChanged) refreshGap();
     applyBottleBrand();
     if (!profileScreen.hidden) scrollBottleBrandWheelTo(selectedBottleBrand);
     profileTileLabel.textContent = firstName ? `${firstName}’s profile` : 'Profile';
@@ -1085,8 +1099,8 @@ function renderSinceLastFeed() {
     lastFeedDetailEl.textContent = '';
     return;
   }
-  // For a breast feed with a length, the parent watches the time since it finished. Next feed still counts from the start.
-  const endedAt = isBreast(last) && last.durationMin ? last.timestamp + last.durationMin * 60000 : last.timestamp;
+  // The time since the last feed counts from its start or its finish, as chosen in Settings (the same for the next feed).
+  const endedAt = gapBaseTs(last);
   lastFeedLabelEl.textContent = endedAt > last.timestamp && endedAt <= Date.now() ? 'Last feed finished' : 'Last feed';
   sinceLastFeedEl.classList.remove('is-empty');
   const since = durationString(Date.now() - (endedAt <= Date.now() ? endedAt : last.timestamp));
@@ -1122,7 +1136,8 @@ function renderNextFeed() {
   }
   const now = Date.now();
   const intervalMs = (last.intervalHours || 3) * 60 * 60 * 1000;
-  const nextTs = last.timestamp + intervalMs;
+  const base = Math.min(gapBaseTs(last), now);
+  const nextTs = base + intervalMs;
   const late = now > nextTs;
   const diffMs = Math.abs(nextTs - now);
 
@@ -1140,7 +1155,7 @@ function renderNextFeed() {
     nextFeedInEl.textContent = `in ${durationString(diffMs)}`;
   }
   // The bar fills from the last feed to the next one. Once late it stays full.
-  const share = late ? 1 : Math.max(0, (now - last.timestamp) / intervalMs);
+  const share = late ? 1 : Math.max(0, (now - base) / intervalMs);
   heroLine.hidden = false;
   heroLine.style.setProperty('--p', share.toFixed(4));
 }
@@ -1557,7 +1572,7 @@ function renderHistory() {
     for (const feed of dayFeeds) {
       const fullIndex = latestFeeds.indexOf(feed);
       const older = latestFeeds[fullIndex + 1];
-      const gap = older ? durationString(feed.timestamp - older.timestamp) : '—';
+      const gap = older ? durationString(Math.max(0, feed.timestamp - gapBaseTs(older))) : '—';
       const amountHtml = feed.amountMl != null
         ? (isBreast(feed) && feed.durationMin
           ? `<span class="history-amount-val breast-val"><b>${feed.durationMin} min</b><small>${SIDE_NAMES[feed.side] || 'Breast'}</small></span>`
@@ -2530,13 +2545,13 @@ function defaultFeedType() {
   return isBreast(latestFeeds.find(f => f.amountMl != null)) ? 'breast' : 'bottle';
 }
 // Breastfed babies feed when they are hungry, so a breast feed is not asked for hours until the next one. The Feeds
-// card and reminders still need a rough time, so it is the usual start-to-start gap of the last few feeds, to the
+// card and reminders still need a rough time, so it is the usual gap of the last few feeds (counted as chosen in Settings), to the
 // nearest half hour (2 hours 30 minutes until there are enough feeds to go on).
 function breastIntervalHours() {
-  const starts = latestFeeds.filter(f => f.amountMl != null && f.id !== editingFeedId).slice(0, 7).map(f => f.timestamp);
+  const recent = latestFeeds.filter(f => f.amountMl != null && f.id !== editingFeedId).slice(0, 7);
   const gaps = [];
-  for (let i = 0; i < starts.length - 1; i++) {
-    const g = (starts[i] - starts[i + 1]) / 3600000;
+  for (let i = 0; i < recent.length - 1; i++) {
+    const g = (recent[i].timestamp - gapBaseTs(recent[i + 1])) / 3600000;
     if (g >= 0.5 && g <= 6) gaps.push(g);
   }
   if (gaps.length < 3) return 2.5;
@@ -3101,7 +3116,7 @@ async function runConnectionCheck() {
     lines[lines.length - 1] = `${label}: ${result} (${((Date.now() - t) / 1000).toFixed(1)}s)`; show();
   };
   const code = getHouseholdCode();
-  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 186`);
+  lines.push(`Little sips ${inNativeApp ? 'iPhone app' : 'website'}, version 187`);
   lines.push(`Online: ${navigator.onLine ? 'yes' : 'no'}  Household: ${code ? code.slice(0, 2) + '…' : 'none'}  Feeds on screen: ${latestFeeds.length}`);
   await step('Local storage', async () => { localStorage.setItem('babyfeed_check', '1'); return localStorage.getItem('babyfeed_check') === '1' ? 'ok' : 'not saved'; });
   await step(`Phone database${window.realIndexedDB ? ' (not used by the app)' : ''}`, () => indexedDbAnswers(3000));
@@ -3390,7 +3405,7 @@ async function syncReminder() {
   const last = latestFeeds[0];
   // Nothing to remind about while a feed is running or before there is a finished feed to count from.
   const due = reminders.length && last && last.amountMl != null
-    ? last.timestamp + (last.intervalHours || 3) * 3600000
+    ? gapBaseTs(last) + (last.intervalHours || 3) * 3600000
     : null;
   const items = due === null ? [] : reminders
     .map(lead => ({ lead, at: due - lead * 60000 }))
@@ -3608,6 +3623,25 @@ document.querySelectorAll('#feeding-choice .segment').forEach(btn => {
   });
 });
 drawFeedingChoice();
+// --- Where the gap is counted from ---
+function drawGapChoice() {
+  document.querySelectorAll('#gap-from-choice .segment').forEach(b => b.classList.toggle('active', b.dataset.gap === gapFrom));
+}
+function refreshGap() {
+  renderSinceLastFeed();
+  renderNextFeed();
+  renderHistory();
+}
+document.querySelectorAll('#gap-from-choice .segment').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.gap === gapFrom) return;
+    gapFrom = btn.dataset.gap;
+    drawGapChoice();
+    refreshGap();
+    saveProfileFields({ gapFrom });
+  });
+});
+drawGapChoice();
 document.getElementById('welcome-feeding').addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if (!b) return;
@@ -3795,7 +3829,7 @@ if (existingCode) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js?v=186').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=187').catch(() => {});
   });
 }
 

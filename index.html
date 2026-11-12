@@ -6,14 +6,14 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fdf3ee">
 <title>Little sips</title>
-<link rel="manifest" href="manifest.json?v=186">
+<link rel="manifest" href="manifest.json?v=187">
 <link rel="modulepreload" href="vendor/firebase-app.js">
 <link rel="modulepreload" href="vendor/firebase-auth.js">
 <link rel="modulepreload" href="vendor/firebase-firestore.js">
-<link rel="stylesheet" href="fonts/nunito.css?v=186">
-<link rel="stylesheet" href="style.css?v=186">
-<link rel="icon" type="image/png" href="icon-192.png?v=186">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=186">
+<link rel="stylesheet" href="fonts/nunito.css?v=187">
+<link rel="stylesheet" href="style.css?v=187">
+<link rel="icon" type="image/png" href="icon-192.png?v=187">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=187">
 <script>
   // iPhone app only: a class that styles it as an app (no text selection or press-and-hold menus).
   if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) document.documentElement.classList.add('native');
@@ -67,7 +67,7 @@
 
 <div id="setup-screen" class="screen" hidden>
   <div class="card welcome">
-    <img class="welcome-logo" src="logo-192.png?v=186" alt="" width="64" height="64">
+    <img class="welcome-logo" src="logo-192.png?v=187" alt="" width="64" height="64">
     <h1>Track feeds together</h1>
     <p class="muted">Log a feed in one tap. Everyone looking after your baby sees it straight away. No account needed.</p>
     <p class="welcome-calm">There&rsquo;s no right amount or right time. This is just your diary.</p>
@@ -421,13 +421,18 @@
           <button type="button" class="segment" data-feeding="breast">Breast</button>
           <button type="button" class="segment" data-feeding="both">Both</button>
         </span></div>
+      <div class="srow static"><span>Count the gap from</span>
+        <span class="seg" id="gap-from-choice" role="group" aria-label="Count the gap from">
+          <button type="button" class="segment" data-gap="start">Start</button>
+          <button type="button" class="segment" data-gap="end">Finish</button>
+        </span></div>
       <div class="srow static"><span>Milk shown in</span>
         <span class="seg" id="unit-choice" role="group" aria-label="Milk units">
           <button type="button" class="segment" data-unit="ml">ml</button>
           <button type="button" class="segment" data-unit="oz">oz</button>
         </span></div>
     </div>
-    <p class="snote">How you feed is shared with everyone in this household. Bottle includes expressed milk. Breast feeds save the side instead of an amount. Units are set for this phone only, and amounts are always saved in ml, so switching never changes your history.</p>
+    <p class="snote">How you feed and where the gap is counted from are shared with everyone in this household. The gap is the time between feeds, from when the last one started or finished; bottle feeds have no length, so this only changes breast feeds. Bottle includes expressed milk. Breast feeds save the side instead of an amount. Units are set for this phone only, and amounts are always saved in ml, so switching never changes your history.</p>
 
     <h2 class="sh">Sharing</h2>
     <div class="slist">
@@ -837,6 +842,6 @@
 <div id="offline-note" class="offline-note" role="status" hidden>No connection. New entries are kept and sent when it returns, as long as the app stays open.</div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script type="module" src="app.js?v=186"></script>
+<script type="module" src="app.js?v=187"></script>
 </body>
 </html>
